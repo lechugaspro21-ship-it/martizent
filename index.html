@@ -511,10 +511,15 @@ function sbFetch(path, method, body){
 
 // ─── Login ───
 function sbLogin(user, pass){
-  return sbFetch('usuarios?user_name=eq.'+encodeURIComponent(user)+'&pass=eq.'+encodeURIComponent(pass)+'&select=*')
+  // Use GET with exact match — fetch all users with this username then check pass in JS
+  return sbFetch('usuarios?user_name=eq.'+encodeURIComponent(user)+'&select=*')
     .then(function(rows){
-      if(!rows||!rows.length) throw new Error('Credenciales incorrectas');
-      return rows[0];
+      console.log('Users found:', rows?rows.length:0, JSON.stringify(rows));
+      if(!rows||!rows.length) throw new Error('Usuario no encontrado');
+      var u=rows[0];
+      // Compare password in JS to avoid URL encoding issues
+      if(u.pass!==pass) throw new Error('Contraseña incorrecta');
+      return u;
     });
 }
 
