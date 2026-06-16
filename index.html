@@ -487,17 +487,25 @@ function sbFetch(path, method, body){
     'apikey': SB_KEY,
     'Authorization': 'Bearer '+SB_KEY,
     'Content-Type': 'application/json',
+    'X-Client-Info': 'martizent-campo/1.0',
   };
-  if(method==='POST') headers['Prefer']='return=representation';
-  if(method==='PATCH') headers['Prefer']='return=representation';
-  return fetch(SB_URL+'/rest/v1/'+path, {
+  if(method==='POST'||method==='PATCH') headers['Prefer']='return=representation';
+  var url=SB_URL+'/rest/v1/'+path;
+  console.log('sbFetch',method||'GET',url);
+  return fetch(url, {
     method: method||'GET',
     headers: headers,
     body: body?JSON.stringify(body):undefined
   }).then(function(r){
-    console.log('sbFetch',method||'GET',path,'status:',r.status);
-    if(!r.ok) return r.text().then(function(t){console.error('sbFetch error:',t);throw new Error(t);});
+    console.log('sbFetch response status:',r.status);
+    if(!r.ok) return r.text().then(function(t){
+      console.error('sbFetch error body:',t);
+      throw new Error(t);
+    });
     return r.status===204?null:r.json();
+  }).catch(function(e){
+    console.error('sbFetch catch:',e);
+    throw e;
   });
 }
 
@@ -617,29 +625,33 @@ PRODUCTOS_CATALOGO.forEach(function(p){ p.factura_pct=30; });
 
 // ═══════════ AUTH ═══════════
 function doLogin(){
-  var u=(el('login-user')||{}).value||'';
-  var p=(el('login-pass')||{}).value||'';
-  var btn=el('login-btn');
-  var err=el('login-err');
-  if(!u||!p){if(err)err.textContent='Ingresá usuario y contraseña.';return;}
+  var u=(el('lu')||el('login-user')||{}).value||'';
+  var p=(el('lp')||el('login-pass')||{}).value||'';
+  if(!u||!p){
+    var err=el('login-error')||el('login-err');
+    if(err){err.textContent='Ingresá usuario y contraseña.';err.style.display='block';}
+    return;
+  }
+  var btn=el('login-btn')||document.querySelector('button[onclick*="doLogin"]');
   if(btn)btn.textContent='Ingresando...';
-  if(err)err.textContent='';
-  console.log('Attempting login for:', u);
+  console.log('Logging in user:', u);
   sbLogin(u,p).then(function(usr){
-    console.log('Login success:', usr);
-    SESSION={user:usr.user_name||usr.user,nombre:usr.nombre||(usr.user_name||usr.user),rol:usr.rol||'user',sucursal:usr.sucursal||'—'};
+    console.log('Login success:', JSON.stringify(usr));
+    SESSION={user:usr.user_name,nombre:usr.nombre||usr.user_name,rol:usr.rol||'user',sucursal:usr.sucursal||'—'};
     if(btn)btn.textContent='Ingresar';
-    // Load overrides from DB
-    sbLoadOverrides().catch(function(){});
-    // Load cotizaciones from DB
-    sbLoadCotizaciones(SESSION.user, SESSION.rol).then(function(cots){
+    sbLoadOverrides().catch(function(e){console.warn('Override load failed:',e);});
+    sbLoadCotizaciones(SESSION.user,SESSION.rol).then(function(cots){
       COTIZACIONES=cots||[];
       showHome();
-    }).catch(function(){showHome();});
-  }).catch(function(err2){
-    console.error('Login error:', err2);
+    }).catch(function(e){
+      console.warn('Cot load failed:',e);
+      showHome();
+    });
+  }).catch(function(e){
+    console.error('Login failed:', e);
     if(btn)btn.textContent='Ingresar';
-    if(err)err.textContent='Usuario o contraseña incorrectos.';
+    var err=el('login-error')||el('login-err');
+    if(err){err.textContent='Usuario o contraseña incorrectos.';err.style.display='block';}
   });
 }
 function doLogout(){SESSION=null;el('app-page').classList.remove('visible');el('login-page').style.display='flex';el('lu').value='';el('lp').value='';}
