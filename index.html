@@ -646,6 +646,10 @@ function doLogin(){
     var lp=el('login-page');if(lp)lp.style.display='none';
     if(btn)btn.textContent='Ingresar';
     sbLoadOverrides().catch(function(e){console.warn('Override load failed:',e);});
+    // Load users list
+    sbFetch('usuarios?select=*').then(function(rows){
+      USERS=(rows||[]).map(function(r){return {user:r.user_name,pass:r.pass,nombre:r.nombre||r.user_name,rol:r.rol||'user',sucursal:r.sucursal||'—'};});
+    }).catch(function(){});
     sbLoadCotizaciones(SESSION.user,SESSION.rol).then(function(cots){
       COTIZACIONES=cots||[];
       showHome();
@@ -1249,26 +1253,61 @@ function adminTab(btn,panel){
 }
 
 // ═══════════ PERSONAL ═══════════
+function deleteUser(idx){
+  var u=USERS[idx];if(!u)return;
+  if(!confirm('\u00BFEliminar usuario "'+u.user+'"?')) return;
+  sbFetch('usuarios?user_name=eq.'+encodeURIComponent(u.user),'DELETE')
+    .then(function(){renderUserTable();})
+    .catch(function(err){alert('Error: '+err.message);});
+}
+
 function renderUserTable(){
   var tbody=el('user-rows');if(!tbody)return;
-  tbody.innerHTML=USERS.map(function(u,i){
-    var fixed=u.user==='admin';
-    return '<tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="u-avatar">'+u.nombre.charAt(0)+'</div>'+u.user+'</div></td>'+
-      '<td>'+u.nombre+'</td>'+
-      '<td><span class="u-role '+(u.rol==='admin'?'u-admin':'u-user')+'">'+(u.rol==='admin'?'Admin':'Campo')+'</span></td>'+
-      '<td>'+u.sucursal+'</td>'+
-      '<td>'+(fixed?'<span style="font-size:11.5px;color:var(--text-3);">Cuenta principal</span>':'<button class="btn btn-sm" onclick="delUser('+i+')" style="color:var(--red-600);">Eliminar</button>')+'</td></tr>';
-  }).join('');
+  tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:1rem;color:var(--text-3);">Cargando...</td></tr>';
+  sbFetch('usuarios?select=*&order=created_at.asc')
+    .then(function(rows){
+      USERS=(rows||[]).map(function(r){return {user:r.user_name,pass:r.pass,nombre:r.nombre||r.user_name,rol:r.rol||'user',sucursal:r.sucursal||'—'};});
+      if(!USERS.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--text-3);">Sin usuarios</td></tr>';return;}
+      tbody.innerHTML=USERS.map(function(u,i){
+        var fixed=u.user==='admin';
+        var delBtn=fixed?'<td></td>':
+          '<td><button class="btn btn-sm" style="color:var(--red-600);border-color:var(--red-400);" onclick="deleteUser('+i+')">&#128465;</button></td>';
+        return '<tr>'+
+          '<td><div style="display:flex;align-items:center;gap:8px;"><div class="u-avatar">'+u.nombre.charAt(0).toUpperCase()+'</div>'+u.user+'</div></td>'+
+          '<td>'+u.nombre+'</td>'+
+          '<td><span class="tag '+(u.rol==='admin'?'tag-blue':'tag-green')+'">'+u.rol+'</span></td>'+
+          '<td>'+(u.sucursal||'—')+'</td>'+
+          delBtn+
+        '</tr>';
+      }).join('');
+    }).catch(function(err){
+      tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:1rem;color:var(--red-600);">Error: '+err.message+'</td></tr>';
+    });
 }
 function toggleAddUser(){var f=el('add-user-form');f.style.display=f.style.display==='none'?'block':'none';el('nu-error').textContent='';}
 function addUser(){
-  var nombre=(el('nu-nombre')||{}).value.trim(),user=(el('nu-user')||{}).value.trim(),pass=(el('nu-pass')||{}).value,rol=(el('nu-rol')||{}).value,suc=(el('nu-suc')||{}).value||'—';
-  if(!nombre||!user||!pass){el('nu-error').textContent='Completá nombre, usuario y contraseña.';return;}
-  if(pass.length<6){el('nu-error').textContent='Contraseña mínimo 6 caracteres.';return;}
-  if(USERS.find(function(u){return u.user===user;})){el('nu-error').textContent='Ese usuario ya existe.';return;}
-  USERS.push({user:user,pass:pass,nombre:nombre,rol:rol,sucursal:suc});
-  el('nu-nombre').value='';el('nu-user').value='';el('nu-pass').value='';el('nu-error').textContent='';
-  toggleAddUser();renderUserTable();
+  var nombre=(el('nu-nombre')||{}).value.trim();
+  var user=(el('nu-user')||{}).value.trim();
+  var pass=(el('nu-pass')||{}).value;
+  var rol=(el('nu-rol')||{}).value;
+  var suc=(el('nu-suc')||{}).value||'—';
+  var errEl=el('nu-error');
+  if(!nombre||!user||!pass){if(errEl)errEl.textContent='Completá nombre, usuario y contraseña.';return;}
+  if(pass.length<3){if(errEl)errEl.textContent='Contraseña muy corta.';return;}
+  if(USERS.find(function(u){return u.user===user;})){if(errEl)errEl.textContent='Ese usuario ya existe.';return;}
+  if(errEl)errEl.textContent='Guardando...';
+  sbFetch('usuarios','POST',{user_name:user,pass:pass,nombre:nombre,rol:rol,sucursal:suc})
+    .then(function(res){
+      var newUser={user:user,pass:pass,nombre:nombre,rol:rol,sucursal:suc};
+      USERS.push(newUser);
+      el('nu-nombre').value='';el('nu-user').value='';el('nu-pass').value='';
+      if(errEl)errEl.textContent='';
+      toggleAddUser();
+      renderUserTable();
+    }).catch(function(err){
+      console.error('Error al crear usuario:', err);
+      if(errEl)errEl.textContent='Error: '+err.message;
+    });
 }
 function delUser(i){if(USERS[i].user==='admin')return;if(confirm('¿Eliminar a '+USERS[i].nombre+'?')){USERS.splice(i,1);renderUserTable();}}
 
