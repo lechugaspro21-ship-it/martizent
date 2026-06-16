@@ -209,7 +209,7 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
 <!-- APP -->
 <div class="app" id="app-page">
   <div class="topbar">
-    <div class="logo">📍</div>
+    <div class="logo" onclick="goHome()" style="cursor:pointer;" title="Ir al inicio">📍</div>
     <div><div class="topbar-title">Trabajos de campo</div><div class="topbar-sub">MARTIZENT S.R.L.</div></div>
     <div class="topbar-right">
       <div class="user-badge"><span id="tb-user">—</span><span class="role-tag" id="tb-role">—</span></div>
@@ -231,9 +231,10 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
     <!-- HOME USER -->
     <div id="sc-home-user" class="screen">
       <div class="home-greeting"><h2 id="hg-user">Bienvenido</h2><p>Selecciona el módulo</p></div>
-      <div class="home-grid" style="grid-template-columns:1fr;">
+      <div class="home-grid" style="grid-template-columns:1fr 1fr;">
 
         <div class="hcard hc-teal" onclick="showMain('cotizaciones')"><div class="hcard-bar"></div><div class="hcard-icon">📋</div><h3>Cotizaciones</h3><p>Crear cotizaciones y ver tu historial.</p><div class="hcard-foot"><span class="tag tag-teal">Ventas</span><span style="color:var(--text-3)">›</span></div></div>
+        <div class="hcard hc-blue" onclick="showMain('inv-mercado')"><div class="hcard-bar"></div><div class="hcard-icon">📊</div><h3>Inv. de mercado</h3><p>Investigación de mercado y actividades.</p><div class="hcard-foot"><span class="tag tag-blue">Análisis</span><span style="color:var(--text-3)">›</span></div></div>
       </div>
     </div>
     <!-- MERCADO -->
@@ -253,6 +254,15 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
       <div class="sec-divider"><div class="sec-divider-num">5</div><div><h3>Productos nuevos</h3></div></div>
       <div class="smgrid"><div class="smitem full" onclick="openForm('productos')"><div class="smico ic-amber">📦</div><div><h4>Relevamiento de productos</h4><p>Productos propios y de competencia observados en campo</p></div></div></div>
     </div>
+    <!-- INV MERCADO -->
+    <div id="sc-inv-mercado" class="screen">
+      <div class="sec-header">
+        <div><h2>Investigación de mercado</h2><p id="inv-sec-sub">Actividades y relevamiento de campo</p></div>
+        <button class="btn btn-primary" onclick="openForm('actividad-resp')">+ Nueva actividad</button>
+      </div>
+      <div id="inv-act-list" style="margin-top:1rem;"></div>
+    </div>
+
     <!-- COTIZACIONES -->
     <div id="sc-cotizaciones" class="screen">
       <div class="sec-header" style="border-left:3px solid var(--teal-400);">
@@ -322,6 +332,7 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
         <button class="admin-tab active" onclick="adminTab(this,'adm-actividades')">📋 Actividades</button>
         <button class="admin-tab" onclick="adminTab(this,'adm-catalogo')">📦 Productos</button>
         <button class="admin-tab" onclick="adminTab(this,'adm-repuestos')">🔧 Repuestos</button>
+        <button class="admin-tab" onclick="adminTab(this,'adm-creditos')">💳 Créditos</button>
         <button class="admin-tab" onclick="adminTab(this,'adm-personal')">👥 Personal</button>
       </div>
       <!-- INFORMES -->
@@ -444,6 +455,12 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
         </div>
       </div>
 
+
+      <!-- CREDITOS -->
+      <div id="adm-creditos" style="display:none;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:14px;">Créditos en mora por usuario</div>
+        <div id="creditos-list"></div>
+      </div>
       <!-- PERSONAL -->
       <div id="adm-personal" style="display:none;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -674,6 +691,7 @@ function initApp(){
 function buildNav(){
   var isAdmin=SESSION.rol==='admin';
   var tabs=[{id:'home',l:'🏠 Inicio'},{id:'cotizaciones',l:'📋 Cotizaciones'}];
+  if(!isAdmin) tabs.push({id:'inv-mercado',l:'📊 Inv. Mercado'});
   if(isAdmin) tabs.push({id:'admin',l:'🛡️ Administrador'});
   el('nav-bar').innerHTML=tabs.map(function(t){return '<button class="nav-tab" onclick="showMain(\''+t.id+'\')" id="nt-'+t.id+'">'+t.l+'</button>';}).join('');
 }
@@ -694,6 +712,7 @@ function showMain(id){
   setTab(id);el('stepper-bar').style.display='none';el('form-footer').style.display='none';CUR_FORM=null;window.scrollTo(0,0);
 
   if(id==='cotizaciones') renderCotizaciones();
+  if(id==='inv-mercado'){renderInvMercado();}
   if(id==='admin') renderAdmin();
 }
 function curTab(){var a=document.querySelector('.nav-tab.active');return a?a.id.replace('nt-',''):'home';}
@@ -927,7 +946,8 @@ function renderCotizacionesList(){
             '<span style="font-size:11.5px;color:var(--text-3);">'+tipoPagoLabel+'</span>'+
           '</div>'+
           '<div style="display:flex;gap:8px;">'+
-            '<span style="font-size:11px;background:var(--purple-50);color:var(--purple-700);padding:2px 8px;border-radius:10px;">MZT: '+c.martizent+'</span>'+
+            (c.martNum>0?'<span style="font-size:11px;background:var(--purple-50);color:var(--purple-700);padding:2px 8px;border-radius:10px;">MZT: '+c.martizent+'</span>':'')+
+            (c.multiNum>0?'<span style="font-size:11px;background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:10px;">Multi: '+c.multiempresas+'</span>':'')+
             '<span style="font-size:11px;background:var(--teal-50);color:var(--teal-600);padding:2px 8px;border-radius:10px;">Diego: '+c.diego+'</span>'+
           '</div>'+
         '</div>';
@@ -1243,10 +1263,11 @@ function renderReports(filter){
 function toggleReport(id){var d=el('rd-'+id);if(d)d.classList.toggle('open');var r=REPORTS.find(function(x){return x.id===id;});if(r&&!r.leido){r.leido=true;var b=el('rbadge-'+id);if(b){b.textContent='Leído';b.className='rbadge rb-read';}updateStats();}}
 function adminTab(btn,panel){
   document.querySelectorAll('.admin-tab').forEach(function(t){t.classList.remove('active');});btn.classList.add('active');
-  ['adm-informes','adm-actividades','adm-catalogo','adm-repuestos','adm-personal'].forEach(function(p){var e=el(p);if(e)e.style.display=p===panel?'block':'none';});
+  ['adm-informes','adm-actividades','adm-catalogo','adm-repuestos','adm-creditos','adm-personal'].forEach(function(p){var e=el(p);if(e)e.style.display=p===panel?'block':'none';});
   if(panel==='adm-actividades') renderAdmActList();
   if(panel==='adm-catalogo') renderAdmCatalog();
   if(panel==='adm-repuestos') renderRepuestos();
+  if(panel==='adm-creditos') renderCreditos();
   if(panel==='adm-personal') renderUserTable();
 }
 
@@ -2433,6 +2454,159 @@ function shareCotPdf(cot){
   lines.push('Fecha: '+cot.fecha);
   lines.push('_Tarija - Cochabamba - Santa Cruz_');
   window.open('https://wa.me/?text='+encodeURIComponent(lines.join('\n')),'_blank');
+}
+
+function goHome(){
+  if(CUR_FORM==='cot-nueva' && (COT_ITEMS.length>0||(el('f-cot-cliente')&&el('f-cot-cliente').value.trim()!==''))){
+    if(!confirm('\u00BFSalir de la cotizaci\u00F3n? Los datos no guardados se perder\u00E1n.')) return;
+  }
+  COT_ITEMS=[];COT_REP_ITEMS=[];CUR_FORM=null;window._editCotId=null;
+  showHome();
+}
+
+// ═══ INV MERCADO ═══
+var INV_ACTIVIDADES = []; // stored in Supabase table: actividades
+
+function renderInvMercado(){
+  sbFetch('actividades?select=*&order=fecha.desc')
+    .then(function(rows){
+      INV_ACTIVIDADES = rows||[];
+      var el2=el('inv-act-list');if(!el2)return;
+      if(!INV_ACTIVIDADES.length){
+        el2.innerHTML='<div class="empty-state"><span class="empty-ico">&#128202;</span><h3>Sin actividades</h3><p>Creá la primera actividad de inv. de mercado.</p></div>';
+        return;
+      }
+      el2.innerHTML=INV_ACTIVIDADES.map(function(a){
+        return '<div class="cot-card" style="margin-bottom:10px;">'+
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;">'+
+            '<div>'+
+              '<div style="font-size:13.5px;font-weight:600;">'+a.titulo+'</div>'+
+              '<div style="font-size:11px;color:var(--text-3);margin-top:2px;">'+a.fecha+(a.usuario?' &middot; '+a.usuario:'')+'</div>'+
+            '</div>'+
+            '<span class="tag tag-blue">'+a.tipo+'</span>'+
+          '</div>'+
+          (a.descripcion?'<div style="font-size:12.5px;color:var(--text-2);margin-top:8px;">'+a.descripcion+'</div>':'')+
+        '</div>';
+      }).join('');
+    }).catch(function(){
+      var el2=el('inv-act-list');
+      if(el2)el2.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text-3);">Error al cargar actividades</div>';
+    });
+}
+
+function saveInvActividad(titulo, tipo, descripcion){
+  var row={titulo:titulo,tipo:tipo,descripcion:descripcion,
+    usuario:SESSION.user,fecha:new Date().toLocaleString('es-BO')};
+  return sbFetch('actividades','POST',row);
+}
+
+// ═══ CRÉDITOS ═══
+function renderCreditos(){
+  var el2=el('creditos-list');if(!el2)return;
+  el2.innerHTML='<div style="text-align:center;padding:1rem;color:var(--text-3);">Cargando...</div>';
+  // Load users + their credits
+  Promise.all([
+    sbFetch('usuarios?rol=eq.user&select=*'),
+    sbFetch('creditos?select=*&order=fecha_credito.desc')
+  ]).then(function(results){
+    var users=results[0]||[];
+    var credits=results[1]||[];
+    if(!users.length){el2.innerHTML='<div style="text-align:center;padding:1rem;color:var(--text-3);">Sin usuarios de campo</div>';return;}
+    el2.innerHTML=users.map(function(u){
+      var uCreds=credits.filter(function(c){return c.usuario===u.user_name;});
+      var mora=uCreds.filter(function(c){return c.saldo_pagar>0;});
+      return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:10px;">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
+          '<div>'+
+            '<div style="font-size:14px;font-weight:600;">'+u.nombre+'</div>'+
+            '<div style="font-size:11.5px;color:var(--text-3);">@'+u.user_name+(u.sucursal?' · '+u.sucursal:'')+'</div>'+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:8px;">'+
+            (mora.length?'<span style="font-size:11px;background:#FEE2E2;color:#B91C1C;padding:3px 10px;border-radius:10px;">'+mora.length+' en mora</span>':
+              '<span style="font-size:11px;background:#D1FAE5;color:#065F46;padding:3px 10px;border-radius:10px;">Sin mora</span>')+
+            '<button class="btn btn-sm btn-primary" onclick="showAddCredito(this.dataset.u,this.dataset.n)" data-u="'+u.user_name+'" data-n="'+u.nombre+'">+ Agregar crédito</button>'+
+          '</div>'+
+        '</div>'+
+        (uCreds.length?
+          '<div style="display:flex;flex-direction:column;gap:6px;">'+
+          uCreds.map(function(cr){
+            var pagado=cr.monto_pagado||0;
+            var saldo=cr.saldo_pagar||0;
+            return '<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;">'+
+              '<div>'+
+                '<div style="font-size:12.5px;font-weight:600;">'+cr.nombre_completo+'</div>'+
+                '<div style="font-size:11px;color:var(--text-3);">'+cr.fecha_credito+'</div>'+
+              '</div>'+
+              '<div style="display:flex;gap:10px;align-items:center;text-align:right;">'+
+                '<div><div style="font-size:10px;color:var(--text-3);">Monto</div><div style="font-size:12px;font-weight:600;">Bs '+Number(cr.monto_credito).toLocaleString('es-BO')+'</div></div>'+
+                '<div><div style="font-size:10px;color:var(--text-3);">Pagado</div><div style="font-size:12px;color:var(--teal-600);font-weight:600;">Bs '+Number(pagado).toLocaleString('es-BO')+'</div></div>'+
+                '<div><div style="font-size:10px;color:var(--text-3);">Saldo</div><div style="font-size:12px;color:'+(saldo>0?'#B91C1C':'#065F46')+';font-weight:700;">Bs '+Number(saldo).toLocaleString('es-BO')+'</div></div>'+
+                (saldo<=0?'<button class="btn btn-sm" style="color:var(--red-600);border-color:var(--red-400);" onclick="darBajaCredito('+cr.id+')">Dar de baja</button>':'')+
+              '</div>'+
+            '</div>';
+          }).join('')+
+          '</div>':
+          '<div style="font-size:12px;color:var(--text-3);text-align:center;padding:8px;">Sin créditos registrados</div>'
+        )+
+      '</div>';
+    }).join('');
+  }).catch(function(err){
+    el2.innerHTML='<div style="color:var(--red-600);padding:1rem;">Error: '+err.message+'</div>';
+  });
+}
+
+function showAddCredito(userName, nombre){
+  var html='<div id="credito-modal-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;">'+
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:1.5rem;width:90%;max-width:400px;">'+
+      '<div style="font-size:15px;font-weight:700;margin-bottom:4px;">Agregar crédito</div>'+
+      '<div style="font-size:12px;color:var(--text-3);margin-bottom:14px;">Usuario: '+nombre+'</div>'+
+      '<div style="display:flex;flex-direction:column;gap:10px;">'+
+        '<div><label class="flabel">Nombre completo *</label><input type="text" id="cr-nombre" placeholder="Nombre del deudor"></div>'+
+        '<div><label class="flabel">Fecha de crédito *</label><input type="date" id="cr-fecha" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
+        '<div class="frow">'+
+          '<div><label class="flabel">Monto de crédito (Bs) *</label><input type="number" id="cr-monto" placeholder="0" min="0" oninput="calcSaldo()"></div>'+
+          '<div><label class="flabel">Monto pagado (Bs)</label><input type="number" id="cr-pagado" placeholder="0" min="0" value="0" oninput="calcSaldo()"></div>'+
+        '</div>'+
+        '<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">'+
+          '<span style="font-size:13px;font-weight:600;">Saldo a pagar:</span>'+
+          '<span style="font-size:18px;font-weight:700;color:#B91C1C;" id="cr-saldo-display">Bs 0</span>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">'+
+        '<button class="btn" onclick="closeCreditoModal()">Cancelar</button>'+
+        '<button class="btn btn-primary" onclick="saveCredito(this.dataset.u)" data-u="'+userName+'">Guardar crédito</button>'+
+      '</div>'+
+      '<div id="cr-error" style="font-size:12px;color:var(--red-600);margin-top:6px;"></div>'+
+    '</div></div>';
+  var d=document.createElement('div');d.innerHTML=html;document.body.appendChild(d.firstChild);
+}
+function calcSaldo(){
+  var m=parseFloat((el('cr-monto')||{}).value)||0;
+  var p=parseFloat((el('cr-pagado')||{}).value)||0;
+  var s=m-p;
+  var sd=el('cr-saldo-display');if(sd)sd.textContent='Bs '+Math.max(0,s).toLocaleString('es-BO');
+}
+function closeCreditoModal(){var m=el('credito-modal-overlay');if(m)m.remove();}
+function saveCredito(userName){
+  var nombre=((el('cr-nombre')||{}).value||'').trim();
+  var fecha=(el('cr-fecha')||{}).value||'';
+  var monto=parseFloat((el('cr-monto')||{}).value)||0;
+  var pagado=parseFloat((el('cr-pagado')||{}).value)||0;
+  var saldo=Math.max(0,monto-pagado);
+  if(!nombre||!fecha||!monto){var e=el('cr-error');if(e)e.textContent='Completá los campos obligatorios.';return;}
+  sbFetch('creditos','POST',{
+    usuario:userName,nombre_completo:nombre,
+    fecha_credito:fecha,monto_credito:monto,
+    monto_pagado:pagado,saldo_pagar:saldo
+  }).then(function(){
+    closeCreditoModal();renderCreditos();
+  }).catch(function(err){var e=el('cr-error');if(e)e.textContent='Error: '+err.message;});
+}
+function darBajaCredito(id){
+  if(!confirm('\u00BFDar de baja este crédito?')) return;
+  sbFetch('creditos?id=eq.'+id,'DELETE')
+    .then(function(){renderCreditos();})
+    .catch(function(err){alert('Error: '+err.message);});
 }
 
 </script>
