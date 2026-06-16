@@ -643,6 +643,7 @@ function doLogin(){
   sbLogin(u,p).then(function(usr){
     console.log('Login success:', JSON.stringify(usr));
     SESSION={user:usr.user_name,nombre:usr.nombre||usr.user_name,rol:usr.rol||'user',sucursal:usr.sucursal||'—'};
+    var lp=el('login-page');if(lp)lp.style.display='none';
     if(btn)btn.textContent='Ingresar';
     sbLoadOverrides().catch(function(e){console.warn('Override load failed:',e);});
     sbLoadCotizaciones(SESSION.user,SESSION.rol).then(function(cots){
@@ -673,6 +674,7 @@ function buildNav(){
   el('nav-bar').innerHTML=tabs.map(function(t){return '<button class="nav-tab" onclick="showMain(\''+t.id+'\')" id="nt-'+t.id+'">'+t.l+'</button>';}).join('');
 }
 function showHome(){
+  var lp=el('login-page');if(lp)lp.style.display='none';
   hideAll();var isAdmin=SESSION.rol==='admin';
   if(isAdmin){el('hg-admin').textContent='Bienvenido, '+SESSION.nombre;el('sc-home-admin').classList.add('active');}
   else{el('hg-user').textContent='Bienvenido, '+SESSION.nombre;el('sc-home-user').classList.add('active');}
