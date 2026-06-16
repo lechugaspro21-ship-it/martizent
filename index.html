@@ -675,6 +675,7 @@ function buildNav(){
 }
 function showHome(){
   var lp=el('login-page');if(lp)lp.style.display='none';
+  var ap=el('app-page');if(ap)ap.style.display='flex';
   hideAll();var isAdmin=SESSION.rol==='admin';
   if(isAdmin){el('hg-admin').textContent='Bienvenido, '+SESSION.nombre;el('sc-home-admin').classList.add('active');}
   else{el('hg-user').textContent='Bienvenido, '+SESSION.nombre;el('sc-home-user').classList.add('active');}
