@@ -567,14 +567,26 @@ function sbLoadCotizaciones(usuario, rol){
 
 // ─── Overrides ───
 function sbSaveOverride(id, tipo, data){
-  return sbFetch('overrides', 'POST', {id:id, tipo:tipo, data:data})
-    .catch(function(){
-      return sbFetch('overrides?id=eq.'+encodeURIComponent(id), 'PATCH', {data:data});
-    });
+  // Use upsert via POST with Prefer: resolution=merge-duplicates
+  return fetch(SB_URL+'/rest/v1/overrides', {
+    method: 'POST',
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer '+SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates,return=representation'
+    },
+    body: JSON.stringify({id:String(id), tipo:tipo, data:data, updated_at:new Date().toISOString()})
+  }).then(function(r){
+    console.log('sbSaveOverride status:', r.status);
+    if(!r.ok) return r.text().then(function(t){console.error('sbSaveOverride error:',t);throw new Error(t);});
+    return r.status===204?null:r.json();
+  });
 }
 
 function sbLoadOverrides(){
   return sbFetch('overrides?select=*').then(function(rows){
+    console.log('Loaded overrides:', rows?rows.length:0);
     (rows||[]).forEach(function(r){
       if(r.tipo==='prod') PROD_OVERRIDES[r.id]=r.data;
       else if(r.tipo==='rep') REPUESTOS_OVERRIDES[r.id]=r.data;
@@ -1061,7 +1073,7 @@ function renderCatalog(){
   var search=(el('cat-search')||{}).value||'';
   var filterCat=(el('cat-filter')||{}).value||'';
   var list=PRODUCTOS_CATALOGO.filter(function(p){
-    var ov=PROD_OVERRIDES[p.id]||{};
+    var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id]||{};
     var desc=(ov.descripcion||p.descripcion).toLowerCase();
     var matchS=!search||desc.indexOf(search.toLowerCase())>-1;
     var matchC=!filterCat||p.categoria===filterCat;
@@ -1071,7 +1083,7 @@ function renderCatalog(){
   if(!list.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-3);">Sin resultados</td></tr>';return;}
   var lastCat='';var html='';
   list.forEach(function(p){
-    var ov=PROD_OVERRIDES[p.id]||{};
+    var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id]||{};
     var desc=ov.descripcion||p.descripcion;
     var p1=ov.precio1!==undefined?ov.precio1:p.precio1;
     var p2=ov.precio2!==undefined?ov.precio2:p.precio2;
@@ -1359,13 +1371,13 @@ function cotSearch(){
   var tipoEl=el('f-cot-tipoprecio');
   var nacional=tipoEl&&tipoEl.value==='nacional';
   var matches=PRODUCTOS_CATALOGO.filter(function(p){
-    var ov=PROD_OVERRIDES[p.id]||{};
+    var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id]||{};
     var desc=(ov.descripcion||p.descripcion).toLowerCase();
     return desc.indexOf(ql)>-1||p.subcat_label.toLowerCase().indexOf(ql)>-1||p.categoria.toLowerCase().indexOf(ql)>-1;
   }).slice(0,15);
   if(!matches.length){res.innerHTML='<div style="padding:10px 12px;font-size:12.5px;color:var(--text-3);">Sin resultados</div>';res.style.display='block';return;}
   res.innerHTML=matches.map(function(p){
-    var ov=PROD_OVERRIDES[p.id]||{};
+    var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id]||{};
     var desc=ov.descripcion||p.descripcion;
     var precio=nacional?(ov.precio2!==undefined?ov.precio2:p.precio2):(ov.precio1!==undefined?ov.precio1:p.precio1);
     var fpct=ov.factura_pct!==undefined?ov.factura_pct:(p.factura_pct!==undefined?p.factura_pct:30);
@@ -1501,7 +1513,7 @@ function cotUpdatePrices(){
   COT_REP_ITEMS.forEach(function(it){
     var r=REPUESTOS_CATALOGO.find(function(x){return x.id===it.repId;});
     if(!r)return;
-    var ov=REPUESTOS_OVERRIDES[r.id]||{};
+    var ov=REPUESTOS_OVERRIDES[String(r.id)]||REPUESTOS_OVERRIDES[r.id]||{};
     it.precio=esTecnicoRep?(ov.tec!==undefined?ov.tec:r.tec):(ov.dist!==undefined?ov.dist:r.dist);
   });
 
@@ -1512,13 +1524,13 @@ function cotUpdatePrices(){
   COT_REP_ITEMS.forEach(function(it){
     var r=REPUESTOS_CATALOGO.find(function(x){return x.id===it.repId;});
     if(!r)return;
-    var ov=REPUESTOS_OVERRIDES[r.id]||{};
+    var ov=REPUESTOS_OVERRIDES[String(r.id)]||REPUESTOS_OVERRIDES[r.id]||{};
     it.precio=esTecnicoRep?(ov.tec!==undefined?ov.tec:r.tec):(ov.dist!==undefined?ov.dist:r.dist);
   });
   COT_ITEMS.forEach(function(it){
     var p=PRODUCTOS_CATALOGO.find(function(x){return x.id===it.prodId;});
     if(!p)return;
-    var ov=PROD_OVERRIDES[p.id]||{};
+    var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id]||{};
     it.precio=nacional?(ov.precio2!==undefined?ov.precio2:p.precio2):(ov.precio1!==undefined?ov.precio1:p.precio1);
   });
   renderCotItems();
@@ -2068,7 +2080,7 @@ function cotUpdateFpct(i,val){
 }
 function cotAddItem(prodId){
   var p=PRODUCTOS_CATALOGO.find(function(x){return x.id===prodId;});if(!p)return;
-  var ov=PROD_OVERRIDES[p.id]||{};
+  var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id]||{};
   var desc=ov.descripcion||p.descripcion;
   var glosa=getGlosa(p.categoria);
   var tipoEl=el('f-cot-tipoprecio');
@@ -2115,14 +2127,14 @@ function repSearch(){
   var tcEl=el('f-cot-tipocliente-rep');
   var esTecnico=tcEl&&tcEl.value==='tecnico';
   var matches=REPUESTOS_CATALOGO.filter(function(r){
-    var ov=REPUESTOS_OVERRIDES[r.id]||{};
+    var ov=REPUESTOS_OVERRIDES[String(r.id)]||REPUESTOS_OVERRIDES[r.id]||{};
     var art=(ov.articulo||r.articulo).toLowerCase();
     var det=(ov.detalle||r.detalle||'').toLowerCase();
     return art.indexOf(ql)>-1||det.indexOf(ql)>-1;
   }).slice(0,15);
   if(!matches.length){res.innerHTML='<div style="padding:10px 12px;font-size:12.5px;color:var(--text-3);">Sin resultados</div>';res.style.display='block';return;}
   res.innerHTML=matches.map(function(r){
-    var ov=REPUESTOS_OVERRIDES[r.id]||{};
+    var ov=REPUESTOS_OVERRIDES[String(r.id)]||REPUESTOS_OVERRIDES[r.id]||{};
     var art=ov.articulo||r.articulo;
     var det=ov.detalle||r.detalle||'';
     var precio=esTecnico?(ov.tec!==undefined?ov.tec:r.tec):(ov.dist!==undefined?ov.dist:r.dist);
@@ -2140,7 +2152,7 @@ var COT_REP_ITEMS=[];
 
 function repAddItem(repId){
   var r=REPUESTOS_CATALOGO.find(function(x){return x.id===repId;});if(!r)return;
-  var ov=REPUESTOS_OVERRIDES[r.id]||{};
+  var ov=REPUESTOS_OVERRIDES[String(r.id)]||REPUESTOS_OVERRIDES[r.id]||{};
   var art=ov.articulo||r.articulo;
   var det=ov.detalle||r.detalle||'';
   var tcEl=el('f-cot-tipocliente-rep');
@@ -2174,12 +2186,12 @@ function renderRepuestos(){
   var tbody=el('rep-tbody');if(!tbody)return;
   var list=REPUESTOS_CATALOGO.filter(function(r){
     if(!q)return true;
-    var ov=REPUESTOS_OVERRIDES[r.id]||{};
+    var ov=REPUESTOS_OVERRIDES[String(r.id)]||REPUESTOS_OVERRIDES[r.id]||{};
     return (ov.articulo||r.articulo).toLowerCase().indexOf(q)>-1;
   });
   if(!list.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--text-3);">Sin resultados</td></tr>';return;}
   tbody.innerHTML=list.map(function(r){
-    var ov=REPUESTOS_OVERRIDES[r.id]||{};
+    var ov=REPUESTOS_OVERRIDES[String(r.id)]||REPUESTOS_OVERRIDES[r.id]||{};
     var art=ov.articulo||r.articulo;
     var det=(ov.detalle||r.detalle||'').replace(/"/g,'&quot;');
     var artEsc=art.replace(/"/g,'&quot;');
@@ -2209,8 +2221,14 @@ function saveRepEdit(id){
   var det=((el('re-det-'+id)||{}).value)||'';
   var dist=parseFloat((el('re-dist-'+id)||{}).value)||0;
   var tec=parseFloat((el('re-tec-'+id)||{}).value)||0;
-  REPUESTOS_OVERRIDES[id]={articulo:art,detalle:det,dist:dist,tec:tec};
-  sbSaveOverride(String(id),'rep',REPUESTOS_OVERRIDES[id]).catch(function(){});
+  var ovData={articulo:art,detalle:det,dist:dist,tec:tec};
+  REPUESTOS_OVERRIDES[String(id)]=ovData;REPUESTOS_OVERRIDES[id]=ovData;
+  sbSaveOverride(String(id),'rep',ovData).then(function(){
+    console.log('Repuesto guardado en Supabase:',id);
+  }).catch(function(e){
+    console.error('Error al guardar repuesto:',e);
+    alert('No se pudo guardar en la nube: '+e.message);
+  });
   toggleRepEdit(id);renderRepuestos();
 }
 
@@ -2265,14 +2283,14 @@ function renderAdmCatalog(){
   var tbody=el('adm-prod-tbody');if(!tbody)return;
   var list=PRODUCTOS_CATALOGO.filter(function(p){
     if(!q)return true;
-    var ov=PROD_OVERRIDES[p.id]||{};
+    var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id]||{};
     var desc=(ov.descripcion||p.descripcion).toLowerCase();
     return desc.indexOf(q)>-1||(p.cat_label||'').toLowerCase().indexOf(q)>-1||(p.subcat_label||'').toLowerCase().indexOf(q)>-1;
   });
   if(!list.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-3);">Sin resultados</td></tr>';return;}
   var lastCat='';var html='';
   list.forEach(function(p){
-    var ov=PROD_OVERRIDES[p.id]||{};
+    var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id]||{};
     var desc=ov.descripcion||p.descripcion;
     var p1=ov.precio1!==undefined?ov.precio1:p.precio1;
     var p2=ov.precio2!==undefined?ov.precio2:p.precio2;
@@ -2309,8 +2327,14 @@ function saveAdmProdEdit(id){
   var p1=parseFloat((el('adpe-p1-'+id)||{}).value)||0;
   var p2=parseFloat((el('adpe-p2-'+id)||{}).value)||0;
   var fpct=parseFloat((el('adpe-fpct-'+id)||{}).value);if(isNaN(fpct))fpct=30;
-  PROD_OVERRIDES[id]={descripcion:desc,precio1:p1,precio2:p2,factura_pct:fpct};
-  sbSaveOverride(String(id),'prod',PROD_OVERRIDES[id]).catch(function(){});
+  var ovData={descripcion:desc,precio1:p1,precio2:p2,factura_pct:fpct};
+  PROD_OVERRIDES[String(id)]=ovData;PROD_OVERRIDES[id]=ovData;
+  sbSaveOverride(String(id),'prod',ovData).then(function(){
+    console.log('Producto guardado en Supabase:',id);
+  }).catch(function(e){
+    console.error('Error al guardar producto:',e);
+    alert('No se pudo guardar en la nube: '+e.message);
+  });
   toggleAdmProdEdit(id);renderAdmCatalog();
 }
 function toggleAddProd(){
