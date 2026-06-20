@@ -2069,15 +2069,6 @@ var FORM_BUILDERS={
 ];},
 };
 
-function saveEdit(id){
-  var desc=(el('pe-desc-'+id)||{}).value||'';
-  var p1=parseFloat((el('pe-p1-'+id)||{}).value)||0;
-  var p2=parseFloat((el('pe-p2-'+id)||{}).value)||0;
-  var fpct=parseFloat((el('pe-fpct-'+id)||{}).value);
-  if(isNaN(fpct))fpct=30;
-  PROD_OVERRIDES[id]={descripcion:desc,precio1:p1,precio2:p2,factura_pct:fpct};
-  toggleEdit(id);renderCatalog();
-}
 function cotUpdateFpct(i,val){
   var n=parseFloat(val);if(isNaN(n)||n<0)n=0;if(n>100)n=100;
   COT_ITEMS[i].factura_pct=n;calcCotTotal();
@@ -2341,11 +2332,6 @@ function saveAdmProdEdit(id){
   });
   toggleAdmProdEdit(id);renderAdmCatalog();
 }
-function toggleAddProd(){
-  var f=el('add-prod-form');
-  if(f)f.style.display=f.style.display==='none'?'block':'none';
-  var e=el('np-error');if(e)e.textContent='';
-}
 function addProducto(){
   var desc=((el('np-desc')||{}).value||'').trim();
   if(!desc){var e=el('np-error');if(e)e.textContent='Ingresá la descripción.';return;}
@@ -2359,15 +2345,6 @@ function addProducto(){
   var fp=el('np-fpct');if(fp)fp.value='30';
   var e=el('np-error');if(e)e.textContent='';
   toggleAddProd();renderAdmCatalog();
-}
-function toggleAdmProdEdit(id){var r=el('admpedit-'+id);if(r)r.classList.toggle('open');}
-function saveAdmProdEdit(id){
-  var desc=(el('adpe-desc-'+id)||{}).value||'';
-  var p1=parseFloat((el('adpe-p1-'+id)||{}).value)||0;
-  var p2=parseFloat((el('adpe-p2-'+id)||{}).value)||0;
-  var fpct=parseFloat((el('adpe-fpct-'+id)||{}).value);if(isNaN(fpct))fpct=30;
-  PROD_OVERRIDES[id]={descripcion:desc,precio1:p1,precio2:p2,factura_pct:fpct};
-  toggleAdmProdEdit(id);renderAdmCatalog();
 }
 
 // ═══ Excel import for products ═══
@@ -2461,28 +2438,6 @@ function deleteCotizacion(id){
     }).catch(function(err){alert('Error: '+err.message);});
 }
 
-function shareCotPdf(cot){
-  var lines=['*Cotizaci\u00F3n '+cot.numeroCot+'* - MARTIZENT S.R.L.'];
-  lines.push('Cliente: '+cot.cliente);
-  lines.push('Total: '+cot.totalStr);
-  if(cot.conFactura){
-    if(cot.martNum>0) lines.push('MARTIZENT: Bs '+Math.round(cot.martNum).toLocaleString('es-BO'));
-    if(cot.multiNum>0) lines.push('MULTIEMPRESAS: Bs '+Math.round(cot.multiNum).toLocaleString('es-BO'));
-  }
-  lines.push('DIEGO MART\u00CDNEZ: Bs '+Math.round(cot.diegoNum||0).toLocaleString('es-BO'));
-  lines.push('');
-  lines.push('*Detalle:*');
-  (cot.items||[]).forEach(function(it){
-    lines.push('- '+it.desc+' x'+it.cant+' = Bs '+Math.round(it.cant*it.precio).toLocaleString('es-BO'));
-  });
-  (cot.repItems||[]).forEach(function(it){
-    lines.push('- [REP] '+it.desc+' x'+it.cant+' = Bs '+Math.round(it.cant*it.precio).toLocaleString('es-BO'));
-  });
-  lines.push('');
-  lines.push('Fecha: '+cot.fecha);
-  lines.push('_Tarija - Cochabamba - Santa Cruz_');
-  window.open('https://wa.me/?text='+encodeURIComponent(lines.join('\n')),'_blank');
-}
 
 function goHome(){
   if(CUR_FORM==='cot-nueva' && (COT_ITEMS.length>0||(el('f-cot-cliente')&&el('f-cot-cliente').value.trim()!==''))){
