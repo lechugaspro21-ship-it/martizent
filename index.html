@@ -663,7 +663,7 @@ function doLogin(){
   var p=(el('lp')||el('login-pass')||{}).value||'';
   if(!u||!p){
     var err=el('login-error')||el('login-err');
-    if(err){err.textContent='Ingresá usuario y contraseña.';err.style.display='block';}
+    if(err){err.textContent='Ingres\u00E1 usuario y contrase\u00F1a.';err.style.display='block';}
     return;
   }
   var btn=el('login-btn')||document.querySelector('button[onclick*="doLogin"]');
@@ -671,26 +671,24 @@ function doLogin(){
   console.log('Logging in user:', u);
   sbLogin(u,p).then(function(usr){
     console.log('Login success:', JSON.stringify(usr));
-    SESSION={user:usr.user_name,nombre:usr.nombre||usr.user_name,rol:usr.rol||'user',sucursal:usr.sucursal||'—'};
+    SESSION={user:usr.user_name,nombre:usr.nombre||usr.user_name,rol:usr.rol||'user',sucursal:usr.sucursal||'\u2014'};
     var lp=el('login-page');if(lp)lp.style.display='none';
     if(btn)btn.textContent='Ingresar';
-    sbLoadOverrides().catch(function(e){console.warn('Override load failed:',e);});
-    // Load users list
-    sbFetch('usuarios?select=*').then(function(rows){
-      USERS=(rows||[]).map(function(r){return {user:r.user_name,pass:r.pass,nombre:r.nombre||r.user_name,rol:r.rol||'user',sucursal:r.sucursal||'—'};});
-    }).catch(function(){});
-    sbLoadCotizaciones(SESSION.user,SESSION.rol).then(function(cots){
-      COTIZACIONES=cots||[];
-      showHome();
-    }).catch(function(e){
-      console.warn('Cot load failed:',e);
+    // Wait for overrides to load BEFORE showing home, so prices/fpct are correct
+    Promise.all([
+      sbLoadOverrides().catch(function(e){console.warn('Override load failed:',e);}),
+      sbFetch('usuarios?select=*').then(function(rows){
+        USERS=(rows||[]).map(function(r){return {user:r.user_name,pass:r.pass,nombre:r.nombre||r.user_name,rol:r.rol||'user',sucursal:r.sucursal||'\u2014'};});
+      }).catch(function(){}),
+      sbLoadCotizaciones(SESSION.user,SESSION.rol).then(function(cots){COTIZACIONES=cots||[];}).catch(function(e){console.warn('Cot load failed:',e);})
+    ]).then(function(){
       showHome();
     });
   }).catch(function(e){
     console.error('Login failed:', e);
     if(btn)btn.textContent='Ingresar';
     var err=el('login-error')||el('login-err');
-    if(err){err.textContent='Usuario o contraseña incorrectos.';err.style.display='block';}
+    if(err){err.textContent='Usuario o contrase\u00F1a incorrectos.';err.style.display='block';}
   });
 }
 function doLogout(){SESSION=null;el('app-page').classList.remove('visible');el('login-page').style.display='flex';el('lu').value='';el('lp').value='';}
@@ -730,7 +728,13 @@ function showMain(id){
 function curTab(){var a=document.querySelector('.nav-tab.active');return a?a.id.replace('nt-',''):'home';}
 function openForm(id){
   CUR_FORM=id;BACK_TO=curTab();CUR_STEP=1;
-  hideAll();el('sc-form').classList.add('active');buildForm(id);window.scrollTo(0,0);
+  hideAll();el('sc-form').classList.add('active');
+  if(id==='cot-nueva'){
+    sbLoadOverrides().then(function(){buildForm(id);}).catch(function(){buildForm(id);});
+  } else {
+    buildForm(id);
+  }
+  window.scrollTo(0,0);
 }
 function goBack(){showMain(BACK_TO);}
 // ═══════════ HELPERS ═══════════
