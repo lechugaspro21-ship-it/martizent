@@ -2649,37 +2649,58 @@ function importProductsExcel(input){
       var wb=XLSX.read(e.target.result,{type:'binary'});
       var ws=wb.Sheets[wb.SheetNames[0]];
       var data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-      var updated=0;
-      // Find header row
       var hdr=data[0]||[];
-      var colDesc=-1,colP1=-1,colP2=-1,colP3=-1,colP4=-1,colFpct=-1;
+      var colId=-1,colDesc=-1,colP1=-1,colP2=-1,colP3=-1,colP4=-1,colFpct=-1;
       hdr.forEach(function(h,i){
         var hl=String(h).toLowerCase();
-        if(hl.indexOf('descripci')>-1)colDesc=i;
+        if(hl==='id'||hl.indexOf('id')===0)colId=i;
+        else if(hl.indexOf('descripci')>-1)colDesc=i;
         else if(hl.indexOf('min')>-1&&hl.indexOf('nacional')>-1)colP2=i;
         else if(hl.indexOf('min')>-1)colP1=i;
         else if(hl.indexOf('mayorista')>-1&&hl.indexOf('nacional')>-1)colP4=i;
         else if(hl.indexOf('mayorista')>-1)colP3=i;
         else if(hl.indexOf('factura')>-1||hl.indexOf('fact')>-1)colFpct=i;
       });
+      var toSave=[];
       for(var r=1;r<data.length;r++){
         var row=data[r];
-        if(!row[0])continue;
-        var desc=String(row[colDesc]||row[0]||'').trim();
-        if(!desc)continue;
-        var match=PRODUCTOS_CATALOGO.find(function(p){return (p.descripcion||'').toLowerCase()===desc.toLowerCase();});
+        if(!row.length)continue;
+        var match=null;
+        if(colId>-1&&row[colId]!==''){
+          var idVal=parseInt(row[colId]);
+          match=PRODUCTOS_CATALOGO.find(function(p){return p.id===idVal;});
+        }
+        if(!match){
+          var desc=String((colDesc>-1?row[colDesc]:row[0])||'').trim();
+          if(!desc)continue;
+          match=PRODUCTOS_CATALOGO.find(function(p){return (p.descripcion||'').toLowerCase()===desc.toLowerCase();});
+        }
         if(match){
-          var ov=PROD_OVERRIDES[match.id]||{};
-          if(colP1>-1&&row[colP1]!=='')ov.precio1=parseFloat(row[colP1])||ov.precio1||match.precio1;
-          if(colP2>-1&&row[colP2]!=='')ov.precio2=parseFloat(row[colP2])||ov.precio2||match.precio2;
-          if(colP3>-1&&row[colP3]!=='')ov.precio3=parseFloat(row[colP3])||ov.precio3||match.precio3;
-          if(colP4>-1&&row[colP4]!=='')ov.precio4=parseFloat(row[colP4])||ov.precio4||match.precio4;
-          if(colFpct>-1&&row[colFpct]!=='')ov.factura_pct=parseFloat(row[colFpct])||ov.factura_pct||(match.factura_pct||30);
-          PROD_OVERRIDES[match.id]=ov;updated++;
+          var ov=PROD_OVERRIDES[String(match.id)]||PROD_OVERRIDES[match.id]||{};
+          ov=Object.assign({},ov);
+          if(colP1>-1&&row[colP1]!=='')ov.precio1=parseFloat(row[colP1]);
+          if(colP2>-1&&row[colP2]!=='')ov.precio2=parseFloat(row[colP2]);
+          if(colP3>-1&&row[colP3]!=='')ov.precio3=parseFloat(row[colP3]);
+          if(colP4>-1&&row[colP4]!=='')ov.precio4=parseFloat(row[colP4]);
+          if(colFpct>-1&&row[colFpct]!=='')ov.factura_pct=parseFloat(row[colFpct]);
+          PROD_OVERRIDES[String(match.id)]=ov;PROD_OVERRIDES[match.id]=ov;
+          toSave.push({id:match.id,ov:ov});
         }
       }
-      alert('Productos actualizados: '+updated+' de '+PRODUCTOS_CATALOGO.length);
+      if(!toSave.length){alert('No se encontró ningún producto coincidente en el Excel (revisá que tenga columna ID o Descripción exacta).');return;}
       renderAdmCatalog();
+      alert('Aplicando '+toSave.length+' productos... Guardando en la nube, no cierres esta ventana.');
+      var promises=toSave.map(function(item){
+        return sbSaveOverride(String(item.id),'prod',item.ov).catch(function(e){console.error('Error guardando producto',item.id,e);return {error:true,id:item.id};});
+      });
+      Promise.all(promises).then(function(results){
+        var fails=results.filter(function(r){return r&&r.error;});
+        if(fails.length){
+          alert('Importación terminada con errores: '+(toSave.length-fails.length)+' guardados en la nube, '+fails.length+' fallaron (revisá tu conexión y reintentá).');
+        } else {
+          alert('Listo: '+toSave.length+' productos actualizados y guardados en la nube. Ya están disponibles para todos los usuarios.');
+        }
+      });
     }catch(err){alert('Error al leer el archivo: '+err.message);}
   };
   reader.readAsBinaryString(file);
@@ -2694,12 +2715,12 @@ function importRepuestosExcel(input){
       var wb=XLSX.read(e.target.result,{type:'binary'});
       var ws=wb.Sheets[wb.SheetNames[0]];
       var data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-      var updated=0;
       var hdr=data[0]||[];
-      var colArt=-1,colDet=-1,colDist=-1,colTec=-1;
+      var colId=-1,colArt=-1,colDet=-1,colDist=-1,colTec=-1;
       hdr.forEach(function(h,i){
         var hl=String(h).toLowerCase();
-        if(hl.indexOf('art')>-1)colArt=i;
+        if(hl==='id'||hl.indexOf('id')===0)colId=i;
+        else if(hl.indexOf('art')>-1)colArt=i;
         else if(hl.indexOf('det')>-1)colDet=i;
         else if(hl.indexOf('dist')>-1||hl.indexOf('30')>-1)colDist=i;
         else if(hl.indexOf('tec')>-1||hl.indexOf('50')>-1)colTec=i;
@@ -2707,20 +2728,43 @@ function importRepuestosExcel(input){
       if(colArt===-1)colArt=0;
       if(colDist===-1)colDist=1;
       if(colTec===-1)colTec=2;
+      var toSave=[];
       for(var r=1;r<data.length;r++){
         var row=data[r];
-        var art=String(row[colArt]||'').trim();
-        if(!art)continue;
-        var match=REPUESTOS_CATALOGO.find(function(x){return (x.articulo||'').toLowerCase()===art.toLowerCase();});
+        if(!row.length)continue;
+        var match=null;
+        if(colId>-1&&row[colId]!==''){
+          var idVal=parseInt(row[colId]);
+          match=REPUESTOS_CATALOGO.find(function(x){return x.id===idVal;});
+        }
+        if(!match){
+          var art=String(row[colArt]||'').trim();
+          if(!art)continue;
+          match=REPUESTOS_CATALOGO.find(function(x){return (x.articulo||'').toLowerCase()===art.toLowerCase();});
+        }
         if(match){
-          var ov=REPUESTOS_OVERRIDES[match.id]||{};
-          if(colDist>-1&&row[colDist]!=='')ov.dist=parseFloat(row[colDist])||ov.dist||match.dist;
-          if(colTec>-1&&row[colTec]!=='')ov.tec=parseFloat(row[colTec])||ov.tec||match.tec;
-          REPUESTOS_OVERRIDES[match.id]=ov;updated++;
+          var ov=REPUESTOS_OVERRIDES[String(match.id)]||REPUESTOS_OVERRIDES[match.id]||{};
+          ov=Object.assign({},ov);
+          if(colDist>-1&&row[colDist]!=='')ov.dist=parseFloat(row[colDist]);
+          if(colTec>-1&&row[colTec]!=='')ov.tec=parseFloat(row[colTec]);
+          REPUESTOS_OVERRIDES[String(match.id)]=ov;REPUESTOS_OVERRIDES[match.id]=ov;
+          toSave.push({id:match.id,ov:ov});
         }
       }
-      alert('Repuestos actualizados: '+updated+' de '+REPUESTOS_CATALOGO.length);
+      if(!toSave.length){alert('No se encontró ningún repuesto coincidente en el Excel (revisá que tenga columna ID o Artículo exacto).');return;}
       renderRepuestos();
+      alert('Aplicando '+toSave.length+' repuestos... Guardando en la nube, no cierres esta ventana.');
+      var promises=toSave.map(function(item){
+        return sbSaveOverride(String(item.id),'rep',item.ov).catch(function(e){console.error('Error guardando repuesto',item.id,e);return {error:true,id:item.id};});
+      });
+      Promise.all(promises).then(function(results){
+        var fails=results.filter(function(r){return r&&r.error;});
+        if(fails.length){
+          alert('Importación terminada con errores: '+(toSave.length-fails.length)+' guardados en la nube, '+fails.length+' fallaron (revisá tu conexión y reintentá).');
+        } else {
+          alert('Listo: '+toSave.length+' repuestos actualizados y guardados en la nube. Ya están disponibles para todos los usuarios.');
+        }
+      });
     }catch(err){alert('Error al leer el archivo: '+err.message);}
   };
   reader.readAsBinaryString(file);
