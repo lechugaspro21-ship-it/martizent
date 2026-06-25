@@ -730,13 +730,14 @@ function showMain(id){
   if(id==='admin') renderAdmin();
 }
 function curTab(){var a=document.querySelector('.nav-tab.active');return a?a.id.replace('nt-',''):'home';}
-function openForm(id){
+function openForm(id,afterBuild){
   CUR_FORM=id;BACK_TO=curTab();CUR_STEP=1;
   hideAll();el('sc-form').classList.add('active');
   if(id==='cot-nueva'){
-    sbLoadOverrides().then(function(){buildForm(id);}).catch(function(){buildForm(id);});
+    sbLoadOverrides().then(function(){buildForm(id);if(afterBuild)afterBuild();}).catch(function(){buildForm(id);if(afterBuild)afterBuild();});
   } else {
     buildForm(id);
+    if(afterBuild)afterBuild();
   }
   window.scrollTo(0,0);
 }
@@ -868,7 +869,7 @@ function saveCot(){
   var conFact=getConFactura();
   var factNombre=conFact?((el('f-fact-nombre')&&el('f-fact-nombre').value)||''):'';
   var factNit=conFact?((el('f-fact-nit')&&el('f-fact-nit').value)||''):'';
-  var tipoPrecio=(el('f-cot-tipoprecio')&&el('f-cot-tipoprecio').value)||'local';
+  var tipoPrecio=cotIsNacional()?'nacional':'local';
   var _pagoRadios=document.querySelectorAll('input[name="tipopago"]');
   var tipoPago='contado';
   _pagoRadios.forEach(function(r){if(r.checked)tipoPago=r.value;});
@@ -1001,27 +1002,38 @@ function editCotizacion(id){
   if(!cot)return;
   window._editCotId=id;
   COT_ITEMS=[];COT_REP_ITEMS=[];
-  openForm('cot-nueva');
-  setTimeout(function(){
+  openForm('cot-nueva',function(){
     // Cliente y tipo precio
     var fc=el('f-cot-cliente');if(fc)fc.value=cot.cliente||'';
     var tp=el('f-cot-tipoprecio');if(tp)tp.value=cot.tipoPrecio||'local';
     // Modalidad de precio
     var modo=cot.modalidad||'parcial';
+    var modChk=el('f-cot-modalidad-toggle');
+    var modSelWrap=el('cot-modalidad-select-wrap');
     var modEl=el('f-cot-modalidad');
-    if(modEl){modEl.value=modo;modEl._lastVal=modo;}
+    if(modo==='parcial'){
+      if(modChk)modChk.checked=false;
+      if(modSelWrap)modSelWrap.style.display='none';
+    } else {
+      if(modChk)modChk.checked=true;
+      if(modSelWrap)modSelWrap.style.display='block';
+      if(modEl)modEl.value=modo;
+    }
     var repBtn=el('tab-reps-btn'),repWrap=el('cot-tipocliente-rep-wrap'),
-        radioWrap=el('cot-fact-radio-wrap'),factMsg=el('cot-fact-forzada-msg');
+        radioWrap=el('cot-fact-radio-wrap'),factMsg=el('cot-fact-forzada-msg'),
+        tipoPrecioWrap=el('cot-tipoprecio-wrap');
     if(modo==='parcial'){
       if(repBtn)repBtn.style.display='';
       if(repWrap)repWrap.style.display='';
       if(radioWrap)radioWrap.style.display='';
       if(factMsg)factMsg.style.display='none';
+      if(tipoPrecioWrap)tipoPrecioWrap.style.display='none';
     } else {
       if(repBtn)repBtn.style.display='none';
       if(repWrap)repWrap.style.display='none';
       if(radioWrap)radioWrap.style.display='none';
       if(factMsg)factMsg.style.display='block';
+      if(tipoPrecioWrap)tipoPrecioWrap.style.display=modo==='total'?'':'none';
     }
     // Tipo cliente repuestos
     var tcr=el('f-cot-tipocliente-rep');
@@ -1053,7 +1065,7 @@ function editCotizacion(id){
     // Change button
     var nb=el('ff-next');
     if(nb){nb.textContent='Actualizar cotizaci\u00F3n';nb.className='btn btn-primary';}
-  },200);
+  });
 }
 function updateCotizacion(id){
   var idx=COTIZACIONES.findIndex(function(x){return x.id===id;});
@@ -1063,7 +1075,7 @@ function updateCotizacion(id){
   var conFact=getConFactura();
   var factNombre=conFact?((el('f-fact-nombre')&&el('f-fact-nombre').value)||''):'';
   var factNit=conFact?((el('f-fact-nit')&&el('f-fact-nit').value)||''):'';
-  var tipoPrecio=(el('f-cot-tipoprecio')&&el('f-cot-tipoprecio').value)||'local';
+  var tipoPrecio=cotIsNacional()?'nacional':'local';
   var _pagoRadios=document.querySelectorAll('input[name="tipopago"]');
   var tipoPago='contado';
   _pagoRadios.forEach(function(r){if(r.checked)tipoPago=r.value;});
@@ -1362,20 +1374,58 @@ function renderUserTable(){
     .then(function(rows){
       USERS=(rows||[]).map(function(r){return {user:r.user_name,pass:r.pass,nombre:r.nombre||r.user_name,rol:r.rol||'user',sucursal:r.sucursal||'—'};});
       if(!USERS.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--text-3);">Sin usuarios</td></tr>';return;}
+      var sucOpts=['—','Tarija','Cochabamba','Santa Cruz','La Paz'];
       tbody.innerHTML=USERS.map(function(u,i){
         var fixed=u.user==='admin';
-        var delBtn=fixed?'<td></td>':
-          '<td><button class="btn btn-sm" style="color:var(--red-600);border-color:var(--red-400);" onclick="deleteUser('+i+')">&#128465;</button></td>';
-        return '<tr>'+
+        var actions=fixed?'<button class="btn btn-sm" onclick="toggleEditUser('+i+')">&#9998;</button>':
+          '<button class="btn btn-sm" onclick="toggleEditUser('+i+')">&#9998;</button> '+
+          '<button class="btn btn-sm" style="color:var(--red-600);border-color:var(--red-400);" onclick="deleteUser('+i+')">&#128465;</button>';
+        var sucSelect='<select id="ue-suc-'+i+'">'+sucOpts.map(function(s){return '<option value="'+s+'"'+(s===u.sucursal?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';
+        return '<tr id="urow-'+i+'">'+
           '<td><div style="display:flex;align-items:center;gap:8px;"><div class="u-avatar">'+u.nombre.charAt(0).toUpperCase()+'</div>'+u.user+'</div></td>'+
           '<td>'+u.nombre+'</td>'+
           '<td><span class="tag '+(u.rol==='admin'?'tag-blue':'tag-green')+'">'+u.rol+'</span></td>'+
           '<td>'+(u.sucursal||'—')+'</td>'+
-          delBtn+
-        '</tr>';
+          '<td>'+actions+'</td>'+
+        '</tr>'+
+        '<tr class="prod-edit-row" id="uedit-'+i+'"><td class="prod-edit-cell" colspan="5">'+
+          '<div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1.4fr auto;gap:8px;align-items:end;">'+
+          '<div><label class="flabel">Nombre</label><input type="text" id="ue-nombre-'+i+'" value="'+u.nombre.replace(/"/g,'&quot;')+'"></div>'+
+          '<div><label class="flabel">Rol</label><select id="ue-rol-'+i+'"'+(fixed?' disabled':'')+'><option value="user"'+(u.rol==='user'?' selected':'')+'>Usuario de campo</option><option value="admin"'+(u.rol==='admin'?' selected':'')+'>Administrador</option></select></div>'+
+          '<div><label class="flabel">Sucursal</label>'+sucSelect+'</div>'+
+          '<div><label class="flabel">Nueva contraseña (opcional)</label><input type="password" id="ue-pass-'+i+'" placeholder="Dejar vac\u00EDo para no cambiar" autocomplete="new-password"></div>'+
+          '<div style="display:flex;gap:6px;">'+
+            '<button class="btn btn-success btn-sm" onclick="saveEditUser('+i+')">&#10003;</button>'+
+            '<button class="btn btn-sm" onclick="toggleEditUser('+i+')">&#10005;</button>'+
+          '</div></div>'+
+          '<div id="ue-error-'+i+'" style="color:var(--red-600);font-size:12px;margin-top:6px;"></div>'+
+        '</td></tr>';
       }).join('');
     }).catch(function(err){
       tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:1rem;color:var(--red-600);">Error: '+err.message+'</td></tr>';
+    });
+}
+function toggleEditUser(i){var r=el('uedit-'+i);if(r)r.classList.toggle('open');}
+function saveEditUser(i){
+  var u=USERS[i];if(!u)return;
+  var nombre=(el('ue-nombre-'+i)||{}).value.trim();
+  var rol=u.user==='admin'?'admin':(el('ue-rol-'+i)||{}).value;
+  var suc=(el('ue-suc-'+i)||{}).value||'—';
+  var pass=(el('ue-pass-'+i)||{}).value;
+  var errEl=el('ue-error-'+i);
+  if(!nombre){if(errEl)errEl.textContent='El nombre no puede estar vac\u00EDo.';return;}
+  if(pass&&pass.length<3){if(errEl)errEl.textContent='La nueva contrase\u00F1a es muy corta.';return;}
+  if(errEl)errEl.textContent='Guardando...';
+  var patch={nombre:nombre,rol:rol,sucursal:suc};
+  if(pass)patch.pass=pass;
+  sbFetch('usuarios?user_name=eq.'+encodeURIComponent(u.user),'PATCH',patch)
+    .then(function(){
+      u.nombre=nombre;u.rol=rol;u.sucursal=suc;if(pass)u.pass=pass;
+      if(SESSION&&SESSION.user===u.user){SESSION.nombre=nombre;SESSION.sucursal=suc;SESSION.rol=rol;}
+      renderUserTable();
+    }).catch(function(err){
+      console.error('Error al editar usuario:', err);
+      if(errEl)errEl.textContent='Error: '+err.message;
     });
 }
 function toggleAddUser(){var f=el('add-user-form');f.style.display=f.style.display==='none'?'block':'none';el('nu-error').textContent='';}
@@ -1431,8 +1481,7 @@ function cotSearch(){
   var res=el('cot-search-results');if(!res)return;
   if(!q||q.trim().length<2){res.style.display='none';return;}
   var ql=q.toLowerCase();
-  var tipoEl=el('f-cot-tipoprecio');
-  var nacional=tipoEl&&tipoEl.value==='nacional';
+  var nacional=cotIsNacional();
   var modo=cotGetModalidad();
   var matches=PRODUCTOS_CATALOGO.filter(function(p){
     var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id]||{};
@@ -1614,8 +1663,23 @@ function getConFactura(){
 }
 
 function cotGetModalidad(){
+  var chk=el('f-cot-modalidad-toggle');
+  if(chk&&!chk.checked)return 'parcial';
   var m=el('f-cot-modalidad');
   return m?m.value:'parcial';
+}
+function cotBranchNacional(){
+  if(!SESSION)return false;
+  var nacionales=['Santa Cruz','Cochabamba','La Paz'];
+  return nacionales.indexOf(SESSION.sucursal)>-1;
+}
+function cotIsNacional(){
+  var modo=cotGetModalidad();
+  if(modo==='total'){
+    var tipoEl=el('f-cot-tipoprecio');
+    return tipoEl?tipoEl.value==='nacional':cotBranchNacional();
+  }
+  return cotBranchNacional();
 }
 function cotPrecioProducto(p,ov,nacional,modo){
   function v(key,fallback){return ov[key]!==undefined?ov[key]:fallback;}
@@ -1628,24 +1692,41 @@ function cotPrecioProducto(p,ov,nacional,modo){
   }
   return nacional?v('precio2',p.precio2):v('precio1',p.precio1);
 }
+function cotModalidadToggle(){
+  var chk=el('f-cot-modalidad-toggle');
+  var selWrap=el('cot-modalidad-select-wrap');
+  if(chk&&chk.checked){
+    if(selWrap)selWrap.style.display='block';
+    var modEl=el('f-cot-modalidad');
+    if(modEl&&!modEl.value)modEl.value='total';
+  } else {
+    if(selWrap)selWrap.style.display='none';
+  }
+  cotModalidadChange();
+}
 function cotModalidadChange(){
-  var modEl=el('f-cot-modalidad');
-  var modo=modEl?modEl.value:'parcial';
+  var modo=cotGetModalidad();
   var repBtn=el('tab-reps-btn');
   var repWrap=el('cot-tipocliente-rep-wrap');
   var radioWrap=el('cot-fact-radio-wrap');
   var factMsg=el('cot-fact-forzada-msg');
   var fnBox=el('fact-nombre-nit');
+  var tipoPrecioWrap=el('cot-tipoprecio-wrap');
   if(modo==='parcial'){
     if(repBtn)repBtn.style.display='';
     if(repWrap)repWrap.style.display='';
     if(radioWrap)radioWrap.style.display='';
     if(factMsg)factMsg.style.display='none';
+    if(tipoPrecioWrap)tipoPrecioWrap.style.display='none';
     updateFactMode();
   } else {
     if(COT_REP_ITEMS.length>0){
       if(!confirm('Esta modalidad solo admite Productos. Se eliminar\u00E1n los repuestos ya agregados a esta cotizaci\u00F3n. \u00BFContinuar?')){
-        modEl.value=modEl._lastVal||'parcial';
+        var chk=el('f-cot-modalidad-toggle');
+        if(chk)chk.checked=false;
+        var selWrap=el('cot-modalidad-select-wrap');
+        if(selWrap)selWrap.style.display='none';
+        cotModalidadChange();
         return;
       }
       COT_REP_ITEMS=[];
@@ -1656,13 +1737,12 @@ function cotModalidadChange(){
     if(radioWrap)radioWrap.style.display='none';
     if(factMsg)factMsg.style.display='block';
     if(fnBox)fnBox.style.display='flex';
+    if(tipoPrecioWrap)tipoPrecioWrap.style.display=(modo==='total')?'':'none';
   }
-  modEl._lastVal=modo;
   cotUpdatePrices();
 }
 function cotUpdatePrices(){
-  var tipoEl=el('f-cot-tipoprecio');
-  var nacional=tipoEl&&tipoEl.value==='nacional';
+  var nacional=cotIsNacional();
   var modo=cotGetModalidad();
   var tcEl=el('f-cot-tipocliente-rep');
   var esTecnicoRep=tcEl&&tcEl.value==='tecnico';
@@ -2258,19 +2338,26 @@ var FORM_BUILDERS={
 'cot-nueva':function(){
   COT_ITEMS=[];COT_REP_ITEMS=[];
   return[scard(1,'Nueva cotizaci\u00F3n','',
-    // CLIENTE + TIPO PRECIO
+    // CLIENTE
     '<div class="frow">'+
-      '<div>'+flabel('Nombre del cliente / negocio',true)+'<input type="text" id="f-cot-cliente" placeholder="Ej. Ferretr\u00EDa L\u00F3pez"></div>'+
-      '<div>'+flabel('Modalidad de precio',false)+'<select id="f-cot-modalidad" onchange="cotModalidadChange()">'+
-        '<option value="parcial">Mayorista Parcial</option>'+
-        '<option value="total">Mayorista Total</option>'+
-        '<option value="utilidad">Utilidad Mayorista</option>'+
-        '<option value="publico">Venta a P\u00FAblico</option>'+
-      '</select></div>'+
+      '<div>'+flabel('Nombre del negocio',true)+'<input type="text" id="f-cot-cliente" placeholder="Ej. Ferretr\u00EDa L\u00F3pez"></div>'+
     '</div>'+
+    // MODALIDAD DE PRECIO (toggle + select condicional)
+    '<div class="frow full" style="margin-top:6px;"><div>'+
+      '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-2);">'+
+        '<input type="checkbox" id="f-cot-modalidad-toggle" onchange="cotModalidadToggle()" style="width:16px;height:16px;"> Modalidad de precio'+
+      '</label>'+
+      '<div id="cot-modalidad-select-wrap" style="display:none;margin-top:6px;">'+
+        '<select id="f-cot-modalidad" onchange="cotModalidadChange()">'+
+          '<option value="total">Mayorista Total</option>'+
+          '<option value="utilidad">Utilidad Mayorista</option>'+
+          '<option value="publico">Venta a P\u00FAblico</option>'+
+        '</select>'+
+      '</div>'+
+    '</div></div>'+
     '<div class="frow" style="margin-top:8px;">'+
-      '<div>'+flabel('Local / Nacional',false)+'<select id="f-cot-tipoprecio" onchange="cotUpdatePrices()"><option value="local">Local</option><option value="nacional">Nacional</option></select></div>'+
       '<div id="cot-tipocliente-rep-wrap">'+flabel('Tipo cliente repuestos',false)+'<select id="f-cot-tipocliente-rep" onchange="cotUpdatePrices()"><option value="distribuidor">Distribuidor</option><option value="tecnico">T\u00E9cnico</option></select></div>'+
+      '<div id="cot-tipoprecio-wrap" style="display:none;">'+flabel('Local / Nacional',false)+'<select id="f-cot-tipoprecio" onchange="cotUpdatePrices()"><option value="local">Local</option><option value="nacional">Nacional</option></select></div>'+
     '</div>'+
     // TIPO DE PAGO
     '<div class="frow full"><div>'+flabel('Tipo de pago',false)+
@@ -2359,8 +2446,7 @@ function cotAddItem(prodId){
   var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id]||{};
   var desc=ov.descripcion||p.descripcion;
   var glosa=getGlosa(p.categoria);
-  var tipoEl=el('f-cot-tipoprecio');
-  var nacional=tipoEl&&tipoEl.value==='nacional';
+  var nacional=cotIsNacional();
   var modo=cotGetModalidad();
   var precio=cotPrecioProducto(p,ov,nacional,modo);
   var fpct=(modo==='total'||modo==='publico')?100:(ov.factura_pct!==undefined?ov.factura_pct:(p.factura_pct!==undefined?p.factura_pct:30));
