@@ -865,8 +865,10 @@ function doSaveCot(enviar){
 }
 function saveCot(){
   var modo=cotGetModalidad();
+  var esRapida=cotIsRapida();
+  if(esRapida)modo='rapida';
   var cliente=(el('f-cot-cliente')&&el('f-cot-cliente').value)||'(sin nombre)';
-  var conFact=getConFactura();
+  var conFact=esRapida?false:getConFactura();
   var factNombre=conFact?((el('f-fact-nombre')&&el('f-fact-nombre').value)||''):'';
   var factNit=conFact?((el('f-fact-nit')&&el('f-fact-nit').value)||''):'';
   var tipoPrecio=cotIsNacional()?'nacional':'local';
@@ -876,10 +878,13 @@ function saveCot(){
   var diasCredito=(el('f-cot-dias')&&el('f-cot-dias').value.trim())||null;
   var gasto=parseFloat((el('f-cot-gasto')||{}).value)||0;
   var hasProd=COT_ITEMS.length>0;
-  var hasRep=COT_REP_ITEMS.length>0;
+  var hasRep=esRapida?false:COT_REP_ITEMS.length>0;
   var mart=0,multi=0,diego=0,sub=0,total=0,utilidadTotal=0;
 
-  if(modo==='utilidad'){
+  if(esRapida){
+    sub=COT_ITEMS.reduce(function(s,it){return s+(it.cant*(it.precio||0));},0);
+    total=sub+gasto;
+  } else if(modo==='utilidad'){
     var utilSum=0;
     sub=COT_ITEMS.reduce(function(s,it){
       var factU=it.facturaSolicitada!==undefined?it.facturaSolicitada:it.precio;
@@ -989,7 +994,8 @@ function renderCotizacionesList(){
             (c.multiNum>0?'<span style="font-size:11px;background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:10px;">Multi: '+c.multiempresas+'</span>':'')+
             (c.diegoNum>0?'<span style="font-size:11px;background:var(--teal-50);color:var(--teal-600);padding:2px 8px;border-radius:10px;">Diego: '+c.diego+'</span>':'')+
             (c.modalidad==='utilidad'?'<span style="font-size:11px;background:#E1F5EE;color:#0F6E56;padding:2px 8px;border-radius:10px;">Utilidad: Bs '+Math.round(c.utilidadTotalNum||0).toLocaleString('es-BO')+'</span>':'')+
-            (c.modalidad&&c.modalidad!=='parcial'&&c.modalidad!=='utilidad'?'<span style="font-size:11px;background:var(--bg);color:var(--text-3);padding:2px 8px;border-radius:10px;border:1px solid var(--border);">'+(c.modalidad==='total'?'Mayorista Total':'Venta a P\u00FAblico')+'</span>':'')+
+            (c.modalidad==='rapida'?'<span style="font-size:11px;background:var(--purple-50);color:var(--purple-700);padding:2px 8px;border-radius:10px;">\u26A1 Cotizaci\u00F3n R\u00E1pida</span>':'')+
+            (c.modalidad&&c.modalidad!=='parcial'&&c.modalidad!=='utilidad'&&c.modalidad!=='rapida'?'<span style="font-size:11px;background:var(--bg);color:var(--text-3);padding:2px 8px;border-radius:10px;border:1px solid var(--border);">'+(c.modalidad==='total'?'Mayorista Total':'Venta a P\u00FAblico')+'</span>':'')+
           '</div>'+
         '</div>';
     });
@@ -1008,21 +1014,23 @@ function editCotizacion(id){
     var tp=el('f-cot-tipoprecio');if(tp)tp.value=cot.tipoPrecio||'local';
     // Modalidad de precio
     var modo=cot.modalidad||'parcial';
+    var esRapida=(modo==='rapida');
+    var modoForUI=esRapida?'parcial':modo;
     var modChk=el('f-cot-modalidad-toggle');
     var modSelWrap=el('cot-modalidad-select-wrap');
     var modEl=el('f-cot-modalidad');
-    if(modo==='parcial'){
+    if(modoForUI==='parcial'){
       if(modChk)modChk.checked=false;
       if(modSelWrap)modSelWrap.style.display='none';
     } else {
       if(modChk)modChk.checked=true;
       if(modSelWrap)modSelWrap.style.display='block';
-      if(modEl)modEl.value=modo;
+      if(modEl)modEl.value=modoForUI;
     }
     var repBtn=el('tab-reps-btn'),repWrap=el('cot-tipocliente-rep-wrap'),
         radioWrap=el('cot-fact-radio-wrap'),factMsg=el('cot-fact-forzada-msg'),
         tipoPrecioWrap=el('cot-tipoprecio-wrap');
-    if(modo==='parcial'){
+    if(modoForUI==='parcial'){
       if(repBtn)repBtn.style.display='';
       if(repWrap)repWrap.style.display='';
       if(radioWrap)radioWrap.style.display='';
@@ -1033,8 +1041,13 @@ function editCotizacion(id){
       if(repWrap)repWrap.style.display='none';
       if(radioWrap)radioWrap.style.display='none';
       if(factMsg)factMsg.style.display='block';
-      if(tipoPrecioWrap)tipoPrecioWrap.style.display=modo==='total'?'':'none';
+      if(tipoPrecioWrap)tipoPrecioWrap.style.display=modoForUI==='total'?'':'none';
     }
+    // Cotizaci\u00F3n r\u00E1pida
+    var rapChk=el('f-cot-rapida-toggle');
+    if(rapChk)rapChk.checked=esRapida;
+    cotShowPagoSections(!esRapida);
+    if(esRapida&&repBtn)repBtn.style.display='none';
     // Tipo cliente repuestos
     var tcr=el('f-cot-tipocliente-rep');
     // Tipo pago
@@ -1071,8 +1084,10 @@ function updateCotizacion(id){
   var idx=COTIZACIONES.findIndex(function(x){return x.id===id;});
   if(idx===-1)return;
   var modo=cotGetModalidad();
+  var esRapida=cotIsRapida();
+  if(esRapida)modo='rapida';
   var cliente=(el('f-cot-cliente')&&el('f-cot-cliente').value)||'(sin nombre)';
-  var conFact=getConFactura();
+  var conFact=esRapida?false:getConFactura();
   var factNombre=conFact?((el('f-fact-nombre')&&el('f-fact-nombre').value)||''):'';
   var factNit=conFact?((el('f-fact-nit')&&el('f-fact-nit').value)||''):'';
   var tipoPrecio=cotIsNacional()?'nacional':'local';
@@ -1082,10 +1097,13 @@ function updateCotizacion(id){
   var diasCredito=(el('f-cot-dias')&&el('f-cot-dias').value.trim())||null;
   var gasto=parseFloat((el('f-cot-gasto')||{}).value)||0;
   var hasProd=COT_ITEMS.length>0;
-  var hasRep=COT_REP_ITEMS.length>0;
+  var hasRep=esRapida?false:COT_REP_ITEMS.length>0;
   var mart=0,multi=0,diego=0,sub=0,total=0,utilidadTotal=0;
 
-  if(modo==='utilidad'){
+  if(esRapida){
+    sub=COT_ITEMS.reduce(function(s,it){return s+(it.cant*(it.precio||0));},0);
+    total=sub+gasto;
+  } else if(modo==='utilidad'){
     var utilSum=0;
     sub=COT_ITEMS.reduce(function(s,it){
       var factU=it.facturaSolicitada!==undefined?it.facturaSolicitada:it.precio;
@@ -1481,26 +1499,68 @@ function cotSearch(){
   var res=el('cot-search-results');if(!res)return;
   if(!q||q.trim().length<2){res.style.display='none';return;}
   var ql=q.toLowerCase();
+  if(cotIsRapida()){renderCotSearchSections(ql,res);return;}
   var nacional=cotIsNacional();
   var modo=cotGetModalidad();
   var matches=PRODUCTOS_CATALOGO.filter(function(p){
+    if(COT_ITEMS.some(function(it){return it.prodId===p.id;}))return false;
     var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id]||{};
     var desc=(ov.descripcion||p.descripcion).toLowerCase();
     return desc.indexOf(ql)>-1||p.subcat_label.toLowerCase().indexOf(ql)>-1||p.categoria.toLowerCase().indexOf(ql)>-1;
   }).slice(0,15);
-  if(!matches.length){res.innerHTML='<div style="padding:10px 12px;font-size:12.5px;color:var(--text-3);">Sin resultados</div>';res.style.display='block';return;}
+  if(!matches.length){res.innerHTML='<div style="padding:10px 12px;font-size:12.5px;color:var(--text-3);">Sin resultados (o ya agregados)</div>';res.style.display='block';return;}
   res.innerHTML=matches.map(function(p){
     var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id]||{};
     var desc=ov.descripcion||p.descripcion;
     var precio=cotPrecioProducto(p,ov,nacional,modo);
     var fpct=ov.factura_pct!==undefined?ov.factura_pct:(p.factura_pct!==undefined?p.factura_pct:30);
     var priceLabel={parcial:nacional?'May. Mín. Nac.':'May. Mínimo',total:nacional?'Mayorista Nac.':'Mayorista',utilidad:nacional?'Mayorista Nac.':'Mayorista',publico:nacional?'Venta Públ. Nac.':'Venta Público'}[modo]||'';
-    return '<div class="cot-sr-item" onmousedown="event.preventDefault();cotAddItem('+p.id+')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);">'+
-      '<div style="font-size:13px;font-weight:500;">'+desc+'</div>'+
-      '<div style="font-size:11.5px;color:var(--text-3);margin-top:2px;">'+p.subcat_label+'&nbsp;·&nbsp;<b>Bs '+Number(precio).toLocaleString('es-BO')+'</b>&nbsp;('+priceLabel+')&nbsp;·&nbsp;Fact:&nbsp;'+fpct+'%</div>'+
+    return '<div class="cot-sr-item" style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;">'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:13px;font-weight:500;">'+desc+'</div>'+
+        '<div style="font-size:11.5px;color:var(--text-3);margin-top:2px;">'+p.subcat_label+'&nbsp;·&nbsp;<b>Bs '+Number(precio).toLocaleString('es-BO')+'</b>&nbsp;('+priceLabel+')&nbsp;·&nbsp;Fact:&nbsp;'+fpct+'%</div>'+
+      '</div>'+
+      '<button class="btn btn-sm btn-success" onmousedown="event.preventDefault();cotSearchAddItem('+p.id+');" title="Agregar" style="flex-shrink:0;font-weight:800;width:32px;height:32px;padding:0;font-size:16px;line-height:1;">+</button>'+
     '</div>';
   }).join('');
   res.style.display='block';
+}
+function cotSearchAddItem(prodId){
+  cotAddItem(prodId);
+  cotSearch();
+}
+function renderCotSearchSections(ql,res){
+  var seen={};
+  var sections=[];
+  PRODUCTOS_CATALOGO.forEach(function(p){
+    if(sections.some(function(s){return s.categoria===p.categoria;})===false){
+      var label=(p.subcat_label||p.cat_label||p.categoria);
+      if(label.toLowerCase().indexOf(ql)>-1||p.categoria.toLowerCase().indexOf(ql)>-1||(p.cat_label||'').toLowerCase().indexOf(ql)>-1){
+        sections.push({categoria:p.categoria,label:label,catLabel:p.cat_label,count:PRODUCTOS_CATALOGO.filter(function(x){return x.categoria===p.categoria;}).length});
+      }
+    }
+  });
+  // Excluir secciones ya completamente agregadas
+  sections=sections.filter(function(s){
+    var prods=PRODUCTOS_CATALOGO.filter(function(p){return p.categoria===s.categoria;});
+    return !prods.every(function(p){return COT_ITEMS.some(function(it){return it.prodId===p.id;});});
+  }).slice(0,20);
+  if(!sections.length){res.innerHTML='<div style="padding:10px 12px;font-size:12.5px;color:var(--text-3);">Sin secciones (o ya agregadas)</div>';res.style.display='block';return;}
+  res.innerHTML=sections.map(function(s){
+    return '<div class="cot-sr-item" style="padding:9px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;">'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:13px;font-weight:600;">'+s.label+'</div>'+
+        '<div style="font-size:11px;color:var(--text-3);margin-top:2px;">'+(s.catLabel||'')+' &nbsp;·&nbsp; '+s.count+' producto'+(s.count!==1?'s':'')+'</div>'+
+      '</div>'+
+      '<button class="btn btn-sm btn-success" onmousedown="event.preventDefault();cotAddSection(\''+s.categoria+'\');" title="Agregar toda la secci\u00F3n" style="flex-shrink:0;font-weight:800;width:32px;height:32px;padding:0;font-size:16px;line-height:1;">+</button>'+
+    '</div>';
+  }).join('');
+  res.style.display='block';
+}
+function cotAddSection(categoria){
+  var prods=PRODUCTOS_CATALOGO.filter(function(p){return p.categoria===categoria;});
+  prods.forEach(function(p){cotAddItem(p.id);});
+  cotSearch();
 }
 
 function renderCotItems(){
@@ -1692,10 +1752,22 @@ function cotPrecioProducto(p,ov,nacional,modo){
   }
   return nacional?v('precio2',p.precio2):v('precio1',p.precio1);
 }
+function cotIsRapida(){
+  var chk=el('f-cot-rapida-toggle');
+  return !!(chk&&chk.checked);
+}
+function cotShowPagoSections(show){
+  var tprow=el('cot-tipocliente-tipoprecio-row');if(tprow)tprow.style.display=show?'':'none';
+  var tipopagoSec=el('cot-tipopago-section');if(tipopagoSec)tipopagoSec.style.display=show?'':'none';
+  var factBox=el('cot-fact-box');if(factBox)factBox.style.display=show?'block':'none';
+  var modToggleWrap=el('cot-modalidad-toggle-wrap');if(modToggleWrap)modToggleWrap.style.display=show?'':'none';
+}
 function cotModalidadToggle(){
   var chk=el('f-cot-modalidad-toggle');
   var selWrap=el('cot-modalidad-select-wrap');
   if(chk&&chk.checked){
+    var rapChk=el('f-cot-rapida-toggle');
+    if(rapChk&&rapChk.checked){rapChk.checked=false;cotShowPagoSections(true);}
     if(selWrap)selWrap.style.display='block';
     var modEl=el('f-cot-modalidad');
     if(modEl&&!modEl.value)modEl.value='total';
@@ -1703,6 +1775,31 @@ function cotModalidadToggle(){
     if(selWrap)selWrap.style.display='none';
   }
   cotModalidadChange();
+}
+function cotRapidaToggle(){
+  var chk=el('f-cot-rapida-toggle');
+  var on=chk&&chk.checked;
+  if(on){
+    var modChk=el('f-cot-modalidad-toggle');
+    if(modChk)modChk.checked=false;
+    var selWrap=el('cot-modalidad-select-wrap');if(selWrap)selWrap.style.display='none';
+    if(COT_REP_ITEMS.length>0){
+      if(!confirm('Cotizaci\u00F3n r\u00E1pida solo admite Productos. Se eliminar\u00E1n los repuestos ya agregados. \u00BFContinuar?')){
+        chk.checked=false;return;
+      }
+      COT_REP_ITEMS=[];
+    }
+    var repBtn=el('tab-reps-btn');if(repBtn)repBtn.style.display='none';
+    switchCotTab('productos');
+    cotShowPagoSections(false);
+  } else {
+    cotShowPagoSections(true);
+    var repBtn2=el('tab-reps-btn');if(repBtn2)repBtn2.style.display='';
+    cotModalidadChange();
+  }
+  var si=el('cot-search-input');
+  if(si&&si.value)cotSearch();
+  cotUpdatePrices();
 }
 function cotModalidadChange(){
   var modo=cotGetModalidad();
@@ -1765,6 +1862,7 @@ function cotUpdatePrices(){
 function cotRemoveItem(i){COT_ITEMS.splice(i,1);renderCotItems();}
 function calcCotTotal(){
   var modo=cotGetModalidad();
+  if(cotIsRapida()){calcCotTotalRapida();return;}
   if(modo==='utilidad'){calcCotTotalUtilidad();return;}
   var subProd=COT_ITEMS.reduce(function(s,it){return s+(it.cant*(it.precio||0));},0);
   var subRep=COT_REP_ITEMS.reduce(function(s,it){return s+(it.cant*(it.precio||0));},0);
@@ -1848,6 +1946,13 @@ function calcCotTotal(){
   }
   cards.innerHTML=html;
 }
+function calcCotTotalRapida(){
+  var sub=COT_ITEMS.reduce(function(s,it){return s+(it.cant*(it.precio||0));},0);
+  var st=el('cot-subtotal');if(st)st.textContent='Bs '+Math.round(sub).toLocaleString('es-BO');
+  var tt=el('cot-total');if(tt)tt.textContent='Bs '+Math.round(sub).toLocaleString('es-BO');
+  var cards=el('cot-dist-cards');
+  if(cards)cards.innerHTML='<div style="font-size:11.5px;color:var(--text-3);padding:6px 2px;">\u26A1 Cotizaci\u00F3n r\u00E1pida \u2014 sin desglose de pago.</div>';
+}
 function calcCotTotalUtilidad(){
   var sub=0,utilTotalGen=0;
   COT_ITEMS.forEach(function(it){
@@ -1889,7 +1994,49 @@ function getCotDocHtml(cot,docType){
     if(docType==='detallada')return buildCotHtmlDetallada(cot);
     return buildCotHtmlNormalUtilidad(cot);
   }
+  if(cot.modalidad==='rapida')return buildCotHtmlRapida(cot);
   return buildCotHtml(cot);
+}
+function buildCotHtmlRapida(cot){
+  var items=cot.items||[];
+  var rows=items.map(function(it){
+    var lineTotal=Math.round((it.precio||0)*it.cant);
+    return '<tr>'+
+      '<td style="border:1px solid #ccc;padding:6px 8px;font-size:10.5px;">'+it.desc+(it.glosa?'<div style="font-size:8.5px;color:#666;">'+it.glosa+'</div>':'')+'</td>'+
+      '<td style="border:1px solid #ccc;padding:6px 8px;font-size:10.5px;text-align:center;">'+it.cant+'</td>'+
+      '<td style="border:1px solid #ccc;padding:6px 8px;font-size:10.5px;text-align:right;">'+Math.round(it.precio||0).toLocaleString('es-BO')+'</td>'+
+      '<td style="border:1px solid #ccc;padding:6px 8px;font-size:10.5px;font-weight:600;text-align:right;">'+lineTotal.toLocaleString('es-BO')+'</td>'+
+    '</tr>';
+  }).join('');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>Cotizaci\u00F3n R\u00E1pida '+cot.numeroCot+'</title>'+
+    '<style>@page{size:A5 portrait;margin:10mm 8mm 8mm 8mm;}'+
+    '*{box-sizing:border-box;margin:0;padding:0;}'+
+    'html{height:auto;}body{font-family:Arial,sans-serif;font-size:11px;color:#111;background:#fff;margin:0;padding:0;}'+
+    '.page{width:100%;padding:2px;}table{width:100%;border-collapse:collapse;margin-bottom:5px;}'+
+    'th{background:#222;color:#fff;padding:5px 7px;font-size:9.5px;text-align:center;border:1px solid #222;}'+
+    '</style></head><body><div class="page">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;border-bottom:2px solid #111;padding-bottom:6px;">'+
+      '<div>'+
+        '<div style="font-size:18px;font-weight:900;letter-spacing:-1px;">MARTIZENT S.R.L.</div>'+
+      '</div>'+
+      '<div style="text-align:right;">'+
+        '<div style="font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:1px;">Cotizaci\u00F3n R\u00E1pida</div>'+
+        '<div style="font-size:15px;font-weight:900;letter-spacing:1px;">'+cot.numeroCot+'</div>'+
+        '<div style="font-size:8px;color:#555;margin-top:2px;">'+cot.fecha+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="font-size:10px;margin-bottom:6px;"><b>Cliente:</b> '+cot.cliente+'</div>'+
+    '<table><thead><tr>'+
+      '<th style="width:46%;">Producto</th><th style="width:12%;">Cant.</th>'+
+      '<th style="width:20%;">P. Unitario</th><th style="width:22%;">Subtotal</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div style="border:2px solid #111;padding:8px 14px;text-align:right;margin-top:10px;">'+
+      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;">Total</div>'+
+      '<div style="font-size:19px;font-weight:900;">'+cot.totalStr+'</div>'+
+    '</div>'+
+    '<div style="font-size:8.5px;color:#777;margin-top:10px;">Cotizaci\u00F3n preliminar sin validez de factura. Precios sujetos a confirmaci\u00F3n.</div>'+
+  '</div></body></html>';
+  return html;
 }
 function previewCotizacion(cot){
   var esUtilidad=cot.modalidad==='utilidad';
@@ -2343,7 +2490,7 @@ var FORM_BUILDERS={
       '<div>'+flabel('Nombre del negocio',true)+'<input type="text" id="f-cot-cliente" placeholder="Ej. Ferretr\u00EDa L\u00F3pez"></div>'+
     '</div>'+
     // MODALIDAD DE PRECIO (toggle + select condicional)
-    '<div class="frow full" style="margin-top:6px;"><div>'+
+    '<div class="frow full" id="cot-modalidad-toggle-wrap" style="margin-top:6px;"><div>'+
       '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-2);">'+
         '<input type="checkbox" id="f-cot-modalidad-toggle" onchange="cotModalidadToggle()" style="width:16px;height:16px;"> Modalidad de precio'+
       '</label>'+
@@ -2355,12 +2502,18 @@ var FORM_BUILDERS={
         '</select>'+
       '</div>'+
     '</div></div>'+
-    '<div class="frow" style="margin-top:8px;">'+
+    '<div class="frow" id="cot-tipocliente-tipoprecio-row" style="margin-top:8px;">'+
       '<div id="cot-tipocliente-rep-wrap">'+flabel('Tipo cliente repuestos',false)+'<select id="f-cot-tipocliente-rep" onchange="cotUpdatePrices()"><option value="distribuidor">Distribuidor</option><option value="tecnico">T\u00E9cnico</option></select></div>'+
       '<div id="cot-tipoprecio-wrap" style="display:none;">'+flabel('Local / Nacional',false)+'<select id="f-cot-tipoprecio" onchange="cotUpdatePrices()"><option value="local">Local</option><option value="nacional">Nacional</option></select></div>'+
     '</div>'+
+    // COTIZACION RAPIDA
+    '<div class="frow full" style="margin-top:4px;"><div>'+
+      '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:700;color:var(--purple-700);background:var(--purple-50);padding:8px 12px;border-radius:var(--r-md);border:1px solid var(--purple-100);">'+
+        '<input type="checkbox" id="f-cot-rapida-toggle" onchange="cotRapidaToggle()" style="width:16px;height:16px;"> \u26A1 Cotizaci\u00F3n r\u00E1pida \u2014 solo productos y precios, sin factura ni forma de pago'+
+      '</label>'+
+    '</div></div>'+
     // TIPO DE PAGO
-    '<div class="frow full"><div>'+flabel('Tipo de pago',false)+
+    '<div class="frow full" id="cot-tipopago-section"><div>'+flabel('Tipo de pago',false)+
     '<div style="display:flex;gap:10px;margin-top:4px;">'+
       '<label style="display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 16px;border:1.5px solid var(--border);border-radius:var(--r-md);font-size:13px;font-weight:500;" id="lbl-contado">'+
         '<input type="radio" name="tipopago" id="f-cot-tipopago" value="contado" checked onchange="updatePagoStyle()" style="width:15px;height:15px;">CONTADO</label>'+
@@ -2455,8 +2608,6 @@ function cotAddItem(prodId){
   var newItem={prodId:prodId,desc:desc,glosa:glosa,precio:precio,factura_pct:fpct,cant:1};
   if(modo==='utilidad')newItem.facturaSolicitada=precio;
   COT_ITEMS.push(newItem);
-  var si=el('cot-search-input');if(si)si.value='';
-  var sr=el('cot-search-results');if(sr)sr.style.display='none';
   renderCotItems();
 }
 
@@ -2492,25 +2643,33 @@ function repSearch(){
   var tcEl=el('f-cot-tipocliente-rep');
   var esTecnico=tcEl&&tcEl.value==='tecnico';
   var matches=REPUESTOS_CATALOGO.filter(function(r){
+    if(COT_REP_ITEMS.some(function(it){return it.repId===r.id;}))return false;
     var ov=REPUESTOS_OVERRIDES[String(r.id)]||REPUESTOS_OVERRIDES[r.id]||{};
     var art=(ov.articulo||r.articulo).toLowerCase();
     var det=(ov.detalle||r.detalle||'').toLowerCase();
     return art.indexOf(ql)>-1||det.indexOf(ql)>-1;
   }).slice(0,15);
-  if(!matches.length){res.innerHTML='<div style="padding:10px 12px;font-size:12.5px;color:var(--text-3);">Sin resultados</div>';res.style.display='block';return;}
+  if(!matches.length){res.innerHTML='<div style="padding:10px 12px;font-size:12.5px;color:var(--text-3);">Sin resultados (o ya agregados)</div>';res.style.display='block';return;}
   res.innerHTML=matches.map(function(r){
     var ov=REPUESTOS_OVERRIDES[String(r.id)]||REPUESTOS_OVERRIDES[r.id]||{};
     var art=ov.articulo||r.articulo;
     var det=ov.detalle||r.detalle||'';
     var precio=esTecnico?(ov.tec!==undefined?ov.tec:r.tec):(ov.dist!==undefined?ov.dist:r.dist);
     var lbl=esTecnico?'P. T\u00E9cnico':'P. Distribuidor';
-    return '<div class="cot-sr-item" onmousedown="event.preventDefault();repAddItem('+r.id+');" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);">'+
-      '<div style="font-size:13px;font-weight:500;">'+art+'</div>'+
-      '<div style="font-size:11.5px;color:var(--text-3);margin-top:2px;">'+(det?det+' &nbsp;·&nbsp; ':'')+
-      '<b>Bs '+Number(precio).toLocaleString('es-BO')+'</b>&nbsp;('+lbl+') · Fact: 30%</div>'+
+    return '<div class="cot-sr-item" style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;">'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:13px;font-weight:500;">'+art+'</div>'+
+        '<div style="font-size:11.5px;color:var(--text-3);margin-top:2px;">'+(det?det+' &nbsp;·&nbsp; ':'')+
+        '<b>Bs '+Number(precio).toLocaleString('es-BO')+'</b>&nbsp;('+lbl+') · Fact: 30%</div>'+
+      '</div>'+
+      '<button class="btn btn-sm btn-success" onmousedown="event.preventDefault();repSearchAddItem('+r.id+');" title="Agregar" style="flex-shrink:0;font-weight:800;width:32px;height:32px;padding:0;font-size:16px;line-height:1;">+</button>'+
     '</div>';
   }).join('');
   res.style.display='block';
+}
+function repSearchAddItem(repId){
+  repAddItem(repId);
+  repSearch();
 }
 
 var COT_REP_ITEMS=[];
@@ -2527,8 +2686,6 @@ function repAddItem(repId){
   var existing=COT_REP_ITEMS.find(function(it){return it.repId===repId;});
   if(existing){existing.cant++;renderCotItems();return;}
   COT_REP_ITEMS.push({repId:repId,desc:art,detalle:det,precio:precio,factura_pct:30,cant:1,isRepuesto:true});
-  var si=el('rep-search-cot');if(si)si.value='';
-  var sr=el('rep-search-results');if(sr)sr.style.display='none';
   renderCotItems();
 }
 
