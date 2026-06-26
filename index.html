@@ -361,14 +361,27 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
         </div>
         <div class="add-form-box" id="assign-form" style="display:none;">
           <h4>Asignar nueva actividad a todos los usuarios de campo</h4>
-          <div class="frow full"><div><label class="flabel">Título de la actividad <span class="req">*</span></label><input type="text" id="act-titulo" placeholder="Ej. Relevamiento zona norte Tarija"></div></div>
+          <div class="frow"><div><label class="flabel">Título de la actividad <span class="req">*</span></label><input type="text" id="act-titulo" placeholder="Ej. Relevamiento zona norte Tarija"></div>
+          <div><label class="flabel">Tipo de actividad</label><select id="act-tipo" onchange="actTipoChange()">
+            <option value="generica">Genérica (secciones libres)</option>
+            <option value="precios_competencia">Precios de la competencia</option>
+            <option value="aceptacion_producto">Aceptación de producto</option>
+          </select></div></div>
 
-          <!-- SECCIONES DINAMICAS -->
-          <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;">
-            <div style="font-size:12px;font-weight:600;color:var(--text-2);">Secciones de relevamiento</div>
-            <button class="btn btn-sm" onclick="addActSection()" style="font-size:12px;">➕ Agregar sección</button>
+          <!-- CONTEXTO (para tipos precios_competencia / aceptacion_producto) -->
+          <div id="act-contexto-wrap" style="display:none;margin-top:10px;">
+            <label class="flabel">Producto / contexto a investigar <span class="req">*</span></label>
+            <textarea id="act-contexto" placeholder="Ej. Termotanque Rheem Mexicano 75 galones — relevar precio en al menos 3 competidores"></textarea>
           </div>
-          <div id="act-sections-wrap" style="margin-top:8px;display:flex;flex-direction:column;gap:10px;"></div>
+
+          <!-- SECCIONES DINAMICAS (solo para tipo genérica) -->
+          <div id="act-secciones-wrap">
+            <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-size:12px;font-weight:600;color:var(--text-2);">Secciones de relevamiento</div>
+              <button class="btn btn-sm" onclick="addActSection()" style="font-size:12px;">➕ Agregar sección</button>
+            </div>
+            <div id="act-sections-wrap" style="margin-top:8px;display:flex;flex-direction:column;gap:10px;"></div>
+          </div>
 
           <div class="frow" style="margin-top:14px;">
             <div><label class="flabel">Fecha límite</label><input type="date" id="act-fecha"></div>
@@ -510,6 +523,8 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
 // ═══════════════════════════════════════
 var SB_URL = 'https://kfegzlpswbnjhexlnngq.supabase.co';
 var SB_KEY = 'sb_publishable_ibRIrVqUXUlGL2BZO5OCmg_sQiH7Mr6';
+var SB_STORAGE_BUCKET = 'fotos';
+var PHOTOS = {};
 
 function sbFetch(path, method, body){
   var headers={
@@ -619,6 +634,7 @@ function sbLoadOverrides(){
 // ═══════════ DATA ═══════════
 var USERS=[{user:'admin',pass:'Af373dc33f.10',nombre:'Administrador',rol:'admin',sucursal:'—'},{user:'herlan',pass:'1',nombre:'Herlan',rol:'user',sucursal:'—'}];
 var SESSION=null,REPORTS=[],ACTIVITIES=[],COTIZACIONES=[],ACT_SEC_COUNT=0;
+var ACTRESP_COMP_ROWS=[],ACTRESP_MODEL_ROWS=[];
 var CUR_FORM=null,BACK_TO='home',CUR_STEP=1,TOTAL_STEPS=1,pRowN=3,cRowN=3;
 
 var PRODUCTOS_CATALOGO = [{"id": 1, "categoria": "termotanque.rheem.mexicano", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano", "descripcion": "75 galones, gn, 480270 285 l", "precio1": 15769, "precio2": 16069, "precio3": 17345, "precio4": 17645}, {"id": 2, "categoria": "termotanque.rheem.mexicano", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano", "descripcion": "100 galones, gn, 485287 375 l", "precio1": 19516, "precio2": 19716, "precio3": 21468, "precio4": 21668}, {"id": 3, "categoria": "termotanque.rheem.mexicano", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano", "descripcion": "19 galones, gn, 435145 50 litros", "precio1": 2560, "precio2": 2620, "precio3": 2817, "precio4": 2877}, {"id": 4, "categoria": "termotanque.rheem.mexicano", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano", "descripcion": "20 galones, gn, 435145 76 litros", "precio1": 2944, "precio2": 3014, "precio3": 3238, "precio4": 3308}, {"id": 5, "categoria": "termotanque.rheem.mexicano", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano", "descripcion": "30 galones, gn, 439884 114 litros", "precio1": 3376, "precio2": 3456, "precio3": 3714, "precio4": 3794}, {"id": 6, "categoria": "termotanque.rheem.mexicano", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano", "descripcion": "40 galones, gn, 435169 152 lts", "precio1": 3612, "precio2": 3702, "precio3": 3973, "precio4": 4063}, {"id": 7, "categoria": "termotanque.rheem.mexicano", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano", "descripcion": "50 galones, gn, 460642 190 lts", "precio1": 4234, "precio2": 4324, "precio3": 4657, "precio4": 4747}, {"id": 8, "categoria": "termotanque.rheem.mexicano.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano Electrico", "descripcion": "20 galones, 240v, 575438 76 litros", "precio1": 3812, "precio2": 3872, "precio3": 4193, "precio4": 4253}, {"id": 9, "categoria": "termotanque.rheem.mexicano.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano Electrico", "descripcion": "30 galones, 240v, 114l", "precio1": 5190, "precio2": 5250, "precio3": 5709, "precio4": 5769}, {"id": 10, "categoria": "termotanque.rheem.mexicano.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano Electrico", "descripcion": "40 galones, 240v, 152lt (2,5/3,2 kw)", "precio1": 5779, "precio2": 5849, "precio3": 6357, "precio4": 6427}, {"id": 11, "categoria": "termotanque.rheem.mexicano.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano Electrico", "descripcion": "50 galones,220v, 669809 189 l (3,2/3,8 kw)", "precio1": 6341, "precio2": 6411, "precio3": 6976, "precio4": 7046}, {"id": 12, "categoria": "termotanque.rheem.mexicano.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano Electrico", "descripcion": "66 galones,240v, 508306 246 l 3,2kw", "precio1": 8108, "precio2": 8258, "precio3": 8919, "precio4": 9069}, {"id": 13, "categoria": "termotanque.rheem.mexicano.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano Electrico", "descripcion": "66 galones,240v, 669816 246 l 4,6kw", "precio1": 7907, "precio2": 8057, "precio3": 8698, "precio4": 8848}, {"id": 14, "categoria": "termotanque.rheem.mexicano.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano Electrico", "descripcion": "80 galones, 240v, 669854 303 l", "precio1": 9714, "precio2": 9914, "precio3": 10686, "precio4": 10886}, {"id": 15, "categoria": "termotanque.rheem.mexicano.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano Electrico", "descripcion": "80 galones, 380v, 669823 303 l", "precio1": 9313, "precio2": 9513, "precio3": 10244, "precio4": 10444}, {"id": 16, "categoria": "termotanque.rheem.mexicano.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano Electrico", "descripcion": "120 galones, 240v, 575407, 454l", "precio1": 26539, "precio2": 26839, "precio3": 29193, "precio4": 29493}, {"id": 17, "categoria": "termotanque.rheem.mexicano.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Mexicano Electrico", "descripcion": "120 galones, 380v, 669830, 454l", "precio1": 26539, "precio2": 26839, "precio3": 29193, "precio4": 29493}, {"id": 18, "categoria": "termotanque.rheem.argentino.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Gas", "descripcion": "30 LITROS", "precio1": 2502, "precio2": 2542, "precio3": 2753, "precio4": 2793}, {"id": 19, "categoria": "termotanque.rheem.argentino.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Gas", "descripcion": "50 LITROS", "precio1": 2376, "precio2": 2426, "precio3": 2613, "precio4": 2663}, {"id": 20, "categoria": "termotanque.rheem.argentino.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Gas", "descripcion": "50 LITROS DE COLGAR", "precio1": 2616, "precio2": 2666, "precio3": 2878, "precio4": 2928}, {"id": 21, "categoria": "termotanque.rheem.argentino.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Gas", "descripcion": "80 LITROS", "precio1": 3095, "precio2": 3155, "precio3": 3405, "precio4": 3465}, {"id": 22, "categoria": "termotanque.rheem.argentino.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Gas", "descripcion": "80 LITROS DE COLGAR", "precio1": 3266, "precio2": 3326, "precio3": 3593, "precio4": 3653}, {"id": 23, "categoria": "termotanque.rheem.argentino.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Gas", "descripcion": "120 LITROS", "precio1": 3518, "precio2": 3588, "precio3": 3869, "precio4": 3939}, {"id": 24, "categoria": "termotanque.rheem.argentino.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Gas", "descripcion": "150 LITROS", "precio1": 3710, "precio2": 3790, "precio3": 4081, "precio4": 4161}, {"id": 25, "categoria": "termotanque.rheem.argentino.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Gas", "descripcion": "160 LITROS NEGRO", "precio1": 5748, "precio2": 5828, "precio3": 6323, "precio4": 6403}, {"id": 26, "categoria": "termotanque.rheem.argentino.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Gas", "descripcion": "COMERCIAL 300 LITROS", "precio1": 25587, "precio2": 25837, "precio3": 28146, "precio4": 28396}, {"id": 27, "categoria": "termotanque.rheem.argentino.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Gas", "descripcion": "COMERCIAL 250 LITROS", "precio1": 22577, "precio2": 22927, "precio3": 24834, "precio4": 25184}, {"id": 28, "categoria": "termotanque.rheem.argentino.gamaalta", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Gamaalta", "descripcion": "80 litros gama alta", "precio1": 3775, "precio2": 3845, "precio3": 4153, "precio4": 4223}, {"id": 29, "categoria": "termotanque.rheem.argentino.gamaalta", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Gamaalta", "descripcion": "120 litros gama alta", "precio1": 4416, "precio2": 4496, "precio3": 4857, "precio4": 4937}, {"id": 30, "categoria": "termotanque.rheem.argentino.gamaalta", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Gamaalta", "descripcion": "150 litros gama alta", "precio1": 4722, "precio2": 4812, "precio3": 5194, "precio4": 5284}, {"id": 31, "categoria": "termotanque.rheem.argentino.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Electrico", "descripcion": "55 LITROS", "precio1": 2355, "precio2": 2385, "precio3": 2590, "precio4": 2620}, {"id": 32, "categoria": "termotanque.rheem.argentino.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Electrico", "descripcion": "55 LITROS DE COLGAR", "precio1": 2355, "precio2": 2385, "precio3": 2590, "precio4": 2620}, {"id": 33, "categoria": "termotanque.rheem.argentino.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Electrico", "descripcion": "85 LITROS", "precio1": 2492, "precio2": 2532, "precio3": 2741, "precio4": 2781}, {"id": 34, "categoria": "termotanque.rheem.argentino.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Electrico", "descripcion": "85 LITROS DE COLGAR", "precio1": 2629, "precio2": 2669, "precio3": 2892, "precio4": 2932}, {"id": 35, "categoria": "termotanque.rheem.argentino.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Electrico", "descripcion": "125 LITROS", "precio1": 2766, "precio2": 2806, "precio3": 3043, "precio4": 3083}, {"id": 36, "categoria": "termotanque.rheem.argentino.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Electrico", "descripcion": "125 LITROS COLGAR", "precio1": 2904, "precio2": 2944, "precio3": 3194, "precio4": 3234}, {"id": 37, "categoria": "termotanque.rheem.argentino.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Electrico", "descripcion": "155 LITROS", "precio1": 3041, "precio2": 3081, "precio3": 3345, "precio4": 3385}, {"id": 38, "categoria": "termotanque.rheem.argentino.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Rheem Argentino Electrico", "descripcion": "255 LITROS", "precio1": 15122, "precio2": 15272, "precio3": 16634, "precio4": 16784}, {"id": 39, "categoria": "termotanque.longvie.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Longvie Gas", "descripcion": "150 litros (t3150)", "precio1": 5237, "precio2": 5317, "precio3": 5761, "precio4": 5841}, {"id": 40, "categoria": "termotanque.longvie.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Longvie Gas", "descripcion": "132 litros t600ap", "precio1": 6489, "precio2": 6569, "precio3": 7138, "precio4": 7218}, {"id": 41, "categoria": "termotanque.longvie.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Longvie Gas", "descripcion": "110 litros", "precio1": 4688, "precio2": 4758, "precio3": 5157, "precio4": 5227}, {"id": 42, "categoria": "termotanque.longvie.gas.alta", "cat_label": "Termotanques", "subcat_label": "Termotanque Longvie Gas Alta", "descripcion": "ALTA RECUPERACION T860AR 56 LTS", "precio1": 5973, "precio2": 6033, "precio3": 6571, "precio4": 6631}, {"id": 43, "categoria": "termotanque.longvie.gas.alta", "cat_label": "Termotanques", "subcat_label": "Termotanque Longvie Gas Alta", "descripcion": "ALTA RECUPERACION TP350AR 40 LTS", "precio1": 4382, "precio2": 4432, "precio3": 4820, "precio4": 4870}, {"id": 44, "categoria": "termotanque.longvie.gas.alta", "cat_label": "Termotanques", "subcat_label": "Termotanque Longvie Gas Alta", "descripcion": "ALTA RECUPERACION t340ar 34 LTS", "precio1": 4071, "precio2": 4121, "precio3": 4478, "precio4": 4528}, {"id": 45, "categoria": "termotanque.longvie.gas.alta", "cat_label": "Termotanques", "subcat_label": "Termotanque Longvie Gas Alta", "descripcion": "TERMOTANQUE SKABE A GAS A6 AQUAPIU", "precio1": 7115, "precio2": 7166, "precio3": 7826, "precio4": 7877}, {"id": 46, "categoria": "termotanque.orbis.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Orbis Gas", "descripcion": "080 litros", "precio1": 3580, "precio2": 3640, "precio3": 3938, "precio4": 3998}, {"id": 47, "categoria": "termotanque.orbis.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Orbis Gas", "descripcion": "130 litros", "precio1": 4815, "precio2": 4885, "precio3": 5297, "precio4": 5367}, {"id": 48, "categoria": "termotanque.orbis.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Orbis Gas", "descripcion": "160 litros", "precio1": 5364, "precio2": 5444, "precio3": 5901, "precio4": 5981}, {"id": 49, "categoria": "termotanque.elequi.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Elequi Gas", "descripcion": "80 litros blanco", "precio1": 2556, "precio2": 2616, "precio3": 2811, "precio4": 2871}, {"id": 50, "categoria": "termotanque.elequi.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Elequi Gas", "descripcion": "120 litros blanco", "precio1": 3130, "precio2": 3200, "precio3": 3443, "precio4": 3513}, {"id": 51, "categoria": "termotanque.elequi.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Elequi Gas", "descripcion": "80 LITROS GRIS", "precio1": 2953, "precio2": 3013, "precio3": 3249, "precio4": 3309}, {"id": 52, "categoria": "termotanque.elequi.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Elequi Gas", "descripcion": "120 LITROS GRIS", "precio1": 3370, "precio2": 3440, "precio3": 3707, "precio4": 3777}, {"id": 53, "categoria": "termotanque.elequi.gas", "cat_label": "Termotanques", "subcat_label": "Termotanque Elequi Gas", "descripcion": "150 LITROS GRIS", "precio1": 3672, "precio2": 3752, "precio3": 4040, "precio4": 4120}, {"id": 54, "categoria": "termotanque.elequi.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Elequi Electrico", "descripcion": "te-80", "precio1": 1645, "precio2": 1705, "precio3": 1810, "precio4": 1870}, {"id": 55, "categoria": "termotanque.elequi.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Elequi Electrico", "descripcion": "te-100", "precio1": 1990, "precio2": 2070, "precio3": 2189, "precio4": 2269}, {"id": 56, "categoria": "termotanque.elequi.electrico", "cat_label": "Termotanques", "subcat_label": "Termotanque Elequi Electrico", "descripcion": "te-50", "precio1": 1248, "precio2": 1298, "precio3": 1373, "precio4": 1423}, {"id": 57, "categoria": "estufa.longvie.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Balanceado", "descripcion": "3000kc e3ba (enc. automatico, color beiz)", "precio1": 2614, "precio2": 2654, "precio3": 2876, "precio4": 2916}, {"id": 58, "categoria": "estufa.longvie.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Balanceado", "descripcion": "3000kc eba3s (cuadrada, enc. manual, color beiz)", "precio1": 2564, "precio2": 2604, "precio3": 2820, "precio4": 2860}, {"id": 59, "categoria": "estufa.longvie.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Balanceado", "descripcion": "3000kc e3bva (visor, enc. automatico, color beiz)", "precio1": 2979, "precio2": 3019, "precio3": 3277, "precio4": 3317}, {"id": 60, "categoria": "estufa.longvie.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Balanceado", "descripcion": "3000kc e3bkva (visor, enc. automatico, color negro)", "precio1": 2979, "precio2": 3019, "precio3": 3277, "precio4": 3317}, {"id": 61, "categoria": "estufa.longvie.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Balanceado", "descripcion": "3000kc e3bta (enc. automatico, con termostato, color beiz)", "precio1": 3458, "precio2": 3498, "precio3": 3804, "precio4": 3844}, {"id": 62, "categoria": "estufa.longvie.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Balanceado", "descripcion": "3000kc eba3kvt (visor, enc. automatico, termostato, neg)", "precio1": 3892, "precio2": 3932, "precio3": 4281, "precio4": 4321}, {"id": 63, "categoria": "estufa.longvie.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Balanceado", "descripcion": "5000kc e5ba (enc. automatico, color beiz)", "precio1": 3388, "precio2": 3438, "precio3": 3727, "precio4": 3777}, {"id": 64, "categoria": "estufa.longvie.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Balanceado", "descripcion": "5000kc eBA5s (cuadrada, enc. manual, color beiz)", "precio1": 3268, "precio2": 3318, "precio3": 3594, "precio4": 3644}, {"id": 65, "categoria": "estufa.longvie.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Balanceado", "descripcion": "5000kc e5bva (visor, enc. automatico, color beiz)", "precio1": 3667, "precio2": 3717, "precio3": 4034, "precio4": 4084}, {"id": 66, "categoria": "estufa.longvie.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Balanceado", "descripcion": "5000kc e5bkva (visor, enc. automatico, color negro)", "precio1": 3667, "precio2": 3717, "precio3": 4034, "precio4": 4084}, {"id": 67, "categoria": "estufa.longvie.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Balanceado", "descripcion": "5000kc e5bvta (visor, enc. automatico, termostato, negro)", "precio1": 4696, "precio2": 4746, "precio3": 5166, "precio4": 5216}, {"id": 68, "categoria": "estufa.longvie.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Balanceado", "descripcion": "5000kc eba5kvt (visor, enc. automatico, termostato, negro)", "precio1": 4697, "precio2": 4748, "precio3": 5167, "precio4": 5218}, {"id": 69, "categoria": "estufa.longvie.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Balanceado", "descripcion": "5000kc e5bta (enc. automatico, con termostato, color beiz)", "precio1": 4386, "precio2": 4436, "precio3": 4825, "precio4": 4875}, {"id": 70, "categoria": "estufa.longvie.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Natural", "descripcion": "tiro natural 3000kc e3cva (enc. automatico, color beiz)", "precio1": 2168, "precio2": 2203, "precio3": 2385, "precio4": 2420}, {"id": 71, "categoria": "estufa.longvie.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Natural", "descripcion": "tiro natural 5000kc e5ca", "precio1": 2330, "precio2": 2375, "precio3": 2563, "precio4": 2608}, {"id": 72, "categoria": "estufa.longvie.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Natural", "descripcion": "tiro natural 5000kc e5cva (enc. automatico, color beiz)", "precio1": 2583, "precio2": 2628, "precio3": 2841, "precio4": 2886}, {"id": 73, "categoria": "estufa.longvie.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Natural", "descripcion": "tiro natural 5200kc eca5kvt (enc. automatico, negro, vidrio)", "precio1": 3103, "precio2": 3148, "precio3": 3414, "precio4": 3459}, {"id": 74, "categoria": "estufa.longvie.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Longvie T Natural", "descripcion": "tiro natural 7500kc e5ca8kvt (enc. automatico, color beiz)", "precio1": 3362, "precio2": 3407, "precio3": 3699, "precio4": 3744}, {"id": 75, "categoria": "estufa.orbis.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Balanceado", "descripcion": "2.500 kcal/h 4124mom 2500kc", "precio1": 2482, "precio2": 2522, "precio3": 2730, "precio4": 2770}, {"id": 76, "categoria": "estufa.orbis.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Balanceado", "descripcion": "2.500 kcal/h 4126GON (Enc. electronico, color gris)", "precio1": 2545, "precio2": 2585, "precio3": 2799, "precio4": 2839}, {"id": 77, "categoria": "estufa.orbis.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Balanceado", "descripcion": "3.800 kcal/h 4144MOM 3800KAL", "precio1": 2851, "precio2": 2891, "precio3": 3136, "precio4": 3176}, {"id": 78, "categoria": "estufa.orbis.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Balanceado", "descripcion": "3.800 kcal/h 4146GON (Enc. electronico, color gris)", "precio1": 2918, "precio2": 2958, "precio3": 3209, "precio4": 3249}, {"id": 79, "categoria": "estufa.orbis.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Balanceado", "descripcion": "3.800 kcal/h 4148TON (E. electronico, visor, termostato, gris)", "precio1": 3693, "precio2": 3733, "precio3": 4062, "precio4": 4102}, {"id": 80, "categoria": "estufa.orbis.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Balanceado", "descripcion": "5.000 kcal/h 4164 MOM TB 5000", "precio1": 3356, "precio2": 3406, "precio3": 3691, "precio4": 3741}, {"id": 81, "categoria": "estufa.orbis.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Balanceado", "descripcion": "5.000 kcal/h 4166GON (Enc. electronico, color gris)", "precio1": 3441, "precio2": 3491, "precio3": 3785, "precio4": 3835}, {"id": 82, "categoria": "estufa.orbis.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Balanceado", "descripcion": "5.000 kcal/h 4168TON (E elec, visor, termostato, gris)", "precio1": 4359, "precio2": 4409, "precio3": 4795, "precio4": 4845}, {"id": 83, "categoria": "estufa.orbis.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Balanceado", "descripcion": "2500 kcal/h 4126NON (frente de vidrio)", "precio1": 2775, "precio2": 2815, "precio3": 3052, "precio4": 3092}, {"id": 84, "categoria": "estufa.orbis.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Balanceado", "descripcion": "3800 kcal/h 4146NON (frente de vidrio)", "precio1": 3181, "precio2": 3231, "precio3": 3499, "precio4": 3549}, {"id": 85, "categoria": "estufa.orbis.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Balanceado", "descripcion": "5000 kcal/h 4166NON (frente de vidrio)", "precio1": 3786, "precio2": 3846, "precio3": 4165, "precio4": 4225}, {"id": 86, "categoria": "estufa.orbis.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Natural", "descripcion": "tiro natural 4200 kcal/h 4040BON (Enc. manual, color beiz)", "precio1": 1798, "precio2": 1828, "precio3": 1978, "precio4": 2008}, {"id": 87, "categoria": "estufa.orbis.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Natural", "descripcion": "tiro natural 2700 kcal/h 4024", "precio1": 1583, "precio2": 1613, "precio3": 1742, "precio4": 1772}, {"id": 88, "categoria": "estufa.orbis.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Natural", "descripcion": "tiro natural 4200 kcal/h 4044", "precio1": 1583, "precio2": 1613, "precio3": 1742, "precio4": 1772}, {"id": 89, "categoria": "estufa.orbis.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Natural", "descripcion": "tiro natural 5000 kcal/h 4064", "precio1": 2084, "precio2": 2114, "precio3": 2292, "precio4": 2322}, {"id": 90, "categoria": "estufa.orbis.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Natural", "descripcion": "tiro natural 4200 kcal/h 4040GON (Enc. manual, color gris)", "precio1": 2441, "precio2": 2471, "precio3": 2686, "precio4": 2716}, {"id": 91, "categoria": "estufa.orbis.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Orbis T Natural", "descripcion": "tiro natural 9100 kcal/h 4990TON", "precio1": 4300, "precio2": 4350, "precio3": 4730, "precio4": 4780}, {"id": 92, "categoria": "estufa.volcan.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Volcan T Balanceado", "descripcion": "2.000 kcal/h 42316VN (Enc. manual)", "precio1": 2346, "precio2": 2386, "precio3": 2581, "precio4": 2621}, {"id": 93, "categoria": "estufa.volcan.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Volcan T Balanceado", "descripcion": "3.800 kcal/h 43716VN (Enc. manual)", "precio1": 2625, "precio2": 2665, "precio3": 2887, "precio4": 2927}, {"id": 94, "categoria": "estufa.volcan.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Volcan T Balanceado", "descripcion": "5.700 kcal/h 46316VN (Enc. manual)", "precio1": 2829, "precio2": 2879, "precio3": 3112, "precio4": 3162}, {"id": 95, "categoria": "estufa.eskabe.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Eskabe T Balanceado", "descripcion": "2000kc TITANIO TB 2 (Titanium, enc. Automatico, termostato, aromatizante)", "precio1": 3621, "precio2": 3661, "precio3": 3983, "precio4": 4023}, {"id": 96, "categoria": "estufa.eskabe.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Eskabe T Balanceado", "descripcion": "3000kc TITANIO TB 3 (Titanium, enc. Automatico, termostato, aromatizante)", "precio1": 3882, "precio2": 3922, "precio3": 4271, "precio4": 4311}, {"id": 97, "categoria": "estufa.eskabe.t.balanceado", "cat_label": "Estufas", "subcat_label": "Estufa Eskabe T Balanceado", "descripcion": "5000kc TITANIO TB 5 (Titanium, enc. Automatico, termostato, aromatizante)", "precio1": 5174, "precio2": 5224, "precio3": 5692, "precio4": 5742}, {"id": 98, "categoria": "estufa.eskabe.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Eskabe T Natural", "descripcion": "tiro natural TITANIO TT MX 8 CV (Titanium, enc. Automatico, termostato, aromatizante)", "precio1": 3327, "precio2": 3367, "precio3": 3660, "precio4": 3700}, {"id": 99, "categoria": "estufa.eskabe.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Eskabe T Natural", "descripcion": "3000kc t. natural TITANIO TT MX 3 CV (Titanium, enc. Automatico, termostato, aromatizante)", "precio1": 3100, "precio2": 3130, "precio3": 3410, "precio4": 3440}, {"id": 100, "categoria": "estufa.eskabe.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Eskabe T Natural", "descripcion": "5000kc t. natural TITANIO TT MX 5 CV (Titanium, enc. Automatico, termostato, aromatizante)", "precio1": 3583, "precio2": 3623, "precio3": 3941, "precio4": 3981}, {"id": 101, "categoria": "estufa.eskabe.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Eskabe T Natural", "descripcion": "3000kc t. natural SIGLO 21 MX 3 MF M G 15", "precio1": 1761, "precio2": 1791, "precio3": 1937, "precio4": 1967}, {"id": 102, "categoria": "estufa.eskabe.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Eskabe T Natural", "descripcion": "5000kc t. natural SIGLO 21 MX 5 MF M G 15", "precio1": 2094, "precio2": 2134, "precio3": 2303, "precio4": 2343}, {"id": 103, "categoria": "estufa.eskabe.t.natural", "cat_label": "Estufas", "subcat_label": "Estufa Eskabe T Natural", "descripcion": "t. natural 21 MX 8 MF M G 15", "precio1": 2501, "precio2": 2541, "precio3": 2751, "precio4": 2791}, {"id": 104, "categoria": "estufas.exterior.elequi", "cat_label": "Estufas", "subcat_label": "Estufas Exterior Elequi", "descripcion": "ee-4 ratan inox", "precio1": 1613, "precio2": 1663, "precio3": 1774, "precio4": 1824}, {"id": 105, "categoria": "estufas.exterior.elequi", "cat_label": "Estufas", "subcat_label": "Estufas Exterior Elequi", "descripcion": "ee-3 ratan redonda", "precio1": 1814, "precio2": 1864, "precio3": 1995, "precio4": 2045}, {"id": 106, "categoria": "estufas.exterior.elequi", "cat_label": "Estufas", "subcat_label": "Estufas Exterior Elequi", "descripcion": "ee-2 ratan cuadrada", "precio1": 1978, "precio2": 2028, "precio3": 2175, "precio4": 2225}, {"id": 107, "categoria": "estufas.exterior.elequi", "cat_label": "Estufas", "subcat_label": "Estufas Exterior Elequi", "descripcion": "ee-1 piramide", "precio1": 2410, "precio2": 2460, "precio3": 2651, "precio4": 2701}, {"id": 108, "categoria": "calefon.elequi", "cat_label": "Calefones", "subcat_label": "Calefon Elequi", "descripcion": "6 LITROS (baja presion, serp. cobre, display temp.)", "precio1": 1087, "precio2": 1107, "precio3": 1196, "precio4": 1216}, {"id": 109, "categoria": "calefon.elequi", "cat_label": "Calefones", "subcat_label": "Calefon Elequi", "descripcion": "8 LITROS (baja presion, serp. cobre, display temp.)", "precio1": 1273, "precio2": 1293, "precio3": 1400, "precio4": 1420}, {"id": 110, "categoria": "calefon.elequi", "cat_label": "Calefones", "subcat_label": "Calefon Elequi", "descripcion": "10 LITROS (baja presion, serp. cobre, display temp.)", "precio1": 1579, "precio2": 1599, "precio3": 1737, "precio4": 1757}, {"id": 111, "categoria": "calefon.elequi", "cat_label": "Calefones", "subcat_label": "Calefon Elequi", "descripcion": "12 LITROS (baja presion, serp. cobre, display temp.)", "precio1": 1844, "precio2": 1874, "precio3": 2028, "precio4": 2058}, {"id": 112, "categoria": "calefon.elequi", "cat_label": "Calefones", "subcat_label": "Calefon Elequi", "descripcion": "16 LITROS (serp. cobre, display temp.)", "precio1": 1723, "precio2": 1763, "precio3": 1895, "precio4": 1935}, {"id": 113, "categoria": "calefon.elequi", "cat_label": "Calefones", "subcat_label": "Calefon Elequi", "descripcion": "14 LITROS (Llama modulante)", "precio1": 1684, "precio2": 1714, "precio3": 1852, "precio4": 1882}, {"id": 114, "categoria": "calefon.elequi", "cat_label": "Calefones", "subcat_label": "Calefon Elequi", "descripcion": "16 LITROS TIRO FORZADO (serp. cobre, modulante)", "precio1": 1724, "precio2": 1754, "precio3": 1897, "precio4": 1927}, {"id": 115, "categoria": "calefon.elequi", "cat_label": "Calefones", "subcat_label": "Calefon Elequi", "descripcion": "12 LITROS EN12 natural c/transformadores", "precio1": 1608, "precio2": 1639, "precio3": 1769, "precio4": 1800}, {"id": 116, "categoria": "calefon.elequi", "cat_label": "Calefones", "subcat_label": "Calefon Elequi", "descripcion": "16 LITROS 16K1C1 tiro forzado modulable", "precio1": 1920, "precio2": 1952, "precio3": 2112, "precio4": 2144}, {"id": 117, "categoria": "calefon.elequi", "cat_label": "Calefones", "subcat_label": "Calefon Elequi", "descripcion": "20 LITROS 20K1C1 tiro forzado modulable", "precio1": 2204, "precio2": 2237, "precio3": 2424, "precio4": 2457}, {"id": 118, "categoria": "calefon.elequi", "cat_label": "Calefones", "subcat_label": "Calefon Elequi", "descripcion": "20 LITROS 20K3S WIFI tiro forzado modulable", "precio1": 2554, "precio2": 2588, "precio3": 2809, "precio4": 2843}, {"id": 119, "categoria": "calefon.elequi", "cat_label": "Calefones", "subcat_label": "Calefon Elequi", "descripcion": "20 litros tiro forzado (serp. cobre, modulante)", "precio1": 2360, "precio2": 2400, "precio3": 2596, "precio4": 2636}, {"id": 120, "categoria": "calefon.elequi.electrico", "cat_label": "Calefones", "subcat_label": "Calefon Elequi Electrico", "descripcion": "calentador de paso electrico ele-5,5", "precio1": 667, "precio2": 682, "precio3": 733, "precio4": 748}, {"id": 121, "categoria": "calefon.elequi.electrico", "cat_label": "Calefones", "subcat_label": "Calefon Elequi Electrico", "descripcion": "calentador de paso electrico ele-12", "precio1": 1497, "precio2": 1512, "precio3": 1647, "precio4": 1662}, {"id": 122, "categoria": "calefon.elequi.electrico", "cat_label": "Calefones", "subcat_label": "Calefon Elequi Electrico", "descripcion": "calentador de paso electrico ele-10,5", "precio1": 852, "precio2": 867, "precio3": 937, "precio4": 952}, {"id": 123, "categoria": "calefon.longvie", "cat_label": "Calefones", "subcat_label": "Calefon Longvie", "descripcion": "CALEFON 14 LITROS", "precio1": 3431, "precio2": 3461, "precio3": 3775, "precio4": 3805}, {"id": 124, "categoria": "calefon.longvie", "cat_label": "Calefones", "subcat_label": "Calefon Longvie", "descripcion": "CALEFON 14 LITROS super automatico", "precio1": 3950, "precio2": 3980, "precio3": 4345, "precio4": 4375}, {"id": 125, "categoria": "calefon.orbis.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Natural", "descripcion": "14 l/min 315BLON (botonera)", "precio1": 2821, "precio2": 2861, "precio3": 3103, "precio4": 3143}, {"id": 126, "categoria": "calefon.orbis.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Natural", "descripcion": "14 l/min 315BBON (botonera enc. electronico)", "precio1": 2984, "precio2": 3024, "precio3": 3282, "precio4": 3322}, {"id": 127, "categoria": "calefon.orbis.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Natural", "descripcion": "14 l/min 315KSON eurotrend (digital automatico ionizado)", "precio1": 4115, "precio2": 4155, "precio3": 4527, "precio4": 4567}, {"id": 128, "categoria": "calefon.orbis.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Natural", "descripcion": "14 l/min 315BDON (botonera automatico ionizado)", "precio1": 3147, "precio2": 3187, "precio3": 3462, "precio4": 3502}, {"id": 129, "categoria": "calefon.orbis.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Natural", "descripcion": "14 l/min 315KBON eurotrend (botonera enc. electronico)", "precio1": 2971, "precio2": 3011, "precio3": 3268, "precio4": 3308}, {"id": 130, "categoria": "calefon.orbis.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Natural", "descripcion": "14 L/MIN 315KJON CORREDERA MODULANTE", "precio1": 2655, "precio2": 2695, "precio3": 2920, "precio4": 2960}, {"id": 131, "categoria": "calefon.orbis.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Natural", "descripcion": "14 L/MIN 315KNON BOTONERA MODULANTE", "precio1": 3773, "precio2": 3813, "precio3": 4150, "precio4": 4190}, {"id": 132, "categoria": "calefon.orbis.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Natural", "descripcion": "14 l/min 315KHON eurotrend (corredera)", "precio1": 2536, "precio2": 2576, "precio3": 2790, "precio4": 2830}, {"id": 133, "categoria": "calefon.orbis.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Natural", "descripcion": "14 l/min 315KLON eurotrend (botonera)", "precio1": 2639, "precio2": 2679, "precio3": 2903, "precio4": 2943}, {"id": 134, "categoria": "calefon.orbis.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Natural", "descripcion": "20 l/min 320KSON eurotrend (botonera digital automatico ionizado)", "precio1": 4839, "precio2": 4879, "precio3": 5323, "precio4": 5363}, {"id": 135, "categoria": "calefon.orbis.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Natural", "descripcion": "20 l/min 320BDON (botonera automatico ionizado)", "precio1": 4254, "precio2": 4294, "precio3": 4679, "precio4": 4719}, {"id": 136, "categoria": "calefon.orbis.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Natural", "descripcion": "12 l/min 313KLON eurotrend (botonera)", "precio1": 2477, "precio2": 2517, "precio3": 2725, "precio4": 2765}, {"id": 137, "categoria": "calefon.orbis.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Natural", "descripcion": "12 l/min 313KHON eurotrend (corredera)", "precio1": 2517, "precio2": 2557, "precio3": 2769, "precio4": 2809}, {"id": 138, "categoria": "calefon.orbis.t.forzado", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Forzado", "descripcion": "14 l/min GN 315FDON (forzado)", "precio1": 6195, "precio2": 6235, "precio3": 6814, "precio4": 6854}, {"id": 139, "categoria": "calefon.orbis.t.balanceado", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Balanceado", "descripcion": "14 l/min posterior 315PDON (automatico ionizado)", "precio1": 3913, "precio2": 3953, "precio3": 4304, "precio4": 4344}, {"id": 140, "categoria": "calefon.orbis.t.balanceado", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Balanceado", "descripcion": "14 l/min derecho 315DDON (automatico ionizado)", "precio1": 4289, "precio2": 4319, "precio3": 4718, "precio4": 4748}, {"id": 141, "categoria": "calefon.orbis.t.balanceado", "cat_label": "Calefones", "subcat_label": "Calefon Orbis T Balanceado", "descripcion": "14 l/min izquierdo 315IDON (automatico ionizado)", "precio1": 3913, "precio2": 3953, "precio3": 4304, "precio4": 4344}, {"id": 142, "categoria": "calefon.volcan.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Volcan T Natural", "descripcion": "14 l/min 315BRVN", "precio1": 3442, "precio2": 3472, "precio3": 3787, "precio4": 3817}, {"id": 143, "categoria": "calefon.volcan.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Volcan T Natural", "descripcion": "12 l/min 313BRVN (compacto)", "precio1": 3442, "precio2": 3472, "precio3": 3787, "precio4": 3817}, {"id": 144, "categoria": "calefon.volcan.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Volcan T Natural", "descripcion": "14 l/min 315KRVN (compacto)", "precio1": 3992, "precio2": 4022, "precio3": 4391, "precio4": 4421}, {"id": 145, "categoria": "calefon.volcan.t.natural", "cat_label": "Calefones", "subcat_label": "Calefon Volcan T Natural", "descripcion": "14 l/min 315KAVN (compacto)", "precio1": 4455, "precio2": 4485, "precio3": 4900, "precio4": 4930}, {"id": 146, "categoria": "caldero.elequi", "cat_label": "Calderos", "subcat_label": "Caldero Elequi", "descripcion": "Caldero elequi de m26 (26kw)", "precio1": 6241, "precio2": 6291, "precio3": 6866, "precio4": 6916}, {"id": 147, "categoria": "caldero.elequi", "cat_label": "Calderos", "subcat_label": "Caldero Elequi", "descripcion": "Caldero elequi de ce-01 (32kw)", "precio1": 6619, "precio2": 6679, "precio3": 7281, "precio4": 7341}, {"id": 148, "categoria": "caldero.elequi", "cat_label": "Calderos", "subcat_label": "Caldero Elequi", "descripcion": "Caldero para piscina k60", "precio1": 6185, "precio2": 6225, "precio3": 6803, "precio4": 6843}, {"id": 149, "categoria": "caldero.orbis", "cat_label": "Calderos", "subcat_label": "Caldero Orbis", "descripcion": "calefaccion orbis 30.000 cal/h 230CDON", "precio1": 7799, "precio2": 7839, "precio3": 8579, "precio4": 8619}, {"id": 150, "categoria": "caldero.orbis", "cat_label": "Calderos", "subcat_label": "Caldero Orbis", "descripcion": "calefaccion orbis 30.000 cal/h 230CTON", "precio1": 8614, "precio2": 8644, "precio3": 9476, "precio4": 9506}, {"id": 151, "categoria": "caldero.orbis", "cat_label": "Calderos", "subcat_label": "Caldero Orbis", "descripcion": "calefaccion orbis 30.000 cal/h 230TDON", "precio1": 5001, "precio2": 5041, "precio3": 5501, "precio4": 5541}, {"id": 152, "categoria": "caldero.orbis", "cat_label": "Calderos", "subcat_label": "Caldero Orbis", "descripcion": "calefaccion orbis 30.000 cal/h 230TTON", "precio1": 5760, "precio2": 5790, "precio3": 6336, "precio4": 6366}, {"id": 153, "categoria": "caldero.orbis", "cat_label": "Calderos", "subcat_label": "Caldero Orbis", "descripcion": "mixta orbis 30.000 cal/h 230XTON", "precio1": 11932, "precio2": 11972, "precio3": 13125, "precio4": 13165}, {"id": 154, "categoria": "caldero.orbis", "cat_label": "Calderos", "subcat_label": "Caldero Orbis", "descripcion": "mixta orbis 30.000 cal/h 230ZTON", "precio1": 14732, "precio2": 14772, "precio3": 16205, "precio4": 16245}, {"id": 155, "categoria": "caldero.eskabe", "cat_label": "Calderos", "subcat_label": "Caldero Eskabe", "descripcion": "CA 5 + conector GN 21.000 Kcal/h", "precio1": 11831, "precio2": 11911, "precio3": 13014, "precio4": 13094}, {"id": 156, "categoria": "caldero.eskabe", "cat_label": "Calderos", "subcat_label": "Caldero Eskabe", "descripcion": "A 29 TBFD GN tiro balanceado forzado 10500/25000 kca/h", "precio1": 8126, "precio2": 8186, "precio3": 8939, "precio4": 8999}, {"id": 157, "categoria": "caldero.eskabe", "cat_label": "Calderos", "subcat_label": "Caldero Eskabe", "descripcion": "A 29 TNC GN tiro natural solo calefaccion 10500/25000 kca/h", "precio1": 7863, "precio2": 7923, "precio3": 8649, "precio4": 8709}, {"id": 158, "categoria": "caldero.eskabe", "cat_label": "Calderos", "subcat_label": "Caldero Eskabe", "descripcion": "Climatizador de Piscina Acquapool AQP 30 30000 kcal/h", "precio1": 13420, "precio2": 13520, "precio3": 14762, "precio4": 14862}, {"id": 159, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-A38C2", "precio1": 1798, "precio2": 1848, "precio3": 1978, "precio4": 2028}, {"id": 160, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-P55A", "precio1": 2063, "precio2": 2113, "precio3": 2269, "precio4": 2319}, {"id": 161, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-P55D", "precio1": 1870, "precio2": 1920, "precio3": 2057, "precio4": 2107}, {"id": 162, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-C18C", "precio1": 1998, "precio2": 2048, "precio3": 2198, "precio4": 2248}, {"id": 163, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-b53c1", "precio1": 1769, "precio2": 1819, "precio3": 1946, "precio4": 1996}, {"id": 164, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-F53C2", "precio1": 2198, "precio2": 2248, "precio3": 2418, "precio4": 2468}, {"id": 165, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-C28A1", "precio1": 2069, "precio2": 2119, "precio3": 2275, "precio4": 2325}, {"id": 166, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-P53B9", "precio1": 1812, "precio2": 1862, "precio3": 1993, "precio4": 2043}, {"id": 167, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-B53c9", "precio1": 2947, "precio2": 2997, "precio3": 3241, "precio4": 3291}, {"id": 168, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-B53c5", "precio1": 2584, "precio2": 2634, "precio3": 2843, "precio4": 2893}, {"id": 169, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-f28b5", "precio1": 1852, "precio2": 1902, "precio3": 2037, "precio4": 2087}, {"id": 170, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-cy28c1", "precio1": 2685, "precio2": 2735, "precio3": 2953, "precio4": 3003}, {"id": 171, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ele-a38", "precio1": 1869, "precio2": 1919, "precio3": 2056, "precio4": 2106}, {"id": 172, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-502", "precio1": 1512, "precio2": 1562, "precio3": 1663, "precio4": 1713}, {"id": 173, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-106", "precio1": 1812, "precio2": 1862, "precio3": 1993, "precio4": 2043}, {"id": 174, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-B53C16", "precio1": 2799, "precio2": 2849, "precio3": 3079, "precio4": 3129}, {"id": 175, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-L53C18", "precio1": 2507, "precio2": 2557, "precio3": 2757, "precio4": 2807}, {"id": 176, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-A38C2A", "precio1": 1570, "precio2": 1620, "precio3": 1727, "precio4": 1777}, {"id": 177, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-S03", "precio1": 2096, "precio2": 2146, "precio3": 2305, "precio4": 2355}, {"id": 178, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-111", "precio1": 2184, "precio2": 2234, "precio3": 2402, "precio4": 2452}, {"id": 179, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-501e", "precio1": 1684, "precio2": 1734, "precio3": 1852, "precio4": 1902}, {"id": 180, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-501f", "precio1": 1798, "precio2": 1848, "precio3": 1978, "precio4": 2028}, {"id": 181, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-110", "precio1": 4775, "precio2": 4825, "precio3": 5252, "precio4": 5302}, {"id": 182, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ele-pb1", "precio1": 1947, "precio2": 1997, "precio3": 2142, "precio4": 2192}, {"id": 183, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-122", "precio1": 1855, "precio2": 1905, "precio3": 2041, "precio4": 2091}, {"id": 184, "categoria": "campana.elequi.pared", "cat_label": "Campanas", "subcat_label": "Campana Elequi Pared", "descripcion": "ELE-VN1", "precio1": 2298, "precio2": 2348, "precio3": 2528, "precio4": 2578}, {"id": 185, "categoria": "campana.elequi.isla", "cat_label": "Campanas", "subcat_label": "Campana Elequi Isla", "descripcion": "ELE-806", "precio1": 5956, "precio2": 6036, "precio3": 6552, "precio4": 6632}, {"id": 186, "categoria": "campana.elequi.isla", "cat_label": "Campanas", "subcat_label": "Campana Elequi Isla", "descripcion": "ELE-822", "precio1": 5055, "precio2": 5135, "precio3": 5561, "precio4": 5641}, {"id": 187, "categoria": "campana.elequi.isla", "cat_label": "Campanas", "subcat_label": "Campana Elequi Isla", "descripcion": "ELE-B53C2A", "precio1": 2891, "precio2": 2951, "precio3": 3180, "precio4": 3240}, {"id": 188, "categoria": "campana.elequi.isla", "cat_label": "Campanas", "subcat_label": "Campana Elequi Isla", "descripcion": "ELE-I2", "precio1": 3811, "precio2": 3861, "precio3": 4193, "precio4": 4243}, {"id": 189, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-60 plano (frente curvo) 60cm", "precio1": 929, "precio2": 949, "precio3": 1022, "precio4": 1042}, {"id": 190, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-80 plano (frente curvo) 80cm", "precio1": 971, "precio2": 996, "precio3": 1068, "precio4": 1093}, {"id": 191, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-90 plano (frente curvo) 90cm", "precio1": 1039, "precio2": 1064, "precio3": 1143, "precio4": 1168}, {"id": 192, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-90p plano (frente recto) 90cm", "precio1": 1047, "precio2": 1072, "precio3": 1152, "precio4": 1177}, {"id": 193, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-60hn plano (frente totalmente touch de vidrio)", "precio1": 1086, "precio2": 1106, "precio3": 1194, "precio4": 1214}, {"id": 194, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-60h plano (Touch frente vidrio inoxidable)", "precio1": 1264, "precio2": 1284, "precio3": 1390, "precio4": 1410}, {"id": 195, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-60ph plano (botonero-inox-1 motor)", "precio1": 612, "precio2": 632, "precio3": 673, "precio4": 693}, {"id": 196, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-60ph2 plano (touch-inox/vidrio-2 motores)", "precio1": 989, "precio2": 1009, "precio3": 1088, "precio4": 1108}, {"id": 197, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-60bh plano (botonero-negro-1motor)", "precio1": 594, "precio2": 614, "precio3": 653, "precio4": 673}, {"id": 198, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-70h plano 70cm", "precio1": 1009, "precio2": 1034, "precio3": 1110, "precio4": 1135}, {"id": 199, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-80bh plano (touch-negro-1 motores)", "precio1": 668, "precio2": 693, "precio3": 735, "precio4": 760}, {"id": 200, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-80bh2 plano (touch-negro 2 motores)", "precio1": 937, "precio2": 962, "precio3": 1031, "precio4": 1056}, {"id": 201, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-80ph (touch frente vidrio total 80cm)", "precio1": 958, "precio2": 983, "precio3": 1053, "precio4": 1078}, {"id": 202, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-90h plano (Touch frente vidrio inox) 90cm", "precio1": 1072, "precio2": 1097, "precio3": 1179, "precio4": 1204}, {"id": 203, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-90ph (touch frente de vidrio total 90cm)", "precio1": 1195, "precio2": 1220, "precio3": 1314, "precio4": 1339}, {"id": 204, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-906 plano (De empotrar) 90cm", "precio1": 1086, "precio2": 1111, "precio3": 1194, "precio4": 1219}, {"id": 205, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-90bh plano (touch-negro-2 motores)", "precio1": 1166, "precio2": 1191, "precio3": 1282, "precio4": 1307}, {"id": 206, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-i1 de empotrar 90cm touch", "precio1": 1765, "precio2": 1790, "precio3": 1941, "precio4": 1966}, {"id": 207, "categoria": "extractor.elequi", "cat_label": "Extractores", "subcat_label": "Extractor Elequi", "descripcion": "ele-60bh2", "precio1": 1014, "precio2": 1034, "precio3": 1116, "precio4": 1136}, {"id": 208, "categoria": "cocina.encimera.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Encimera Elequi", "descripcion": "ele-2s", "precio1": 955, "precio2": 980, "precio3": 1051, "precio4": 1076}, {"id": 209, "categoria": "cocina.encimera.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Encimera Elequi", "descripcion": "ele-e5", "precio1": 1887, "precio2": 1917, "precio3": 2076, "precio4": 2106}, {"id": 210, "categoria": "cocina.encimera.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Encimera Elequi", "descripcion": "ele-v2 (vidrio)", "precio1": 2217, "precio2": 2247, "precio3": 2439, "precio4": 2469}, {"id": 211, "categoria": "cocina.encimera.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Encimera Elequi", "descripcion": "ele-v3 (vidrio)", "precio1": 2135, "precio2": 2165, "precio3": 2349, "precio4": 2379}, {"id": 212, "categoria": "cocina.encimera.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Encimera Elequi", "descripcion": "ele-e2", "precio1": 2093, "precio2": 2123, "precio3": 2302, "precio4": 2332}, {"id": 213, "categoria": "cocina.encimera.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Encimera Elequi", "descripcion": "ele-e4", "precio1": 1607, "precio2": 1637, "precio3": 1767, "precio4": 1797}, {"id": 214, "categoria": "h.empotrar.elequi", "cat_label": "H", "subcat_label": "H Empotrar Elequi", "descripcion": "hee-02", "precio1": 3486, "precio2": 3536, "precio3": 3834, "precio4": 3884}, {"id": 215, "categoria": "h.empotrar.elequi", "cat_label": "H", "subcat_label": "H Empotrar Elequi", "descripcion": "hee-09n", "precio1": 4730, "precio2": 4790, "precio3": 5203, "precio4": 5263}, {"id": 216, "categoria": "h.empotrar.elequi", "cat_label": "H", "subcat_label": "H Empotrar Elequi", "descripcion": "hee-03 90 cm", "precio1": 4450, "precio2": 4510, "precio3": 4895, "precio4": 4955}, {"id": 217, "categoria": "cocina.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Elequi", "descripcion": "ele-c4", "precio1": 4393, "precio2": 4468, "precio3": 4832, "precio4": 4907}, {"id": 218, "categoria": "cocina.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Elequi", "descripcion": "mottavia mc-v4", "precio1": 2731, "precio2": 2806, "precio3": 3004, "precio4": 3079}, {"id": 219, "categoria": "cocina.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Elequi", "descripcion": "martinelli 4h doble", "precio1": 3139, "precio2": 3214, "precio3": 3453, "precio4": 3528}, {"id": 220, "categoria": "cocina.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Elequi", "descripcion": "elettra", "precio1": 2166, "precio2": 2256, "precio3": 2383, "precio4": 2473}, {"id": 221, "categoria": "cocina.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Elequi", "descripcion": "4h visenza mc4", "precio1": 2258, "precio2": 2333, "precio3": 2484, "precio4": 2559}, {"id": 222, "categoria": "cocina.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Elequi", "descripcion": "6h ele-mc6 marcella", "precio1": 3241, "precio2": 3291, "precio3": 3565, "precio4": 3615}, {"id": 223, "categoria": "cocina.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Elequi", "descripcion": "600b doble toma doble", "precio1": 2683, "precio2": 2758, "precio3": 2951, "precio4": 3026}, {"id": 224, "categoria": "cocina.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Elequi", "descripcion": "811b doble toma doble", "precio1": 3739, "precio2": 3829, "precio3": 4113, "precio4": 4203}, {"id": 225, "categoria": "cocina.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Elequi", "descripcion": "fiorenza mc-v5", "precio1": 3603, "precio2": 3653, "precio3": 3964, "precio4": 4014}, {"id": 226, "categoria": "cocina.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Elequi", "descripcion": "mc-h2 stella", "precio1": 3873, "precio2": 3973, "precio3": 4260, "precio4": 4360}, {"id": 227, "categoria": "cocina.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Elequi", "descripcion": "Vittoria 50a1", "precio1": 1895, "precio2": 1955, "precio3": 2085, "precio4": 2145}, {"id": 228, "categoria": "cocina.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Elequi", "descripcion": "allegra 60a1", "precio1": 2374, "precio2": 2449, "precio3": 2612, "precio4": 2687}, {"id": 229, "categoria": "cocina.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Elequi", "descripcion": "80a1 martina", "precio1": 3322, "precio2": 3412, "precio3": 3655, "precio4": 3745}, {"id": 230, "categoria": "cocina.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Elequi", "descripcion": "caterina mc-e4", "precio1": 1341, "precio2": 1401, "precio3": 1475, "precio4": 1535}, {"id": 231, "categoria": "cocina.elequi", "cat_label": "Cocinas", "subcat_label": "Cocina Elequi", "descripcion": "giada", "precio1": 1201, "precio2": 1261, "precio3": 1321, "precio4": 1381}, {"id": 232, "categoria": "parrilla.elequi", "cat_label": "Parrillas", "subcat_label": "Parrilla Elequi", "descripcion": "parrilla c-11", "precio1": 2776, "precio2": 2796, "precio3": 3053, "precio4": 3073}, {"id": 233, "categoria": "parrilla.elequi", "cat_label": "Parrillas", "subcat_label": "Parrilla Elequi", "descripcion": "parrilla mk-1b01", "precio1": 3064, "precio2": 3084, "precio3": 3370, "precio4": 3390}, {"id": 234, "categoria": "cocina.orbis", "cat_label": "Cocinas", "subcat_label": "Cocina Orbis", "descripcion": "HORNO DE EMBUTIR INOX ORBIS 960ACOM", "precio1": 4129, "precio2": 4149, "precio3": 4542, "precio4": 4562}, {"id": 235, "categoria": "cocina.orbis", "cat_label": "Cocinas", "subcat_label": "Cocina Orbis", "descripcion": "HORNO DE EMBUTIR INOX PARCIAL ORBIS 960APOM", "precio1": 4129, "precio2": 4149, "precio3": 4542, "precio4": 4562}, {"id": 236, "categoria": "cocina.orbis", "cat_label": "Cocinas", "subcat_label": "Cocina Orbis", "descripcion": "ANAFE ORBIS 735AZOM 5 QUEMADORES", "precio1": 4197, "precio2": 4217, "precio3": 4617, "precio4": 4637}, {"id": 237, "categoria": "aire.elequi.tropical", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Tropical", "descripcion": "ele-9000fcna 9000btu 220v", "precio1": 2578, "precio2": 2638, "precio3": 2835, "precio4": 2895}, {"id": 238, "categoria": "aire.elequi.tropical", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Tropical", "descripcion": "ele-12000fcna 12000btu 220v", "precio1": 2542, "precio2": 2602, "precio3": 2796, "precio4": 2856}, {"id": 239, "categoria": "aire.elequi.tropical", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Tropical", "descripcion": "ele-18000fcna 18000btu 220v", "precio1": 3816, "precio2": 3896, "precio3": 4198, "precio4": 4278}, {"id": 240, "categoria": "aire.elequi.tropical", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Tropical", "descripcion": "ele-24000fcna 24000btu 220v", "precio1": 6010, "precio2": 6090, "precio3": 6610, "precio4": 6690}, {"id": 241, "categoria": "aire.elequi.tropical", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Tropical", "descripcion": "ele-30000fcna 30000btu 220v", "precio1": 6449, "precio2": 6549, "precio3": 7094, "precio4": 7194}, {"id": 242, "categoria": "aire.elequi.tropical", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Tropical", "descripcion": "ele-36000fcna 36000btu 220v", "precio1": 9249, "precio2": 9349, "precio3": 10174, "precio4": 10274}, {"id": 243, "categoria": "aire.elequi.inverter", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Inverter", "descripcion": "ele-9000fcin 9000btu 220v", "precio1": 3514, "precio2": 3574, "precio3": 3865, "precio4": 3925}, {"id": 244, "categoria": "aire.elequi.inverter", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Inverter", "descripcion": "ele-12000fcin 12000btu 220v", "precio1": 3031, "precio2": 3091, "precio3": 3334, "precio4": 3394}, {"id": 245, "categoria": "aire.elequi.inverter", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Inverter", "descripcion": "ele-18000fcin 18000btu 220v", "precio1": 4131, "precio2": 4211, "precio3": 4544, "precio4": 4624}, {"id": 246, "categoria": "aire.elequi.inverter", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Inverter", "descripcion": "ele-24000fcin 24000btu 220v", "precio1": 5028, "precio2": 5108, "precio3": 5531, "precio4": 5611}, {"id": 247, "categoria": "aire.elequi.portatil", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Portatil", "descripcion": "portatil 12000FCNA", "precio1": 3854, "precio2": 3904, "precio3": 4240, "precio4": 4290}, {"id": 248, "categoria": "aire.elequi.portatil", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Portatil", "descripcion": "portatil ele-12000fCP", "precio1": 3236, "precio2": 3286, "precio3": 3560, "precio4": 3610}, {"id": 249, "categoria": "aire.elequi.pisotecho", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Pisotecho", "descripcion": "ELE-36HR1 380V", "precio1": 11226, "precio2": 11346, "precio3": 12349, "precio4": 12469}, {"id": 250, "categoria": "aire.elequi.pisotecho", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Pisotecho", "descripcion": "ELE-36HR1-A PISO TECHO 220V", "precio1": 11089, "precio2": 11209, "precio3": 12198, "precio4": 12318}, {"id": 251, "categoria": "aire.elequi.pisotecho", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Pisotecho", "descripcion": "ELE-48HR1 PISO TECHO 380V", "precio1": 13025, "precio2": 13175, "precio3": 14327, "precio4": 14477}, {"id": 252, "categoria": "aire.elequi.pisotecho", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Pisotecho", "descripcion": "ELE-60HR1 PISO TECHO 380V", "precio1": 14576, "precio2": 14726, "precio3": 16033, "precio4": 16183}, {"id": 253, "categoria": "aire.elequi.ducto", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Ducto", "descripcion": "ELE-36HR1 220V MEDIO", "precio1": 12121, "precio2": 12241, "precio3": 13333, "precio4": 13453}, {"id": 254, "categoria": "aire.elequi.ducto", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Ducto", "descripcion": "ELE-36HR1 380V MEDIO", "precio1": 11875, "precio2": 11995, "precio3": 13062, "precio4": 13182}, {"id": 255, "categoria": "aire.elequi.ducto", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Ducto", "descripcion": "ELE-48HR1 380V MEDIO", "precio1": 13835, "precio2": 13985, "precio3": 15218, "precio4": 15368}, {"id": 256, "categoria": "aire.elequi.ducto", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Ducto", "descripcion": "ELE-60HR1 380V MEDIO", "precio1": 14877, "precio2": 15027, "precio3": 16365, "precio4": 16515}, {"id": 257, "categoria": "aire.elequi.ducto", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Ducto", "descripcion": "ELE-48HR1 380V ALTO", "precio1": 14490, "precio2": 14640, "precio3": 15939, "precio4": 16089}, {"id": 258, "categoria": "aire.elequi.ducto", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Ducto", "descripcion": "ELE-60HR1 380V ALTO", "precio1": 15303, "precio2": 15453, "precio3": 16833, "precio4": 16983}, {"id": 259, "categoria": "aire.elequi.casett", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Casett", "descripcion": "CCA-18HR1 220V", "precio1": 7797, "precio2": 7917, "precio3": 8576, "precio4": 8696}, {"id": 260, "categoria": "aire.elequi.casett", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Casett", "descripcion": "CCA-24HR 220V", "precio1": 9596, "precio2": 9746, "precio3": 10555, "precio4": 10705}, {"id": 261, "categoria": "aire.elequi.casett", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Casett", "descripcion": "CCA-36HR 360V", "precio1": 12645, "precio2": 12795, "precio3": 13910, "precio4": 14060}, {"id": 262, "categoria": "aire.elequi.casett", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Casett", "descripcion": "CCA-488HR 360V", "precio1": 14658, "precio2": 14808, "precio3": 16124, "precio4": 16274}, {"id": 263, "categoria": "aire.elequi.casett", "cat_label": "Aire acondicionado", "subcat_label": "Aire Elequi Casett", "descripcion": "CCA-60HR 360V", "precio1": 15867, "precio2": 16017, "precio3": 17453, "precio4": 17603}, {"id": 264, "categoria": "cortina.elequi", "cat_label": "Cortinas de aire", "subcat_label": "Cortina Elequi", "descripcion": "CAE-09T2 90 CM", "precio1": 1127, "precio2": 1157, "precio3": 1240, "precio4": 1270}, {"id": 265, "categoria": "cortina.elequi", "cat_label": "Cortinas de aire", "subcat_label": "Cortina Elequi", "descripcion": "CAE-12T2 120 CM", "precio1": 1301, "precio2": 1331, "precio3": 1431, "precio4": 1461}, {"id": 266, "categoria": "cortina.elequi", "cat_label": "Cortinas de aire", "subcat_label": "Cortina Elequi", "descripcion": "CAE-15T2 150 CM", "precio1": 1744, "precio2": 1784, "precio3": 1919, "precio4": 1959}, {"id": 267, "categoria": "cortina.elequi", "cat_label": "Cortinas de aire", "subcat_label": "Cortina Elequi", "descripcion": "CAE-2T2 200CM", "precio1": 2238, "precio2": 2288, "precio3": 2462, "precio4": 2512}, {"id": 268, "categoria": "electrodomesticos.elequi", "cat_label": "Electrodomésticos", "subcat_label": "Electrodomesticos Elequi", "descripcion": "Camara de frio", "precio1": 17113, "precio2": 17463, "precio3": 18825, "precio4": 19175}, {"id": 269, "categoria": "electrodomesticos.elequi", "cat_label": "Electrodomésticos", "subcat_label": "Electrodomesticos Elequi", "descripcion": "Camara de frio puerta de vidrio", "precio1": 15462, "precio2": 15812, "precio3": 17009, "precio4": 17359}, {"id": 270, "categoria": "electrodomesticos.elequi", "cat_label": "Electrodomésticos", "subcat_label": "Electrodomesticos Elequi", "descripcion": "VITRINA REFRIGERARA VERTICAL", "precio1": 6746, "precio2": 6946, "precio3": 7421, "precio4": 7621}, {"id": 271, "categoria": "electrodomesticos.elequi", "cat_label": "Electrodomésticos", "subcat_label": "Electrodomesticos Elequi", "descripcion": "HELADERA ELEQUI MRF 410", "precio1": 9601, "precio2": 9751, "precio3": 10561, "precio4": 10711}, {"id": 272, "categoria": "electrodomesticos.elequi", "cat_label": "Electrodomésticos", "subcat_label": "Electrodomesticos Elequi", "descripcion": "HELADERA ELEQUI MRF 468", "precio1": 9259, "precio2": 9409, "precio3": 10185, "precio4": 10335}, {"id": 273, "categoria": "electrodomesticos.elequi", "cat_label": "Electrodomésticos", "subcat_label": "Electrodomesticos Elequi", "descripcion": "Cava de vino ele-cv85", "precio1": 2538, "precio2": 2598, "precio3": 2792, "precio4": 2852}, {"id": 274, "categoria": "lavadora.elequi", "cat_label": "Lavadoras", "subcat_label": "Lavadora Elequi", "descripcion": "lavadora vertical ropa interior", "precio1": 1178, "precio2": 1208, "precio3": 1296, "precio4": 1326}, {"id": 275, "categoria": "lavadora.elequi", "cat_label": "Lavadoras", "subcat_label": "Lavadora Elequi", "descripcion": "lavadora vertical ele-12t 12kg", "precio1": 3375, "precio2": 3465, "precio3": 3712, "precio4": 3802}, {"id": 276, "categoria": "lavadora.elequi", "cat_label": "Lavadoras", "subcat_label": "Lavadora Elequi", "descripcion": "lavadora vertical ele-9t 9kg", "precio1": 2502, "precio2": 2582, "precio3": 2753, "precio4": 2833}, {"id": 277, "categoria": "lavadora.elequi", "cat_label": "Lavadoras", "subcat_label": "Lavadora Elequi", "descripcion": "lavadora vertical ele-18v 18kg", "precio1": 4419, "precio2": 4519, "precio3": 4861, "precio4": 4961}, {"id": 278, "categoria": "lavadora.elequi", "cat_label": "Lavadoras", "subcat_label": "Lavadora Elequi", "descripcion": "lavadora frontal 12kg", "precio1": 4623, "precio2": 4723, "precio3": 5085, "precio4": 5185}, {"id": 279, "categoria": "lavadora.elequi", "cat_label": "Lavadoras", "subcat_label": "Lavadora Elequi", "descripcion": "lavadora frontal 13kg", "precio1": 4517, "precio2": 4617, "precio3": 4969, "precio4": 5069}, {"id": 280, "categoria": "dispenser.elequi.pie", "cat_label": "Dispensers", "subcat_label": "Dispenser Elequi Pie", "descripcion": "ELE-DIFC", "precio1": 1486, "precio2": 1526, "precio3": 1634, "precio4": 1674}, {"id": 281, "categoria": "dispenser.elequi.pie", "cat_label": "Dispensers", "subcat_label": "Dispenser Elequi Pie", "descripcion": "ELE-DFCRA", "precio1": 1223, "precio2": 1263, "precio3": 1346, "precio4": 1386}, {"id": 282, "categoria": "dispenser.elequi.pie", "cat_label": "Dispensers", "subcat_label": "Dispenser Elequi Pie", "descripcion": "ELE-DRI (Inoxidable con refrigerador)", "precio1": 1219, "precio2": 1259, "precio3": 1341, "precio4": 1381}, {"id": 283, "categoria": "dispenser.elequi.pie", "cat_label": "Dispensers", "subcat_label": "Dispenser Elequi Pie", "descripcion": "ELE-DRC", "precio1": 958, "precio2": 988, "precio3": 1054, "precio4": 1084}, {"id": 284, "categoria": "dispenser.elequi.pie", "cat_label": "Dispensers", "subcat_label": "Dispenser Elequi Pie", "descripcion": "ELE-PZ", "precio1": 1255, "precio2": 1295, "precio3": 1380, "precio4": 1420}, {"id": 285, "categoria": "dispenser.elequi.pie", "cat_label": "Dispensers", "subcat_label": "Dispenser Elequi Pie", "descripcion": "ELE-bar", "precio1": 971, "precio2": 1011, "precio3": 1068, "precio4": 1108}, {"id": 286, "categoria": "dispenser.elequi.mesa", "cat_label": "Dispensers", "subcat_label": "Dispenser Elequi Mesa", "descripcion": "ELE-DRIM", "precio1": 654, "precio2": 684, "precio3": 719, "precio4": 749}, {"id": 287, "categoria": "dispenser.elequi.mesa", "cat_label": "Dispensers", "subcat_label": "Dispenser Elequi Mesa", "descripcion": "ELE-PZM", "precio1": 567, "precio2": 597, "precio3": 624, "precio4": 654}, {"id": 288, "categoria": "dispenser.elequi.mesa", "cat_label": "Dispensers", "subcat_label": "Dispenser Elequi Mesa", "descripcion": "c/filtro", "precio1": 1930, "precio2": 1960, "precio3": 2123, "precio4": 2153}];
@@ -798,13 +814,16 @@ var STEP_LABELS={
   'productos':['Datos','Precio y proveedor','Fotos'],
   'cot-nueva':['Cotización'],
   'actividad-resp':['Informe de actividad'],
+  'actresp-precios':['Precios de la competencia'],
+  'actresp-aceptacion':['Aceptación de producto'],
 };
 var FORM_TITLES={
   'perfil':'Perfil de cliente potencial','competencia':'Relevamiento de competencia',
   'pdv':'Relevamiento de punto de venta','productos':'Relevamiento de productos',
   'cot-nueva':'Nueva cotización','actividad-resp':'Respuesta a actividad',
+  'actresp-precios':'Precios de la competencia','actresp-aceptacion':'Aceptación de producto',
 };
-var FORM_TIPO={'perfil':'mercado','competencia':'mercado','pdv':'mercado','productos':'productos','cot-nueva':'cotizacion','actividad-resp':'actividad'};
+var FORM_TIPO={'perfil':'mercado','competencia':'mercado','pdv':'mercado','productos':'productos','cot-nueva':'cotizacion','actividad-resp':'actividad','actresp-precios':'actividad','actresp-aceptacion':'actividad'};
 
 function buildForm(id){
   var labels=STEP_LABELS[id]||['Paso 1'];
@@ -858,6 +877,7 @@ function getFormData(){
   var data={};
   var fc=el('form-content');if(!fc)return data;
   fc.querySelectorAll('input[id],select[id],textarea[id]').forEach(function(e){
+    if(e.type==='file')return;
     if(e.type==='radio'){if(e.checked)data[e.id]=e.value;}
     else if(e.type==='checkbox'){data[e.id]=e.checked;}
     else{data[e.id]=e.value;}
@@ -874,23 +894,50 @@ function getFormData(){
   fc.querySelectorAll('.stars[id]').forEach(function(s){
     data[s.id]=s.querySelectorAll('.star.lit').length;
   });
+  fc.querySelectorAll('.photo-grid[id]').forEach(function(g){
+    var prefix=g.id.replace('phgrid-','');
+    data['fotos_'+prefix]=(PHOTOS[prefix]||[]).slice();
+  });
   return data;
 }
 function saveActividadRespuesta(actId){
   var act=ACTIVITIES.find(function(a){return a.id===actId;});
   if(!act){el('ov-ok').classList.add('show');window._actRespId=null;return;}
-  var resultado='';
-  document.querySelectorAll('#pg-result .pill').forEach(function(p){
-    if(p.classList.contains('sb')||p.classList.contains('st')||p.classList.contains('sa')||p.classList.contains('sp')||p.classList.contains('sc')){resultado=p.textContent.trim();}
-  });
-  var respuesta={usuario:SESSION.user,fecha:new Date().toLocaleString('es-BO'),
-    resumen:(el('f-nombre')||{}).value||'',
-    hallazgos:(el('f-hallazgos')||{}).value||'',
-    resultado:resultado,
-    obs:(el('f-obs')||{}).value||''};
+  var respuesta={usuario:SESSION.user,fecha:new Date().toLocaleString('es-BO'),tipo:CUR_FORM};
+  if(CUR_FORM==='actresp-precios'){
+    respuesta.productoRef=(el('ar-producto')||{}).value||'';
+    respuesta.zona=(el('ar-zona')||{}).value||'';
+    respuesta.competidores=ACTRESP_COMP_ROWS.map(function(idx){
+      return {nombre:(el('comp-nombre-'+idx)||{}).value||'',
+        precio:(el('comp-precio-'+idx)||{}).value||'',
+        disp:(el('comp-disp-'+idx)||{}).value||'',
+        calidad:(el('comp-calidad-'+idx)||{}).value||'',
+        pago:(el('comp-pago-'+idx)||{}).value||''};
+    }).filter(function(c){return c.nombre;});
+    respuesta.confianza=getPillSelected('ar-confianza');
+    respuesta.obs=(el('ar-obs')||{}).value||'';
+    respuesta.fotos=(PHOTOS['arprecios']||[]).slice();
+  } else if(CUR_FORM==='actresp-aceptacion'){
+    respuesta.productoEval=(el('ar2-producto')||{}).value||'';
+    respuesta.modelos=ACTRESP_MODEL_ROWS.map(function(idx){
+      return {modelo:(el('mod-nombre-'+idx)||{}).value||'',
+        precio:(el('mod-precio-'+idx)||{}).value||'',
+        aceptacion:getPillSelected('mod-acept-'+idx),
+        fotos:(PHOTOS['mod'+idx]||[]).slice()};
+    }).filter(function(m){return m.modelo;});
+    respuesta.motivo=(el('ar2-motivo')||{}).value||'';
+    respuesta.compNombre=(el('ar2-comp-nombre')||{}).value||'';
+    respuesta.compPrecio=(el('ar2-comp-precio')||{}).value||'';
+    respuesta.obs=(el('ar2-obs')||{}).value||'';
+  } else {
+    respuesta.resumen=(el('f-nombre')||{}).value||'';
+    respuesta.hallazgos=(el('f-hallazgos')||{}).value||'';
+    respuesta.resultado=getPillSelected('pg-result');
+    respuesta.obs=(el('f-obs')||{}).value||'';
+  }
   act.respuestas=(act.respuestas||[]).filter(function(r){return r.usuario!==SESSION.user;});
   act.respuestas.push(respuesta);
-  var payload={titulo:act.titulo,secciones:act.secciones,fechaLimite:act.fechaLimite,fechaCreacion:act.fechaCreacion,respuestas:act.respuestas};
+  var payload={titulo:act.titulo,tipoActividad:act.tipoActividad,contexto:act.contexto,secciones:act.secciones,fechaLimite:act.fechaLimite,fechaCreacion:act.fechaCreacion,respuestas:act.respuestas};
   sbFetch('actividades?id=eq.'+act.id,'PATCH',{descripcion:JSON.stringify(payload)})
     .then(function(){
       window._actRespId=null;
@@ -908,7 +955,7 @@ function saveReport(){
     showSaveCotModal();
     return;
   }
-  if(CUR_FORM==='actividad-resp'&&window._actRespId){
+  if((CUR_FORM==='actividad-resp'||CUR_FORM==='actresp-precios'||CUR_FORM==='actresp-aceptacion')&&window._actRespId){
     saveActividadRespuesta(window._actRespId);
     return;
   }
@@ -1299,6 +1346,62 @@ function addNewProduct(){
 
 // ═══════════ ACTIVIDADES ═══════════
 var ACT_SECTIONS=[];
+function getPillSelected(groupId){
+  var g=el(groupId);if(!g)return'';
+  var sel='';
+  g.querySelectorAll('.pill').forEach(function(p){
+    if(p.classList.contains('sb')||p.classList.contains('st')||p.classList.contains('sa')||p.classList.contains('sp')||p.classList.contains('sc')){sel=p.textContent.trim();}
+  });
+  return sel;
+}
+function addCompetidorRow(){
+  var idx=Date.now()+Math.floor(Math.random()*1000);
+  ACTRESP_COMP_ROWS.push(idx);
+  var wrap=el('comp-rows-wrap');if(!wrap)return;
+  var div=document.createElement('div');
+  div.id='comp-row-'+idx;
+  div.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:10px 12px;margin-bottom:8px;';
+  div.innerHTML=
+    '<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button class="btn btn-sm" onclick="removeCompetidorRow('+idx+')" style="color:var(--red-600);">✕</button></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
+    '<div><label class="flabel">Competidor / tienda</label><input type="text" id="comp-nombre-'+idx+'" placeholder="Nombre"></div>'+
+    '<div><label class="flabel">Precio observado (Bs)</label><input type="number" id="comp-precio-'+idx+'" placeholder="0"></div>'+
+    '<div><label class="flabel">Disponibilidad</label><select id="comp-disp-'+idx+'"><option value="">Seleccionar...</option><option>Disponible</option><option>Agotado</option><option>Solo por encargo</option></select></div>'+
+    '<div><label class="flabel">Calidad percibida</label><select id="comp-calidad-'+idx+'"><option value="">Seleccionar...</option><option>Mejor que la nuestra</option><option>Similar</option><option>Inferior</option></select></div>'+
+    '<div style="grid-column:1/-1;"><label class="flabel">Condiciones de pago</label><input type="text" id="comp-pago-'+idx+'" placeholder="Ej. Contado, Crédito 30 días"></div>'+
+    '</div>';
+  wrap.appendChild(div);
+}
+function removeCompetidorRow(idx){
+  var d=el('comp-row-'+idx);if(d)d.remove();
+  ACTRESP_COMP_ROWS=ACTRESP_COMP_ROWS.filter(function(i){return i!==idx;});
+}
+function addModeloRow(){
+  var idx=Date.now()+Math.floor(Math.random()*1000);
+  ACTRESP_MODEL_ROWS.push(idx);
+  var wrap=el('mod-rows-wrap');if(!wrap)return;
+  var div=document.createElement('div');
+  div.id='mod-row-'+idx;
+  div.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:10px 12px;margin-bottom:8px;';
+  div.innerHTML=
+    '<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button class="btn btn-sm" onclick="removeModeloRow('+idx+')" style="color:var(--red-600);">✕</button></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
+    '<div><label class="flabel">Modelo / variante</label><input type="text" id="mod-nombre-'+idx+'" placeholder="Ej. Color blanco, 80L"></div>'+
+    '<div><label class="flabel">Precio referencial (Bs)</label><input type="number" id="mod-precio-'+idx+'" placeholder="0"></div>'+
+    '<div style="grid-column:1/-1;"><label class="flabel">Nivel de aceptación</label><div class="pgroup" id="mod-acept-'+idx+'">'+
+      '<div class="pill" onclick="rpill(this,\'st\')">Alta</div><div class="pill" onclick="rpill(this,\'st\')">Media</div><div class="pill" onclick="rpill(this,\'st\')">Baja</div>'+
+    '</div></div>'+
+    '<div style="grid-column:1/-1;">'+
+    '<label class="flabel">Foto del modelo</label>'+
+    photoZoneHtml('mod'+idx)+
+    '</div>'+
+    '</div>';
+  wrap.appendChild(div);
+}
+function removeModeloRow(idx){
+  var d=el('mod-row-'+idx);if(d)d.remove();
+  ACTRESP_MODEL_ROWS=ACTRESP_MODEL_ROWS.filter(function(i){return i!==idx;});
+}
 function addActSection(){
   var idx=ACT_SECTIONS.length;
   var wrap=el('act-sections-wrap');
@@ -1320,44 +1423,65 @@ function addActSection(){
     '<div><label class="flabel">Distribuidor</label><input type="text" id="sec-dist-'+idx+'" placeholder="Nombre del distribuidor"></div>'+
     '<div style="grid-column:1/-1;">'+
     '<label class="flabel">Fotos (hasta 5)</label>'+
-    '<div class="photo-zone" onclick="simPhoto(\'sec'+idx+'\')" style="padding:.75rem;"><span class="pz-ico" style="font-size:20px;">📷</span><p>Toca para capturar foto</p></div>'+
-    '<div class="photo-grid" id="phgrid-sec'+idx+'" style="grid-template-columns:repeat(5,1fr);"></div></div>'+
+    photoZoneHtml('sec'+idx)+
+    '</div>'+
     '<div style="grid-column:1/-1;"><label class="flabel">Observaciones</label><textarea id="sec-obs-'+idx+'" placeholder="Notas adicionales..." style="min-height:52px;"></textarea></div>'+
     '</div>';
   wrap.appendChild(div);
   ACT_SECTIONS.push(idx);
 }
 function removeActSection(idx){var d=el('act-sec-'+idx);if(d)d.remove();ACT_SECTIONS=ACT_SECTIONS.filter(function(x){return x!==idx;});}
+function actTipoChange(){
+  var tipo=(el('act-tipo')||{}).value||'generica';
+  var ctxWrap=el('act-contexto-wrap');
+  var secWrap=el('act-secciones-wrap');
+  if(tipo==='generica'){
+    if(ctxWrap)ctxWrap.style.display='none';
+    if(secWrap)secWrap.style.display='block';
+    if(el('act-sections-wrap')&&el('act-sections-wrap').children.length===0)addActSection();
+  } else {
+    if(ctxWrap)ctxWrap.style.display='block';
+    if(secWrap)secWrap.style.display='none';
+  }
+}
 function toggleAssignForm(){
   var f=el('assign-form');f.style.display=f.style.display==='none'?'block':'none';
-  if(f.style.display==='block'&&el('act-sections-wrap').children.length===0) addActSection();
+  if(f.style.display==='block')actTipoChange();
   el('act-error').textContent='';
 }
 function saveActivity(){
   var titulo=(el('act-titulo')||{}).value.trim();
   var fecha=(el('act-fecha')||{}).value;
+  var tipoActividad=(el('act-tipo')||{}).value||'generica';
   if(!titulo){el('act-error').textContent='Ingresá el título de la actividad.';return;}
   var secs=[];
-  ACT_SECTIONS.forEach(function(idx){
-    var t=el('sec-title-'+idx);if(!t)return;
-    secs.push({titulo:t.value||'Sección '+(idx+1),
-      marca:(el('sec-marca-'+idx)||{}).value||'',
-      modelo:(el('sec-modelo-'+idx)||{}).value||'',
-      desc:(el('sec-desc-'+idx)||{}).value||'',
-      pcomp:(el('sec-pcomp-'+idx)||{}).value||'',
-      vsem:(el('sec-vsem-'+idx)||{}).value||'',
-      vmes:(el('sec-vmes-'+idx)||{}).value||'',
-      disp:(el('sec-disp-'+idx)||{}).value||'',
-      dist:(el('sec-dist-'+idx)||{}).value||''});
-  });
-  var payload={titulo:titulo,secciones:secs,fechaLimite:fecha||null,fechaCreacion:new Date().toLocaleDateString('es-BO'),respuestas:[]};
+  var contexto='';
+  if(tipoActividad==='generica'){
+    ACT_SECTIONS.forEach(function(idx){
+      var t=el('sec-title-'+idx);if(!t)return;
+      secs.push({titulo:t.value||'Sección '+(idx+1),
+        marca:(el('sec-marca-'+idx)||{}).value||'',
+        modelo:(el('sec-modelo-'+idx)||{}).value||'',
+        desc:(el('sec-desc-'+idx)||{}).value||'',
+        pcomp:(el('sec-pcomp-'+idx)||{}).value||'',
+        vsem:(el('sec-vsem-'+idx)||{}).value||'',
+        vmes:(el('sec-vmes-'+idx)||{}).value||'',
+        disp:(el('sec-disp-'+idx)||{}).value||'',
+        dist:(el('sec-dist-'+idx)||{}).value||'',
+        fotos:(PHOTOS['sec'+idx]||[]).slice()});
+    });
+  } else {
+    contexto=(el('act-contexto')||{}).value.trim();
+    if(!contexto){el('act-error').textContent='Describí el producto/contexto a investigar.';return;}
+  }
+  var payload={titulo:titulo,tipoActividad:tipoActividad,contexto:contexto,secciones:secs,fechaLimite:fecha||null,fechaCreacion:new Date().toLocaleDateString('es-BO'),respuestas:[]};
   el('act-error').textContent='Guardando...';
   sbFetch('actividades','POST',{titulo:titulo,tipo:'asignacion',descripcion:JSON.stringify(payload),usuario:SESSION.user,fecha:new Date().toISOString()})
     .then(function(rows){
       var row=rows&&rows[0];
       var newAct=Object.assign({id:row?row.id:Date.now(),creadoPor:SESSION.user},payload);
       ACTIVITIES.unshift(newAct);
-      el('act-titulo').value='';el('act-fecha').value='';
+      el('act-titulo').value='';el('act-fecha').value='';el('act-contexto').value='';
       el('act-sections-wrap').innerHTML='';ACT_SECTIONS=[];
       el('act-error').textContent='';
       toggleAssignForm();renderAdmActList();el('st-act').textContent=ACTIVITIES.length;
@@ -1397,7 +1521,67 @@ function renderActList(){
       '</div>';
   }).join('');
 }
-function responderActividad(id){window._actRespId=id;openForm('actividad-resp');}
+function responderActividad(id){
+  window._actRespId=id;
+  var act=ACTIVITIES.find(function(a){return a.id===id;});
+  var tipo=act?act.tipoActividad:'generica';
+  var formId=tipo==='precios_competencia'?'actresp-precios':(tipo==='aceptacion_producto'?'actresp-aceptacion':'actividad-resp');
+  openForm(formId,function(){
+    var ctxEl=el('ar-contexto-display');
+    if(ctxEl&&act){
+      ctxEl.innerHTML='<b>'+act.titulo+'</b>'+(act.contexto?'<div style="margin-top:3px;">'+act.contexto+'</div>':'');
+    }
+    // Prellenar con respuesta previa si el usuario ya había completado esta actividad
+    var miResp=act&&(act.respuestas||[]).filter(function(r){return r.usuario===SESSION.user;}).pop();
+    if(!miResp)return;
+    if(formId==='actresp-precios'){
+      if(el('ar-producto'))el('ar-producto').value=miResp.productoRef||'';
+      if(el('ar-zona'))el('ar-zona').value=miResp.zona||'';
+      if(el('ar-obs'))el('ar-obs').value=miResp.obs||'';
+      renderPhotoThumbs('arprecios',miResp.fotos);
+      (miResp.competidores||[]).forEach(function(c){
+        addCompetidorRow();
+        var idx=ACTRESP_COMP_ROWS[ACTRESP_COMP_ROWS.length-1];
+        if(el('comp-nombre-'+idx))el('comp-nombre-'+idx).value=c.nombre||'';
+        if(el('comp-precio-'+idx))el('comp-precio-'+idx).value=c.precio||'';
+        if(el('comp-disp-'+idx))el('comp-disp-'+idx).value=c.disp||'';
+        if(el('comp-calidad-'+idx))el('comp-calidad-'+idx).value=c.calidad||'';
+        if(el('comp-pago-'+idx))el('comp-pago-'+idx).value=c.pago||'';
+      });
+    } else if(formId==='actresp-aceptacion'){
+      if(el('ar2-producto'))el('ar2-producto').value=miResp.productoEval||'';
+      if(el('ar2-motivo'))el('ar2-motivo').value=miResp.motivo||'';
+      if(el('ar2-comp-nombre'))el('ar2-comp-nombre').value=miResp.compNombre||'';
+      if(el('ar2-comp-precio'))el('ar2-comp-precio').value=miResp.compPrecio||'';
+      if(el('ar2-obs'))el('ar2-obs').value=miResp.obs||'';
+      (miResp.modelos||[]).forEach(function(m){
+        addModeloRow();
+        var idx=ACTRESP_MODEL_ROWS[ACTRESP_MODEL_ROWS.length-1];
+        if(el('mod-nombre-'+idx))el('mod-nombre-'+idx).value=m.modelo||'';
+        if(el('mod-precio-'+idx))el('mod-precio-'+idx).value=m.precio||'';
+        renderPhotoThumbs('mod'+idx,m.fotos);
+      });
+    } else {
+      if(el('f-nombre'))el('f-nombre').value=miResp.resumen||'';
+      if(el('f-hallazgos'))el('f-hallazgos').value=miResp.hallazgos||'';
+      if(el('f-obs'))el('f-obs').value=miResp.obs||'';
+    }
+  });
+}
+function actTipoLabel(tipo){
+  return tipo==='precios_competencia'?'💰 Precios competencia':(tipo==='aceptacion_producto'?'👍 Aceptación producto':'📝 Genérica');
+}
+function actRespSummary(r){
+  if(r.tipo==='actresp-precios'){
+    var n=(r.competidores||[]).length;
+    return n+' competidor'+(n!==1?'es':'')+' relevado'+(n!==1?'s':'')+(r.productoRef?' — '+r.productoRef:'');
+  }
+  if(r.tipo==='actresp-aceptacion'){
+    var nm=(r.modelos||[]).length;
+    return nm+' modelo'+(nm!==1?'s':'')+' evaluado'+(nm!==1?'s':'')+(r.productoEval?' — '+r.productoEval:'');
+  }
+  return r.resumen||'';
+}
 function renderAdmActList(){
   var w=el('adm-act-list');if(!w)return;
   if(!ACTIVITIES.length){w.innerHTML='<div class="empty-state"><span class="empty-ico">📋</span><h3>Sin actividades</h3><p>Usá el botón para crear una.</p></div>';return;}
@@ -1405,7 +1589,9 @@ function renderAdmActList(){
   w.innerHTML=ACTIVITIES.map(function(a){
     var resp=a.respuestas||[];
     var secsHtml='';
-    if(a.secciones&&a.secciones.length){
+    if(a.contexto){
+      secsHtml='<div style="margin-top:8px;font-size:12px;color:var(--text-2);background:var(--bg);border-radius:var(--r-md);padding:6px 10px;">'+a.contexto+'</div>';
+    } else if(a.secciones&&a.secciones.length){
       secsHtml='<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">';
       a.secciones.forEach(function(s){secsHtml+='<span style="background:var(--purple-50);color:var(--purple-700);font-size:11px;padding:2px 8px;border-radius:10px;">'+s.titulo+'</span>';});
       secsHtml+='</div>';
@@ -1414,15 +1600,15 @@ function renderAdmActList(){
       '<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">'+
       resp.map(function(r){
         return '<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:6px 10px;font-size:11.5px;">'+
-          '<b>'+r.usuario+'</b> &middot; '+r.fecha+(r.resultado?' &middot; '+r.resultado:'')+
-          (r.resumen?'<div style="color:var(--text-3);margin-top:2px;">'+r.resumen+'</div>':'')+
+          '<b>'+r.usuario+'</b> &middot; '+r.fecha+
+          '<div style="color:var(--text-3);margin-top:2px;">'+actRespSummary(r)+'</div>'+
         '</div>';
       }).join('')+
       '</div>':'';
     var done=totalCampo>0&&resp.length>=totalCampo;
     return '<div class="act-card">'+
       '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">'+
-      '<div class="act-title">'+a.titulo+'</div>'+
+      '<div><div class="act-title">'+a.titulo+'</div><span style="font-size:10.5px;color:var(--text-3);">'+actTipoLabel(a.tipoActividad)+'</span></div>'+
       '<span class="act-badge '+(done?'ab-done':'ab-pend')+'">'+resp.length+' / '+(totalCampo||'?')+' respondieron</span></div>'+
       '<div class="act-meta">'+(a.fechaLimite?'<span>📅 '+a.fechaLimite+'</span>':'')+'<span>📋 '+a.fechaCreacion+'</span></div>'+
       secsHtml+respHtml+'</div>';
@@ -1574,11 +1760,87 @@ function calcTotal(){
   var t=0;document.querySelectorAll('[id^="cr-c-"]').forEach(function(e){var i=e.id.replace('cr-c-',''),c=parseFloat(e.value)||0,v=parseFloat((el('cr-v-'+i)||{}).value)||0;t+=c*v;});
   var tb=el('cot-total');if(tb)tb.textContent='Bs '+t.toFixed(2);
 }
-function simPhoto(prefix){
-  var g=el('phgrid-'+prefix);if(!g)return;var n=g.children.length;if(n>=5){alert('Máximo 5 fotos.');return;}
-  var d=document.createElement('div');d.className='photo-thumb';
-  d.innerHTML='<span style="font-size:18px;">📷</span><span>Foto '+(n+1)+'</span><button class="photo-del" onclick="this.parentElement.remove()">✕</button>';
-  g.appendChild(d);
+function photoZoneHtml(prefix){
+  return '<div class="photo-zone" onclick="document.getElementById(\'phinput-'+prefix+'\').click()">'+
+    '<span class="pz-ico">📷</span><p>Toca para capturar foto</p>'+
+    '<input type="file" id="phinput-'+prefix+'" accept="image/*" capture="environment" style="display:none;" onchange="handlePhotoUpload(this,\''+prefix+'\')">'+
+  '</div><div class="photo-grid" id="phgrid-'+prefix+'"></div>';
+}
+function compressImage(file,maxDim,quality){
+  return new Promise(function(resolve,reject){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var img=new Image();
+      img.onload=function(){
+        var w=img.width,h=img.height;
+        if(w>h){if(w>maxDim){h=Math.round(h*maxDim/w);w=maxDim;}}
+        else{if(h>maxDim){w=Math.round(w*maxDim/h);h=maxDim;}}
+        var canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        canvas.toBlob(function(blob){
+          if(blob)resolve(blob);else reject(new Error('No se pudo procesar la imagen.'));
+        },'image/jpeg',quality);
+      };
+      img.onerror=function(){reject(new Error('No se pudo leer la imagen.'));};
+      img.src=e.target.result;
+    };
+    reader.onerror=function(){reject(new Error('No se pudo leer el archivo.'));};
+    reader.readAsDataURL(file);
+  });
+}
+function sbUploadPhoto(path,blob){
+  return fetch(SB_URL+'/storage/v1/object/'+SB_STORAGE_BUCKET+'/'+path,{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'image/jpeg'},
+    body:blob
+  }).then(function(r){
+    if(!r.ok)return r.text().then(function(t){throw new Error(t);});
+    return SB_URL+'/storage/v1/object/public/'+SB_STORAGE_BUCKET+'/'+path;
+  });
+}
+function handlePhotoUpload(input,prefix){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  var g=el('phgrid-'+prefix);if(!g){input.value='';return;}
+  var n=g.children.length;
+  if(n>=5){alert('Máximo 5 fotos.');input.value='';return;}
+  var placeholder=document.createElement('div');
+  placeholder.className='photo-thumb';
+  placeholder.innerHTML='<span style="font-size:10.5px;">Subiendo...</span>';
+  g.appendChild(placeholder);
+  compressImage(file,1280,0.7).then(function(blob){
+    var path=prefix+'/'+Date.now()+'_'+Math.floor(Math.random()*10000)+'.jpg';
+    return sbUploadPhoto(path,blob).then(function(url){
+      PHOTOS[prefix]=PHOTOS[prefix]||[];
+      PHOTOS[prefix].push(url);
+      placeholder.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:cover;border-radius:var(--r-md);">'+
+        '<button class="photo-del" onclick="removePhoto(this,\''+prefix+'\',\''+url+'\')">✕</button>';
+    });
+  }).catch(function(err){
+    placeholder.remove();
+    alert('No se pudo subir la foto: '+(err.message||err));
+  });
+  input.value='';
+}
+function removePhoto(btn,prefix,url){
+  if(PHOTOS[prefix])PHOTOS[prefix]=PHOTOS[prefix].filter(function(u){return u!==url;});
+  var thumb=btn.parentElement;if(thumb)thumb.remove();
+  var marker='/storage/v1/object/public/'+SB_STORAGE_BUCKET+'/';
+  var path=url.indexOf(marker)>-1?url.split(marker)[1]:null;
+  if(path){
+    fetch(SB_URL+'/storage/v1/object/'+SB_STORAGE_BUCKET+'/'+path,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).catch(function(){});
+  }
+}
+function renderPhotoThumbs(prefix,urls){
+  var g=el('phgrid-'+prefix);if(!g)return;
+  PHOTOS[prefix]=(urls||[]).slice();
+  PHOTOS[prefix].forEach(function(url){
+    var d=document.createElement('div');d.className='photo-thumb';
+    d.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:cover;border-radius:var(--r-md);">'+
+      '<button class="photo-del" onclick="removePhoto(this,\''+prefix+'\',\''+url+'\')">✕</button>';
+    g.appendChild(d);
+  });
 }
 
 // ═══════════ COT ITEMS ═══════════
@@ -2567,10 +2829,12 @@ var FORM_BUILDERS={
   scard(2,'Exhibición y presencia de marca','',frow(fpillsR('pg-exhib','Estado de exhibición',['⭐ Excelente','👍 Bueno','⚠ Regular','❌ Deficiente'],'sp'))+frow(fpills('pg-material','Material POP presente',['Cartel luminoso','Afiche / banner','Folletos','Catálogos','Calcomanías','Display','Ninguno']))+frow(fstars('st-visib','Visibilidad de la marca MARTIZENT'))+frow(fpillsR('pg-ubic','Ubicación del producto en el local',['Entrada visible','Zona central','Fondo del local','Almacén / sin exhibición'],'sp'))+frow(ftextarea('f-obs-exhib','Observaciones de exhibición',''))),
   scard(3,'Demanda y stock','',frow(fpillsR('pg-stock','Nivel de stock visible',['Alto — bien surtido','Medio — stock básico','Bajo — casi sin stock','Sin stock'],'sp'))+frow(fpills('pg-dem-prods','Productos más buscados',['Termotanques eléctricos','Termotanques a gas','Cocinas de piso','Cocinas empotradas','Aire acondicionado split','Calefones a gas','Lavarropas','Heladeras','Microondas','Repuestos']))+frow(fpillsR('pg-dem-precio','Sensibilidad al precio',['Solo compra barato','Busca calidad-precio','Prioriza calidad','No importa el precio'],'sp'))+frow(ftextarea('f-dem-obs','Necesidades no cubiertas / quejas frecuentes',''))+frow(ftextarea('f-mejoras','Acciones de mejora recomendadas',''))+fdiv()+fvendedor()),
 ];},
-'productos':function(){return[
+'productos':function(){
+  PHOTOS['pn']=[];
+  return[
   scard(1,'Datos del producto','',frow(finput('f-prod-nombre','Nombre del producto','',true),finput('f-prod-marca','Marca / fabricante','',true))+frowT(fselect('f-prod-cat','Categoría',['Termotanques','Cocinas','Aire acondicionado','Calefones','Lavarropas','Refrigeración','Ferretería','Otro'],true),finput('f-prod-modelo','Modelo / referencia',''),finput('f-prod-origen','País de origen',''))+frow(ftextarea('f-prod-desc','Descripción / características técnicas',''))+frow(fpillsR('pg-prod-tipo','Tipo de relevamiento',['📦 Producto nuevo para MARTIZENT','🔎 Producto de la competencia observado'],'sa'))),
   scard(2,'Precio y proveedor','',frow(finput('f-prod-pcomp','Precio de compra / observado (Bs)','',false,'number'),finput('f-prod-pventa','Precio de venta sugerido (Bs)','',false,'number'))+frow(fpillsR('pg-prod-disp','Disponibilidad en mercado',['Fácil de conseguir','Disponibilidad limitada','Solo por encargo','No disponible aún'],'sa'))+frow(finput('f-prod-prov','Proveedor / tienda donde se observó',''),finput('f-prod-prov-tel','Teléfono del proveedor','',false,'tel'))+frow(finput('f-prod-prov-dir','Dirección / ciudad del proveedor',''),fselect('f-ciudad','Ciudad',CITIES))+frow(fpillsR('pg-prod-vs','Calidad vs. MARTIZENT (si es de competencia)',['Superior','Similar','Inferior','No aplica'],'sc'))+frow(fpillsR('pg-prod-urg','Urgencia de incorporación',['🔴 Alta — demanda activa','🟡 Media — potencial','🟢 Baja — explorar'],'sa'))),
-  scard(3,'Fotos y observaciones','',flabel('Fotos (hasta 5)',false)+'<div class="photo-zone" onclick="simPhoto(\'pn\')" style="margin-top:4px;"><span class="pz-ico">📷</span><p>Toca para capturar foto</p></div><div class="photo-grid" id="phgrid-pn"></div>'+frow(ftextarea('f-prod-obs','Observaciones del vendedor',''))+frow(fstars('st-prod-pot','Potencial de venta estimado'))+fdiv()+fvendedor()),
+  scard(3,'Fotos y observaciones','',flabel('Fotos (hasta 5)',false)+photoZoneHtml('pn')+frow(ftextarea('f-prod-obs','Observaciones del vendedor',''))+frow(fstars('st-prod-pot','Potencial de venta estimado'))+fdiv()+fvendedor()),
 ];},
 'cot-nueva':function(){
   COT_ITEMS=[];COT_REP_ITEMS=[];
@@ -2677,6 +2941,43 @@ var FORM_BUILDERS={
   )];},
 'actividad-resp':function(){return[
   scard(1,'Respuesta a actividad asignada','Completá el informe de la actividad realizada',frow(ftextarea('f-nombre','Resumen de lo realizado','Describir brevemente qué se hizo, dónde y con quién...'))+frow(ftextarea('f-hallazgos','Hallazgos principales','Datos, precios, observaciones encontradas...'))+frow(fpillsR('pg-result','Resultado de la actividad',['✅ Completada satisfactoriamente','🟡 Completada parcialmente','❌ No pudo completarse'],'st'))+frow(ftextarea('f-obs','Observaciones adicionales',''))+fdiv()+fvendedor()),
+];},
+'actresp-precios':function(){
+  ACTRESP_COMP_ROWS=[];
+  PHOTOS['arprecios']=[];
+  return[
+  scard(1,'Precios de la competencia','Relevamiento de precios para un producto similar al solicitado',
+    '<div id="ar-contexto-display" style="background:var(--blue-50);border:1px solid var(--blue-100);border-radius:var(--r-md);padding:8px 12px;font-size:12.5px;color:var(--blue-700);margin-bottom:10px;"></div>'+
+    frow('<div>'+flabel('Producto de referencia',true)+'<input type="text" id="ar-producto" placeholder="Producto que se solicitó investigar"></div>',
+         '<div>'+flabel('Ciudad / zona',false)+'<input type="text" id="ar-zona" placeholder="Ej. Tarija centro"></div>')+
+    '<div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;">'+
+      '<div style="font-size:12px;font-weight:600;color:var(--text-2);">Competidores relevados</div>'+
+      '<button class="btn btn-sm" onclick="addCompetidorRow()" style="font-size:12px;">➕ Agregar competidor</button>'+
+    '</div>'+
+    '<div id="comp-rows-wrap" style="margin-top:8px;"></div>'+
+    frow(fpillsR('ar-confianza','Nivel de confianza del dato',['👁️ Visto en tienda','🗣️ Me lo informaron','📊 Estimado'],'st'))+
+    '<div class="frow full"><div>'+flabel('Fotos (hasta 5)',false)+
+      photoZoneHtml('arprecios')+
+      '</div></div>'+
+    frow(ftextarea('ar-obs','Observaciones generales',''))+
+    fdiv()+fvendedor()),
+];},
+'actresp-aceptacion':function(){
+  ACTRESP_MODEL_ROWS=[];
+  return[
+  scard(1,'Aceptación de producto','Evaluación de un producto: características, modelos y precio referencial',
+    '<div id="ar-contexto-display" style="background:var(--blue-50);border:1px solid var(--blue-100);border-radius:var(--r-md);padding:8px 12px;font-size:12.5px;color:var(--blue-700);margin-bottom:10px;"></div>'+
+    frow(ftextarea('ar2-producto','Producto evaluado','Nombre y características generales del producto...'))+
+    '<div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;">'+
+      '<div style="font-size:12px;font-weight:600;color:var(--text-2);">Modelos / variantes evaluadas</div>'+
+      '<button class="btn btn-sm" onclick="addModeloRow()" style="font-size:12px;">➕ Agregar modelo</button>'+
+    '</div>'+
+    '<div id="mod-rows-wrap" style="margin-top:8px;"></div>'+
+    frow(ftextarea('ar2-motivo','Motivo de aceptación o rechazo','Por qué el cliente/punto de venta aceptaría o no este producto...'))+
+    frow('<div>'+flabel('Producto propio similar (comparación)',false)+'<input type="text" id="ar2-comp-nombre" placeholder="Nombre del producto que ya vendemos"></div>',
+         '<div>'+flabel('Precio actual de ese producto (Bs)',false)+'<input type="number" id="ar2-comp-precio" placeholder="0"></div>')+
+    frow(ftextarea('ar2-obs','Observaciones',''))+
+    fdiv()+fvendedor()),
 ];},
 };
 
@@ -3136,7 +3437,9 @@ function renderInvMercado(){
       var resp=a.respuestas||[];
       var miRespuesta=resp.filter(function(r){return r.usuario===SESSION.user;}).pop();
       var secsHtml='';
-      if(a.secciones&&a.secciones.length){
+      if(a.contexto){
+        secsHtml='<div style="margin-top:10px;font-size:12px;color:var(--text-2);background:var(--bg);border-radius:var(--r-md);padding:8px 10px;">'+a.contexto+'</div>';
+      } else if(a.secciones&&a.secciones.length){
         secsHtml='<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">'+
           a.secciones.map(function(s){
             return '<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 10px;">'+
@@ -3152,13 +3455,14 @@ function renderInvMercado(){
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
           '<div>'+
             '<div style="font-size:13.5px;font-weight:600;">'+a.titulo+'</div>'+
+            '<div style="font-size:10.5px;color:var(--text-3);margin-top:1px;">'+actTipoLabel(a.tipoActividad)+'</div>'+
             '<div style="font-size:11px;color:var(--text-3);margin-top:2px;">'+(a.fechaLimite?'Vence: '+a.fechaLimite:'Sin fecha l\u00EDmite')+'</div>'+
           '</div>'+
           (miRespuesta?'<span class="act-badge ab-done">&#9989; Completada</span>':'<span class="act-badge ab-pend">Pendiente</span>')+
         '</div>'+
         secsHtml+
         (miRespuesta?
-          '<div style="margin-top:10px;font-size:11.5px;color:var(--text-3);">Respondida el '+miRespuesta.fecha+(miRespuesta.resultado?' &middot; '+miRespuesta.resultado:'')+'</div>'+
+          '<div style="margin-top:10px;font-size:11.5px;color:var(--text-3);">Respondida el '+miRespuesta.fecha+' &middot; '+actRespSummary(miRespuesta)+'</div>'+
           '<div style="margin-top:6px;"><button class="btn btn-sm" onclick="responderActividad('+a.id+')">&#9999;&#65039; Editar respuesta</button></div>':
           '<div style="margin-top:10px;"><button class="btn btn-primary btn-sm" onclick="responderActividad('+a.id+')">&#9999;&#65039; Completar actividad</button></div>'
         )+
