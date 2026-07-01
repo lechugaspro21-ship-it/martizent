@@ -64,13 +64,31 @@ textarea{resize:vertical;min-height:68px;line-height:1.5;}
 .hcard:hover{border-color:var(--border-md);transform:translateY(-2px);}
 .hcard:active{transform:scale(.98);}
 .hcard-bar{position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;}
-.hc-blue .hcard-bar{background:var(--blue-500);}.hc-teal .hcard-bar{background:var(--teal-400);}.hc-purple .hcard-bar{background:var(--purple-400);}.hc-amber .hcard-bar{background:var(--amber-400);}
+.hc-blue .hcard-bar{background:var(--blue-500);}.hc-teal .hcard-bar{background:var(--teal-400);}.hc-purple .hcard-bar{background:var(--purple-400);}.hc-amber .hcard-bar{background:var(--amber-400);}.hc-coral .hcard-bar{background:var(--coral-400);}
 .hcard-icon{width:44px;height:44px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:22px;margin-top:4px;}
-.hc-blue .hcard-icon{background:var(--blue-50);}.hc-teal .hcard-icon{background:var(--teal-50);}.hc-purple .hcard-icon{background:var(--purple-50);}.hc-amber .hcard-icon{background:var(--amber-50);}
+.hc-blue .hcard-icon{background:var(--blue-50);}.hc-teal .hcard-icon{background:var(--teal-50);}.hc-purple .hcard-icon{background:var(--purple-50);}.hc-amber .hcard-icon{background:var(--amber-50);}.hc-coral .hcard-icon{background:var(--coral-50);}
 .hcard h3{font-size:14px;font-weight:600;}.hcard p{font-size:12px;color:var(--text-2);line-height:1.5;}
 .hcard-foot{display:flex;align-items:center;justify-content:space-between;margin-top:4px;}
 .tag{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500;}
-.tag-blue{background:var(--blue-50);color:var(--blue-700);}.tag-teal{background:var(--teal-50);color:var(--teal-800);}.tag-purple{background:var(--purple-50);color:var(--purple-700);}.tag-amber{background:var(--amber-50);color:var(--amber-800);}
+.tag-blue{background:var(--blue-50);color:var(--blue-700);}.tag-teal{background:var(--teal-50);color:var(--teal-800);}.tag-purple{background:var(--purple-50);color:var(--purple-700);}.tag-amber{background:var(--amber-50);color:var(--amber-800);}.tag-coral{background:var(--coral-50);color:var(--coral-600);}
+/* ═══ LICITACIONES ═══ */
+.lic-grid{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:14px;align-items:start;}
+@media(max-width:900px){.lic-grid{grid-template-columns:1fr;}}
+.lic-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;}
+.lic-box h3{font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text-2);}
+.lic-item{border:1px solid var(--border);border-radius:var(--r-md);padding:10px;margin-bottom:10px;position:relative;}
+.lic-item input{width:100%;margin-bottom:6px;}
+.lic-item .lic-rm{position:absolute;top:6px;right:6px;background:none;border:none;color:var(--red-600);cursor:pointer;font-size:14px;}
+.lic-item label{display:block;font-size:10.5px;color:var(--text-3);margin-bottom:2px;}
+.lic-kpi{background:var(--coral-50);border:1px solid var(--coral-400);border-radius:var(--r-md);padding:10px 12px;margin-bottom:10px;}
+.lic-kpi .lk-l{font-size:11px;color:var(--coral-600);font-weight:600;}
+.lic-kpi .lk-v{font-size:17px;font-weight:700;color:var(--coral-600);margin-top:2px;}
+.lic-subrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+.lic-subrow input{width:110px;text-align:right;}
+.lic-tax-table{width:100%;border-collapse:collapse;font-size:12px;}
+.lic-tax-table th{text-align:left;font-size:10.5px;color:var(--text-3);padding:4px 6px;border-bottom:1px solid var(--border);}
+.lic-tax-table td{padding:6px;border-bottom:1px solid var(--border);}
+.lic-tax-table input{width:90px;}
 .sec-header{background:var(--surface);border:1px solid var(--border);border-radius:0 var(--r-lg) var(--r-lg) 0;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:12px;}
 .sec-icon{width:40px;height:40px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
 .sec-header h2{font-size:15px;font-weight:600;}.sec-header p{font-size:11.5px;color:var(--text-3);margin-top:2px;}
@@ -226,6 +244,7 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
 
         <div class="hcard hc-teal" onclick="showMain('cotizaciones')"><div class="hcard-bar"></div><div class="hcard-icon">📋</div><h3>Cotizaciones</h3><p>Crear cotizaciones, productos y ver historial completo.</p><div class="hcard-foot"><span class="tag tag-teal">Ventas</span><span style="color:var(--text-3)">›</span></div></div>
         <div class="hcard hc-purple" onclick="showMain('admin')"><div class="hcard-bar"></div><div class="hcard-icon">🛡️</div><h3>Administrador</h3><p>Informes recibidos, actividades y personal.</p><div class="hcard-foot"><span class="tag tag-purple">Gestión</span><span style="color:var(--text-3)">›</span></div></div>
+        <div class="hcard hc-coral" id="hc-lic-admin" onclick="showMain('licitaciones')" style="display:none;"><div class="hcard-bar"></div><div class="hcard-icon">📐</div><h3>Licitaciones</h3><p>Cálculo de costos y utilidad para procesos de licitación.</p><div class="hcard-foot"><span class="tag tag-coral">Licitaciones</span><span style="color:var(--text-3)">›</span></div></div>
       </div>
     </div>
     <!-- HOME USER -->
@@ -236,6 +255,7 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
         <div class="hcard hc-teal" onclick="showMain('cotizaciones')"><div class="hcard-bar"></div><div class="hcard-icon">📋</div><h3>Cotizaciones</h3><p>Crear cotizaciones y ver tu historial.</p><div class="hcard-foot"><span class="tag tag-teal">Ventas</span><span style="color:var(--text-3)">›</span></div></div>
         <div class="hcard hc-blue" onclick="showMain('inv-mercado')"><div class="hcard-bar"></div><div class="hcard-icon">📊</div><h3>Inv. de mercado</h3><p>Investigación de mercado y actividades.</p><div class="hcard-foot"><span class="tag tag-blue">Análisis</span><span style="color:var(--text-3)">›</span></div></div>
         <div class="hcard hc-amber" onclick="showMain('creditos-user')"><div class="hcard-bar"></div><div class="hcard-icon">💳</div><h3>Créditos</h3><p>Créditos asignados y cobranza pendiente.</p><div class="hcard-foot"><span class="tag tag-amber">Cobranza</span><span style="color:var(--text-3)">›</span></div></div>
+        <div class="hcard hc-coral" id="hc-lic-user" onclick="showMain('licitaciones')" style="display:none;"><div class="hcard-bar"></div><div class="hcard-icon">📐</div><h3>Licitaciones</h3><p>Cálculo de costos y utilidad para procesos de licitación.</p><div class="hcard-foot"><span class="tag tag-coral">Licitaciones</span><span style="color:var(--text-3)">›</span></div></div>
       </div>
     </div>
     <!-- MERCADO -->
@@ -274,6 +294,64 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
         <div><h2>Mis créditos</h2><p>Créditos asignados a tu cartera — priorizá los que est\u00E1n en mora</p></div>
       </div>
       <div id="creditos-user-list" style="margin-top:1rem;"></div>
+    </div>
+
+    <!-- LICITACIONES -->
+    <div id="sc-licitaciones" class="screen">
+      <div class="sec-header" style="border-left:3px solid var(--coral-400);">
+        <div class="sec-icon" style="background:var(--coral-50);">📐</div>
+        <div><h2>PROCEDIMIENTO DE LICITACIONES</h2><p>Cálculo de costos, impuestos y utilidad para una licitación</p></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;" id="lic-actionbar">
+        <div style="font-size:13.5px;font-weight:600;" id="lic-form-title">Nueva licitación</div>
+        <button class="btn btn-primary btn-sm" id="lic-newbtn" onclick="licNewLicitacion()">➕ Agregar licitación</button>
+      </div>
+      <div id="lic-form-wrap" style="display:none;">
+        <div class="lic-box" style="margin-bottom:14px;">
+          <div class="frow">
+            <div><label class="flabel">Nombre de la licitación <span class="req">*</span></label><input type="text" id="lic-nombre" placeholder="Ej. Licitación Hospital San Juan de Dios"></div>
+            <div><label class="flabel">Costo capital mensual (%)</label><input type="number" step="0.01" id="lic-costo-capital" value="0" oninput="licRecalc()"></div>
+          </div>
+          <div class="frow" style="margin-top:12px;">
+            <div><label class="flabel">Costo boleta mensual (%)</label><input type="number" step="0.01" id="lic-costo-boleta" value="0" oninput="licRecalc()"></div>
+            <div><label class="flabel">% IUE</label><input type="number" step="0.01" id="lic-iue" value="25" oninput="licRecalc()"></div>
+          </div>
+        </div>
+        <div class="lic-grid">
+          <!-- SECCION 1: ARTICULOS (fija) -->
+          <div class="lic-box">
+            <h3>📦 Artículos</h3>
+            <div id="lic-items-wrap"></div>
+            <button class="btn btn-sm btn-primary" style="width:100%;" onclick="licAddItem()">➕ Agregar artículo</button>
+          </div>
+          <!-- SECCION 2: PESTAÑAS (gastos / impuestos / precio de venta) -->
+          <div class="lic-box">
+            <div class="admin-tabs">
+              <button class="admin-tab active" id="lic-tabbtn-gastos" onclick="licTab('gastos')">💰 Gastos</button>
+              <button class="admin-tab" id="lic-tabbtn-impuestos" onclick="licTab('impuestos')">🧾 Impuestos</button>
+              <button class="admin-tab" id="lic-tabbtn-venta" onclick="licTab('venta')">💵 Precio de venta</button>
+            </div>
+            <div id="lic-panel-gastos"></div>
+            <div id="lic-panel-impuestos" style="display:none;"></div>
+            <div id="lic-panel-venta" style="display:none;"></div>
+          </div>
+          <!-- SECCION 3: RESULTADOS (fija) -->
+          <div class="lic-box">
+            <h3>📊 Resultados</h3>
+            <div id="lic-resultados"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="btn btn-success" onclick="licSaveLicitacion()">💾 Guardar licitación</button>
+          <button class="btn" onclick="licCancelForm()">Cancelar</button>
+          <span id="lic-save-error" style="font-size:12px;color:var(--red-600);align-self:center;"></span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:1.5rem 0 10px;">
+        <div style="font-size:13.5px;font-weight:600;">Historial de licitaciones</div>
+        <span style="font-size:11.5px;color:var(--text-3);" id="lic-hist-count"></span>
+      </div>
+      <div id="lic-hist-list"></div>
     </div>
 
     <!-- COTIZACIONES -->
@@ -346,6 +424,7 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
         <button class="admin-tab" onclick="adminTab(this,'adm-catalogo')">📦 Productos</button>
         <button class="admin-tab" onclick="adminTab(this,'adm-repuestos')">🔧 Repuestos</button>
         <button class="admin-tab" onclick="adminTab(this,'adm-creditos')">💳 Créditos</button>
+        <button class="admin-tab" onclick="adminTab(this,'adm-licitaciones')">📐 Licitaciones</button>
         <button class="admin-tab" onclick="adminTab(this,'adm-personal')">👥 Personal</button>
       </div>
       <!-- INFORMES -->
@@ -507,6 +586,14 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
         <div style="font-size:14px;font-weight:600;margin-bottom:14px;">Créditos en mora por usuario</div>
         <div id="creditos-list"></div>
       </div>
+      <!-- LICITACIONES (admin, todas) -->
+      <div id="adm-licitaciones" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:14px;font-weight:600;">Todas las licitaciones</div>
+          <input type="text" id="adm-lic-search" placeholder="🔍 Buscar por usuario o nombre..." oninput="renderAdminLicitacionesFiltered()" style="max-width:260px;">
+        </div>
+        <div id="adm-lic-list"></div>
+      </div>
       <!-- PERSONAL -->
       <div id="adm-personal" style="display:none;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -518,6 +605,7 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
           <div class="frow"><div><label class="flabel">Nombre <span class="req">*</span></label><input type="text" id="nu-nombre" placeholder="Nombre y apellido"></div><div><label class="flabel">Usuario <span class="req">*</span></label><input type="text" id="nu-user" placeholder="nombre.apellido" autocomplete="off"></div></div>
           <div class="frow" style="margin-top:12px;"><div><label class="flabel">Contraseña <span class="req">*</span></label><input type="password" id="nu-pass" autocomplete="new-password" placeholder="Mínimo 6 caracteres"></div><div><label class="flabel">Rol</label><select id="nu-rol"><option value="user">Usuario de campo</option><option value="admin">Administrador</option></select></div></div>
           <div class="frow" style="margin-top:12px;"><div><label class="flabel">Sucursal</label><select id="nu-suc"><option value="—">—</option><option>Tarija</option><option>Cochabamba</option><option>Santa Cruz</option><option>La Paz</option></select></div><div style="display:flex;align-items:flex-end;gap:8px;"><button class="btn btn-success" onclick="addUser()" style="flex:1;">Guardar</button><button class="btn" onclick="toggleAddUser()">Cancelar</button></div></div>
+          <div style="margin-top:12px;font-size:13px;"><input type="checkbox" id="nu-lic" style="width:16px;height:16px;vertical-align:middle;"> <label for="nu-lic" style="vertical-align:middle;">📐 Habilitar módulo de Licitaciones</label></div>
           <div id="nu-error" style="font-size:12px;color:var(--red-600);margin-top:8px;"></div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-top:10px;">
@@ -729,14 +817,14 @@ function doLogin(){
   console.log('Logging in user:', u);
   sbLogin(u,p).then(function(usr){
     console.log('Login success:', JSON.stringify(usr));
-    SESSION={user:usr.user_name,nombre:usr.nombre||usr.user_name,rol:usr.rol||'user',sucursal:usr.sucursal||'\u2014'};
+    SESSION={user:usr.user_name,nombre:usr.nombre||usr.user_name,rol:usr.rol||'user',sucursal:usr.sucursal||'\u2014',licitaciones:!!usr.licitaciones};
     var lp=el('login-page');if(lp)lp.style.display='none';
     if(btn)btn.textContent='Ingresar';
     // Wait for overrides to load BEFORE showing home, so prices/fpct are correct
     Promise.all([
       sbLoadOverrides().catch(function(e){console.warn('Override load failed:',e);}),
       sbFetch('usuarios?select=*').then(function(rows){
-        USERS=(rows||[]).map(function(r){return {user:r.user_name,pass:r.pass,nombre:r.nombre||r.user_name,rol:r.rol||'user',sucursal:r.sucursal||'\u2014'};});
+        USERS=(rows||[]).map(function(r){return {user:r.user_name,pass:r.pass,nombre:r.nombre||r.user_name,rol:r.rol||'user',sucursal:r.sucursal||'\u2014',licitaciones:!!r.licitaciones};});
       }).catch(function(){}),
       sbLoadCotizaciones(SESSION.user,SESSION.rol).then(function(cots){COTIZACIONES=cots||[];}).catch(function(e){console.warn('Cot load failed:',e);}),
       sbLoadActivities().catch(function(e){console.warn('Activities load failed:',e);}),
@@ -763,8 +851,11 @@ function buildNav(){
   var tabs=[{id:'home',l:'🏠 Inicio'},{id:'cotizaciones',l:'📋 Cotizaciones'}];
   if(!isAdmin) tabs.push({id:'inv-mercado',l:'📊 Inv. Mercado'});
   if(!isAdmin) tabs.push({id:'creditos-user',l:'💳 Créditos'});
+  if(SESSION.licitaciones) tabs.push({id:'licitaciones',l:'📐 Licitaciones'});
   if(isAdmin) tabs.push({id:'admin',l:'🛡️ Administrador'});
   el('nav-bar').innerHTML=tabs.map(function(t){return '<button class="nav-tab" onclick="showMain(\''+t.id+'\')" id="nt-'+t.id+'">'+t.l+'</button>';}).join('');
+  var hcA=el('hc-lic-admin');if(hcA)hcA.style.display=SESSION.licitaciones?'flex':'none';
+  var hcU=el('hc-lic-user');if(hcU)hcU.style.display=SESSION.licitaciones?'flex':'none';
 }
 function showHome(){
   var lp=el('login-page');if(lp)lp.style.display='none';
@@ -785,6 +876,7 @@ function showMain(id){
   if(id==='cotizaciones') renderCotizaciones();
   if(id==='inv-mercado'){renderInvMercado();}
   if(id==='creditos-user'){renderCreditosUser();}
+  if(id==='licitaciones'){renderLicitaciones();}
   if(id==='admin') renderAdmin();
 }
 function curTab(){var a=document.querySelector('.nav-tab.active');return a?a.id.replace('nt-',''):'home';}
@@ -1889,7 +1981,7 @@ function renderReports(filter){
 function toggleReport(id){var d=el('rd-'+id);if(d)d.classList.toggle('open');var r=REPORTS.find(function(x){return x.id===id;});if(r&&!r.leido){r.leido=true;var b=el('rbadge-'+id);if(b){b.textContent='Leído';b.className='rbadge rb-read';}updateStats();}}
 function adminTab(btn,panel){
   document.querySelectorAll('.admin-tab').forEach(function(t){t.classList.remove('active');});btn.classList.add('active');
-  ['adm-informes','adm-actividades','adm-catalogo','adm-repuestos','adm-creditos','adm-personal'].forEach(function(p){var e=el(p);if(e)e.style.display=p===panel?'block':'none';});
+  ['adm-informes','adm-actividades','adm-catalogo','adm-repuestos','adm-creditos','adm-licitaciones','adm-personal'].forEach(function(p){var e=el(p);if(e)e.style.display=p===panel?'block':'none';});
   if(panel==='adm-actividades'){
     ADM_ACT_VIEW={level:'root'};
     Promise.all([sbLoadActivities().catch(function(){}),sbLoadSolicitudes().catch(function(){})]).then(function(){renderAdmActList();});
@@ -1898,6 +1990,7 @@ function adminTab(btn,panel){
   if(panel==='adm-catalogo') renderAdmCatalog();
   if(panel==='adm-repuestos') renderRepuestos();
   if(panel==='adm-creditos') renderCreditos();
+  if(panel==='adm-licitaciones') renderAdminLicitaciones();
   if(panel==='adm-personal') renderUserTable();
 }
 
@@ -1915,7 +2008,7 @@ function renderUserTable(){
   tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:1rem;color:var(--text-3);">Cargando...</td></tr>';
   sbFetch('usuarios?select=*&order=created_at.asc')
     .then(function(rows){
-      USERS=(rows||[]).map(function(r){return {user:r.user_name,pass:r.pass,nombre:r.nombre||r.user_name,rol:r.rol||'user',sucursal:r.sucursal||'—'};});
+      USERS=(rows||[]).map(function(r){return {user:r.user_name,pass:r.pass,nombre:r.nombre||r.user_name,rol:r.rol||'user',sucursal:r.sucursal||'—',licitaciones:!!r.licitaciones};});
       if(!USERS.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--text-3);">Sin usuarios</td></tr>';return;}
       var sucOpts=['—','Tarija','Cochabamba','Santa Cruz','La Paz'];
       tbody.innerHTML=USERS.map(function(u,i){
@@ -1925,7 +2018,7 @@ function renderUserTable(){
           '<button class="btn btn-sm" style="color:var(--red-600);border-color:var(--red-400);" onclick="deleteUser('+i+')">&#128465;</button>';
         var sucSelect='<select id="ue-suc-'+i+'">'+sucOpts.map(function(s){return '<option value="'+s+'"'+(s===u.sucursal?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';
         return '<tr id="urow-'+i+'">'+
-          '<td><div style="display:flex;align-items:center;gap:8px;"><div class="u-avatar">'+u.nombre.charAt(0).toUpperCase()+'</div>'+u.user+'</div></td>'+
+          '<td><div style="display:flex;align-items:center;gap:8px;"><div class="u-avatar">'+u.nombre.charAt(0).toUpperCase()+'</div>'+u.user+(u.licitaciones?' <span title="Licitaciones habilitado">📐</span>':'')+'</div></td>'+
           '<td>'+u.nombre+'</td>'+
           '<td><span class="tag '+(u.rol==='admin'?'tag-blue':'tag-green')+'">'+u.rol+'</span></td>'+
           '<td>'+(u.sucursal||'—')+'</td>'+
@@ -1941,6 +2034,7 @@ function renderUserTable(){
             '<button class="btn btn-success btn-sm" onclick="saveEditUser('+i+')">&#10003;</button>'+
             '<button class="btn btn-sm" onclick="toggleEditUser('+i+')">&#10005;</button>'+
           '</div></div>'+
+          '<div style="margin-top:10px;font-size:12.5px;"><input type="checkbox" id="ue-lic-'+i+'" style="width:15px;height:15px;vertical-align:middle;"'+(u.licitaciones?' checked':'')+'> <label for="ue-lic-'+i+'" style="vertical-align:middle;">📐 Habilitar módulo de Licitaciones</label></div>'+
           '<div id="ue-error-'+i+'" style="color:var(--red-600);font-size:12px;margin-top:6px;"></div>'+
         '</td></tr>';
       }).join('');
@@ -1955,16 +2049,17 @@ function saveEditUser(i){
   var rol=u.user==='admin'?'admin':(el('ue-rol-'+i)||{}).value;
   var suc=(el('ue-suc-'+i)||{}).value||'—';
   var pass=(el('ue-pass-'+i)||{}).value;
+  var lic=(el('ue-lic-'+i)||{}).checked||false;
   var errEl=el('ue-error-'+i);
   if(!nombre){if(errEl)errEl.textContent='El nombre no puede estar vac\u00EDo.';return;}
   if(pass&&pass.length<3){if(errEl)errEl.textContent='La nueva contrase\u00F1a es muy corta.';return;}
   if(errEl)errEl.textContent='Guardando...';
-  var patch={nombre:nombre,rol:rol,sucursal:suc};
+  var patch={nombre:nombre,rol:rol,sucursal:suc,licitaciones:lic};
   if(pass)patch.pass=pass;
   sbFetch('usuarios?user_name=eq.'+encodeURIComponent(u.user),'PATCH',patch)
     .then(function(){
-      u.nombre=nombre;u.rol=rol;u.sucursal=suc;if(pass)u.pass=pass;
-      if(SESSION&&SESSION.user===u.user){SESSION.nombre=nombre;SESSION.sucursal=suc;SESSION.rol=rol;}
+      u.nombre=nombre;u.rol=rol;u.sucursal=suc;u.licitaciones=lic;if(pass)u.pass=pass;
+      if(SESSION&&SESSION.user===u.user){SESSION.nombre=nombre;SESSION.sucursal=suc;SESSION.rol=rol;SESSION.licitaciones=lic;buildNav();}
       renderUserTable();
     }).catch(function(err){
       console.error('Error al editar usuario:', err);
@@ -1978,16 +2073,17 @@ function addUser(){
   var pass=(el('nu-pass')||{}).value;
   var rol=(el('nu-rol')||{}).value;
   var suc=(el('nu-suc')||{}).value||'—';
+  var lic=(el('nu-lic')||{}).checked||false;
   var errEl=el('nu-error');
   if(!nombre||!user||!pass){if(errEl)errEl.textContent='Completá nombre, usuario y contraseña.';return;}
   if(pass.length<3){if(errEl)errEl.textContent='Contraseña muy corta.';return;}
   if(USERS.find(function(u){return u.user===user;})){if(errEl)errEl.textContent='Ese usuario ya existe.';return;}
   if(errEl)errEl.textContent='Guardando...';
-  sbFetch('usuarios','POST',{user_name:user,pass:pass,nombre:nombre,rol:rol,sucursal:suc})
+  sbFetch('usuarios','POST',{user_name:user,pass:pass,nombre:nombre,rol:rol,sucursal:suc,licitaciones:lic})
     .then(function(res){
-      var newUser={user:user,pass:pass,nombre:nombre,rol:rol,sucursal:suc};
+      var newUser={user:user,pass:pass,nombre:nombre,rol:rol,sucursal:suc,licitaciones:lic};
       USERS.push(newUser);
-      el('nu-nombre').value='';el('nu-user').value='';el('nu-pass').value='';
+      el('nu-nombre').value='';el('nu-user').value='';el('nu-pass').value='';el('nu-lic').checked=false;
       if(errEl)errEl.textContent='';
       toggleAddUser();
       renderUserTable();
@@ -1997,6 +2093,366 @@ function addUser(){
     });
 }
 function delUser(i){if(USERS[i].user==='admin')return;if(confirm('¿Eliminar a '+USERS[i].nombre+'?')){USERS.splice(i,1);renderUserTable();}}
+
+// ═══════════ LICITACIONES ═══════════
+var LIC_ITEMS=[];
+var LIC_SEQ=0;
+var LIC_INITIALIZED=false;
+var LIC_CURRENT_ID=null;
+var LIC_HIST=[];
+var ADM_LIC=[];
+var LIC_LAST_SUMMARY={};
+function setTxt(id,txt){var e=el(id);if(e)e.textContent=txt;}
+function escAttr(s){return (s==null?'':(''+s)).replace(/"/g,'&quot;');}
+function licItemRowHtml(id,v){
+  v=v||{};
+  return '<div class="lic-item" id="lic-item-'+id+'">'+
+    '<button type="button" class="lic-rm" onclick="licRemoveItem('+id+')" title="Quitar artículo">✕</button>'+
+    '<label>Artículo</label><input type="text" id="lic-art-'+id+'" placeholder="Nombre del artículo" value="'+escAttr(v.articulo)+'" oninput="licRecalc()">'+
+    '<label>Cantidad</label><input type="number" id="lic-cant-'+id+'" value="'+(v.cantidad||0)+'" oninput="licRecalc()">'+
+    '<label>Costo / Facturado (Bs)</label>'+
+    '<div style="display:flex;gap:6px;">'+
+      '<input type="number" id="lic-costo-'+id+'" placeholder="Costo" value="'+(v.costo||0)+'" style="margin-bottom:0;" oninput="licRecalc()">'+
+      '<input type="number" id="lic-fact-'+id+'" placeholder="Facturado" value="'+(v.facturado||0)+'" style="margin-bottom:0;" oninput="licRecalc()">'+
+    '</div>'+
+    '<label style="margin-top:6px;">Otros gastos (Bs)</label><input type="number" id="lic-otros-'+id+'" value="'+(v.otros||0)+'" oninput="licRecalc()">'+
+  '</div>';
+}
+function licTaxRowHtml(id){
+  return '<tr id="lic-tax-row-'+id+'"><td id="lic-tax-art-'+id+'">—</td><td id="lic-iva-'+id+'">0.00</td><td id="lic-it-'+id+'">0.00</td><td id="lic-iue-'+id+'">0.00</td></tr>';
+}
+function licVentaRowHtml(id,v){
+  v=v||{};
+  return '<tr id="lic-venta-row-'+id+'"><td id="lic-venta-art-'+id+'">—</td>'+
+    '<td><input type="number" id="lic-presup-'+id+'" value="'+(v.presup||0)+'" oninput="licRecalc()"></td>'+
+    '<td><input type="number" id="lic-pventa-'+id+'" value="'+(v.pventa||0)+'" oninput="licRecalc()"></td>'+
+    '<td id="lic-cu-'+id+'">0.00</td><td id="lic-ct-'+id+'">0.00</td><td id="lic-dif-'+id+'">0.00</td></tr>';
+}
+function licAddItem(v){
+  LIC_SEQ++;var id=LIC_SEQ;LIC_ITEMS.push(id);
+  var wrap=el('lic-items-wrap');if(wrap)wrap.insertAdjacentHTML('beforeend',licItemRowHtml(id,v));
+  var taxb=el('lic-tax-tbody');if(taxb)taxb.insertAdjacentHTML('beforeend',licTaxRowHtml(id));
+  var venb=el('lic-venta-tbody');if(venb)venb.insertAdjacentHTML('beforeend',licVentaRowHtml(id,v));
+  licRecalc();
+}
+function licRemoveItem(id){
+  LIC_ITEMS=LIC_ITEMS.filter(function(x){return x!==id;});
+  ['lic-item-'+id,'lic-tax-row-'+id,'lic-venta-row-'+id].forEach(function(elId){var e=el(elId);if(e)e.remove();});
+  licRecalc();
+}
+function licClearItemsDom(){
+  var wrap=el('lic-items-wrap');if(wrap)wrap.innerHTML='';
+  var taxb=el('lic-tax-tbody');if(taxb)taxb.innerHTML='';
+  var venb=el('lic-venta-tbody');if(venb)venb.innerHTML='';
+  LIC_ITEMS=[];
+}
+function licTab(panel){
+  ['gastos','impuestos','venta'].forEach(function(p){
+    var pe=el('lic-panel-'+p);if(pe)pe.style.display=(p===panel?'block':'none');
+    var be=el('lic-tabbtn-'+p);if(be)be.classList.toggle('active',p===panel);
+  });
+}
+function licGastosPanelHtml(){
+  return '<h4 style="font-size:12.5px;font-weight:700;margin-bottom:8px;">Comisiones</h4>'+
+    '<div class="lic-subrow"><span>% sobre venta total</span><input type="number" id="lic-comision-pct" value="0" oninput="licRecalc()"></div>'+
+    '<div class="lic-subrow"><span>Monto comisión (Bs)</span><b id="lic-comision-monto">0.00</b></div>'+
+    '<h4 style="font-size:12.5px;font-weight:700;margin:14px 0 8px;">Gastos de personal</h4>'+
+    '<div class="lic-subrow"><span>Viáticos diarios (Bs)</span><input type="number" id="lic-viaticos" value="0" oninput="licRecalc()"></div>'+
+    '<div class="lic-subrow"><span>Pago diario (Bs)</span><input type="number" id="lic-pago" value="0" oninput="licRecalc()"></div>'+
+    '<div class="lic-subrow"><span>N° de personas</span><input type="number" id="lic-npersonas" value="0" oninput="licRecalc()"></div>'+
+    '<div class="lic-subrow"><span>N° de días</span><input type="number" id="lic-ndias" value="0" oninput="licRecalc()"></div>'+
+    '<div class="lic-subrow"><span>Total gastos personal (Bs)</span><b id="lic-personal-monto">0.00</b></div>'+
+    '<h4 style="font-size:12.5px;font-weight:700;margin:14px 0 8px;">Gastos de documentación (boletas de garantía)</h4>'+
+    '<div class="lic-subrow"><span>V. seriedad — meses / monto</span><span style="display:flex;gap:6px;"><input type="number" id="lic-doc-meses-1" value="0" style="width:52px;" oninput="licRecalc()"><input type="number" id="lic-doc-monto-1" value="0" style="width:75px;" oninput="licRecalc()"></span></div>'+
+    '<div class="lic-subrow"><span>V. cumplimiento — meses / monto</span><span style="display:flex;gap:6px;"><input type="number" id="lic-doc-meses-2" value="0" style="width:52px;" oninput="licRecalc()"><input type="number" id="lic-doc-monto-2" value="0" style="width:75px;" oninput="licRecalc()"></span></div>'+
+    '<div class="lic-subrow"><span>V. garantía funcionamiento — meses / monto</span><span style="display:flex;gap:6px;"><input type="number" id="lic-doc-meses-3" value="0" style="width:52px;" oninput="licRecalc()"><input type="number" id="lic-doc-monto-3" value="0" style="width:75px;" oninput="licRecalc()"></span></div>'+
+    '<div class="lic-subrow"><span>Total documentación (Bs)</span><b id="lic-docs-total">0.00</b></div>'+
+    '<h4 style="font-size:12.5px;font-weight:700;margin:14px 0 8px;">Otros gastos</h4>'+
+    '<div class="lic-subrow"><span>Firma de contratos (Bs)</span><input type="number" id="lic-firma" value="0" oninput="licRecalc()"></div>'+
+    '<div class="lic-subrow"><span>Otros gastos (Bs)</span><input type="number" id="lic-otrosg" value="0" oninput="licRecalc()"></div>'+
+    '<div class="lic-subrow"><span>Total otros gastos (Bs)</span><b id="lic-otros-total">0.00</b></div>'+
+    '<h4 style="font-size:12.5px;font-weight:700;margin:14px 0 8px;">Costo de la inversión</h4>'+
+    '<div class="lic-subrow"><span>INVERSIÓN (costo ítems + gastos)</span><b id="lic-inversion-monto">0.00</b></div>'+
+    '<div class="lic-subrow"><span>Tiempo de cobro (meses)</span><input type="number" id="lic-tiempocobro" value="0" oninput="licRecalc()"></div>'+
+    '<div class="lic-subrow"><span>Costo de la inversión (Bs)</span><b id="lic-costoinversion-monto">0.00</b></div>'+
+    '<div class="lic-subrow" style="border-bottom:none;font-weight:700;"><span>Total gastos generales (Bs)</span><b id="lic-gg-total">0.00</b></div>';
+}
+function renderLicitaciones(){
+  if(!LIC_INITIALIZED){
+    var gp=el('lic-panel-gastos');if(gp)gp.innerHTML=licGastosPanelHtml();
+    var ip=el('lic-panel-impuestos');if(ip)ip.innerHTML='<table class="lic-tax-table"><thead><tr><th>Artículo</th><th>IVA (13%)</th><th>IT (3%)</th><th>IUE</th></tr></thead><tbody id="lic-tax-tbody"></tbody></table>';
+    var vp=el('lic-panel-venta');if(vp)vp.innerHTML='<table class="lic-tax-table"><thead><tr><th>Artículo</th><th>Monto presup.</th><th>P. venta unit.</th><th>Costo unit.</th><th>Costo total</th><th>Dif. presup.</th></tr></thead><tbody id="lic-venta-tbody"></tbody></table>';
+    var res=el('lic-resultados');if(res)res.innerHTML=
+      '<div class="lic-kpi"><div class="lk-l">Costo total de la inversión</div><div class="lk-v" id="lic-kpi-inversion">Bs 0.00</div></div>'+
+      '<div class="lic-kpi"><div class="lk-l">Utilidad</div><div class="lk-v" id="lic-kpi-utilidad">Bs 0.00</div></div>'+
+      '<div class="lic-kpi"><div class="lk-l">Utilidad total</div><div class="lk-v" id="lic-kpi-utilidadtotal">Bs 0.00</div></div>'+
+      '<div class="lic-kpi"><div class="lk-l">Costo total general</div><div class="lk-v" id="lic-kpi-costototal">Bs 0.00</div></div>'+
+      '<div class="lic-kpi"><div class="lk-l">Utilidad general</div><div class="lk-v" id="lic-kpi-utilidadgeneral">0.0%</div></div>';
+    el('lic-form-wrap').style.display='none';
+    LIC_INITIALIZED=true;
+  }
+  licRenderHistory();
+}
+function licRecalc(){
+  var iueP=(parseFloat((el('lic-iue')||{}).value)||0)/100;
+  var capP=(parseFloat((el('lic-costo-capital')||{}).value)||0)/100;
+  var boletaP=(parseFloat((el('lic-costo-boleta')||{}).value)||0)/100;
+  var Jt=0,Lt=0,Qt=0;
+  LIC_ITEMS.forEach(function(id){
+    var art=(el('lic-art-'+id)||{}).value||'';
+    var cant=parseFloat((el('lic-cant-'+id)||{}).value)||0;
+    var costo=parseFloat((el('lic-costo-'+id)||{}).value)||0;
+    var fact=parseFloat((el('lic-fact-'+id)||{}).value)||0;
+    var otros=parseFloat((el('lic-otros-'+id)||{}).value)||0;
+    var presup=parseFloat((el('lic-presup-'+id)||{}).value)||0;
+    var pventa=parseFloat((el('lic-pventa-'+id)||{}).value)||0;
+    var iva=(pventa-fact)*0.13;
+    var it=pventa*0.03;
+    var iue=(pventa-fact)*iueP;
+    var cu=iva+it+iue+otros+costo;
+    var ct=cu*cant;
+    var pvi=pventa*cant;
+    var dif=presup-pvi;
+    var ut=pventa-cu;
+    var utt=ut*cant;
+    Jt+=ct;Lt+=pvi;Qt+=utt;
+    setTxt('lic-tax-art-'+id,art||'—');
+    setTxt('lic-venta-art-'+id,art||'—');
+    setTxt('lic-iva-'+id,iva.toFixed(2));
+    setTxt('lic-it-'+id,it.toFixed(2));
+    setTxt('lic-iue-'+id,iue.toFixed(2));
+    setTxt('lic-cu-'+id,cu.toFixed(2));
+    setTxt('lic-ct-'+id,ct.toFixed(2));
+    setTxt('lic-dif-'+id,dif.toFixed(2));
+  });
+  var comisionPct=(parseFloat((el('lic-comision-pct')||{}).value)||0)/100;
+  var comisionMonto=comisionPct*Lt;
+  var viat=parseFloat((el('lic-viaticos')||{}).value)||0;
+  var pago=parseFloat((el('lic-pago')||{}).value)||0;
+  var nper=parseFloat((el('lic-npersonas')||{}).value)||0;
+  var ndias=parseFloat((el('lic-ndias')||{}).value)||0;
+  var personal=ndias*((viat+pago)*nper);
+  var docsSum=0;
+  [1,2,3].forEach(function(n){
+    var meses=parseFloat((el('lic-doc-meses-'+n)||{}).value)||0;
+    var monto=parseFloat((el('lic-doc-monto-'+n)||{}).value)||0;
+    docsSum+=(boletaP*meses)*monto;
+  });
+  var firma=parseFloat((el('lic-firma')||{}).value)||0;
+  var otrosG=parseFloat((el('lic-otrosg')||{}).value)||0;
+  var otrosSum=firma+otrosG;
+  var inversion=Jt+comisionMonto+personal+docsSum+otrosSum;
+  var tiempoCobro=parseFloat((el('lic-tiempocobro')||{}).value)||0;
+  var costoInversion=(inversion*capP)*tiempoCobro;
+  var ggTotal=comisionMonto+personal+docsSum+otrosSum+costoInversion;
+  var costoTotalGeneral=ggTotal+Jt;
+  var utilidadFinal=Lt-Jt-ggTotal;
+  var utilidadFinalPct=costoTotalGeneral?(utilidadFinal/costoTotalGeneral*100):0;
+  setTxt('lic-comision-monto',comisionMonto.toFixed(2));
+  setTxt('lic-personal-monto',personal.toFixed(2));
+  setTxt('lic-docs-total',docsSum.toFixed(2));
+  setTxt('lic-otros-total',otrosSum.toFixed(2));
+  setTxt('lic-inversion-monto',inversion.toFixed(2));
+  setTxt('lic-costoinversion-monto',costoInversion.toFixed(2));
+  setTxt('lic-gg-total',ggTotal.toFixed(2));
+  setTxt('lic-kpi-inversion','Bs '+costoInversion.toFixed(2));
+  setTxt('lic-kpi-utilidad','Bs '+utilidadFinal.toFixed(2));
+  setTxt('lic-kpi-utilidadtotal','Bs '+Qt.toFixed(2));
+  setTxt('lic-kpi-costototal','Bs '+costoTotalGeneral.toFixed(2));
+  setTxt('lic-kpi-utilidadgeneral',utilidadFinalPct.toFixed(1)+'%');
+  LIC_LAST_SUMMARY={costoInversion:costoInversion,utilidadFinal:utilidadFinal,utilidadTotal:Qt,costoTotalGeneral:costoTotalGeneral,utilidadFinalPct:utilidadFinalPct};
+}
+// ── Alta / edición / guardado ──
+function licNewLicitacion(){
+  LIC_CURRENT_ID=null;
+  licClearItemsDom();
+  var nomEl=el('lic-nombre');if(nomEl)nomEl.value='';
+  ['lic-costo-capital','lic-costo-boleta'].forEach(function(id){var e=el(id);if(e)e.value='0';});
+  var iueEl=el('lic-iue');if(iueEl)iueEl.value='25';
+  ['lic-comision-pct','lic-viaticos','lic-pago','lic-npersonas','lic-ndias','lic-doc-meses-1','lic-doc-monto-1','lic-doc-meses-2','lic-doc-monto-2','lic-doc-meses-3','lic-doc-monto-3','lic-firma','lic-otrosg','lic-tiempocobro'].forEach(function(id){var e=el(id);if(e)e.value='0';});
+  licAddItem();
+  var t=el('lic-form-title');if(t)t.textContent='Nueva licitación';
+  var w=el('lic-form-wrap');if(w){w.style.display='block';window.scrollTo(0,w.offsetTop-80);}
+  var errEl=el('lic-save-error');if(errEl)errEl.textContent='';
+}
+function licCancelForm(){var w=el('lic-form-wrap');if(w)w.style.display='none';}
+function licCollectData(){
+  var items=LIC_ITEMS.map(function(id){
+    return {
+      articulo:(el('lic-art-'+id)||{}).value||'',
+      cantidad:parseFloat((el('lic-cant-'+id)||{}).value)||0,
+      costo:parseFloat((el('lic-costo-'+id)||{}).value)||0,
+      facturado:parseFloat((el('lic-fact-'+id)||{}).value)||0,
+      otros:parseFloat((el('lic-otros-'+id)||{}).value)||0,
+      presup:parseFloat((el('lic-presup-'+id)||{}).value)||0,
+      pventa:parseFloat((el('lic-pventa-'+id)||{}).value)||0
+    };
+  });
+  return {
+    parametros:{
+      costoCapital:parseFloat((el('lic-costo-capital')||{}).value)||0,
+      costoBoleta:parseFloat((el('lic-costo-boleta')||{}).value)||0,
+      iue:parseFloat((el('lic-iue')||{}).value)||0
+    },
+    items:items,
+    gastos:{
+      comisionPct:parseFloat((el('lic-comision-pct')||{}).value)||0,
+      viaticos:parseFloat((el('lic-viaticos')||{}).value)||0,
+      pago:parseFloat((el('lic-pago')||{}).value)||0,
+      npersonas:parseFloat((el('lic-npersonas')||{}).value)||0,
+      ndias:parseFloat((el('lic-ndias')||{}).value)||0,
+      doc1:{meses:parseFloat((el('lic-doc-meses-1')||{}).value)||0,monto:parseFloat((el('lic-doc-monto-1')||{}).value)||0},
+      doc2:{meses:parseFloat((el('lic-doc-meses-2')||{}).value)||0,monto:parseFloat((el('lic-doc-monto-2')||{}).value)||0},
+      doc3:{meses:parseFloat((el('lic-doc-meses-3')||{}).value)||0,monto:parseFloat((el('lic-doc-monto-3')||{}).value)||0},
+      firma:parseFloat((el('lic-firma')||{}).value)||0,
+      otrosG:parseFloat((el('lic-otrosg')||{}).value)||0,
+      tiempoCobro:parseFloat((el('lic-tiempocobro')||{}).value)||0
+    }
+  };
+}
+function licLoadFromData(data){
+  licClearItemsDom();
+  data=data||{};
+  var p=data.parametros||{};
+  var cc=el('lic-costo-capital');if(cc)cc.value=p.costoCapital||0;
+  var cb=el('lic-costo-boleta');if(cb)cb.value=p.costoBoleta||0;
+  var iu=el('lic-iue');if(iu)iu.value=(p.iue!=null?p.iue:25);
+  var items=data.items||[];
+  items.forEach(function(it){
+    licAddItem({articulo:it.articulo,cantidad:it.cantidad,costo:it.costo,facturado:it.facturado,otros:it.otros,presup:it.presup,pventa:it.pventa});
+  });
+  if(!items.length) licAddItem();
+  var g=data.gastos||{};
+  var set=function(id,val){var e=el(id);if(e)e.value=val||0;};
+  set('lic-comision-pct',g.comisionPct);
+  set('lic-viaticos',g.viaticos);set('lic-pago',g.pago);set('lic-npersonas',g.npersonas);set('lic-ndias',g.ndias);
+  set('lic-doc-meses-1',(g.doc1||{}).meses);set('lic-doc-monto-1',(g.doc1||{}).monto);
+  set('lic-doc-meses-2',(g.doc2||{}).meses);set('lic-doc-monto-2',(g.doc2||{}).monto);
+  set('lic-doc-meses-3',(g.doc3||{}).meses);set('lic-doc-monto-3',(g.doc3||{}).monto);
+  set('lic-firma',g.firma);set('lic-otrosg',g.otrosG);set('lic-tiempocobro',g.tiempoCobro);
+  licRecalc();
+}
+function licSaveLicitacion(){
+  var nombreEl=el('lic-nombre');
+  var nombre=(nombreEl?nombreEl.value:'').trim();
+  var errEl=el('lic-save-error');
+  if(!nombre){if(errEl)errEl.textContent='Ingresá un nombre para la licitación.';return;}
+  if(!LIC_ITEMS.length){if(errEl)errEl.textContent='Agregá al menos un artículo.';return;}
+  licRecalc();
+  if(errEl)errEl.textContent='Guardando...';
+  var data=licCollectData();
+  var s=LIC_LAST_SUMMARY;
+  var body={usuario:SESSION.user,nombre:nombre,costo_total_general:s.costoTotalGeneral||0,utilidad_final:s.utilidadFinal||0,utilidad_final_pct:s.utilidadFinalPct||0,data:data,updated_at:new Date().toISOString()};
+  var req;
+  if(LIC_CURRENT_ID){
+    req=sbFetch('licitaciones?id=eq.'+LIC_CURRENT_ID,'PATCH',body);
+  }else{
+    body.estado='en_curso';
+    req=sbFetch('licitaciones','POST',body);
+  }
+  req.then(function(){
+    if(errEl)errEl.textContent='';
+    var w=el('lic-form-wrap');if(w)w.style.display='none';
+    licRenderHistory();
+  }).catch(function(err){
+    console.error('Error al guardar licitación:', err);
+    if(errEl)errEl.textContent='Error: '+err.message;
+  });
+}
+// ── Historial (usuario) ──
+function licHistCardHtml(r){
+  var estadoTag=r.estado==='finalizada'
+    ?'<span class="tag" style="background:var(--green-50);color:var(--green-500);">Finalizada</span>'
+    :'<span class="tag tag-coral">En curso</span>';
+  var fecha=r.created_at?new Date(r.created_at).toLocaleDateString('es-BO'):'';
+  return '<div class="cot-card" style="margin-bottom:8px;">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">'+
+      '<div><div style="font-size:13.5px;font-weight:600;">'+r.nombre+'</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">'+fecha+'</div></div>'+
+      '<div style="display:flex;gap:6px;flex-shrink:0;">'+
+        '<button class="btn btn-sm btn-primary" onclick="licEditHist('+r.id+')" style="font-size:11px;">&#9998; Editar</button>'+
+        (r.estado==='finalizada'
+          ?'<button class="btn btn-sm" onclick="licSetEstado('+r.id+',\'en_curso\')" style="font-size:11px;">&#8635; Reabrir</button>'
+          :'<button class="btn btn-sm" onclick="licSetEstado('+r.id+',\'finalizada\')" style="font-size:11px;color:var(--teal-600);border-color:var(--teal-400);">&#10003; Finalizar</button>')+
+        '<button class="btn btn-sm" onclick="licDeleteHist('+r.id+')" style="font-size:11px;color:var(--red-600);border-color:var(--red-400);">&#128465;</button>'+
+      '</div>'+
+    '</div>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;">'+
+      estadoTag+
+      '<span style="font-size:11.5px;color:var(--text-3);">💰 Costo total: Bs '+(r.costo_total_general||0).toFixed(2)+'</span>'+
+      '<span style="font-size:11.5px;color:var(--text-3);">📈 Utilidad: '+(r.utilidad_final_pct||0).toFixed(1)+'%</span>'+
+    '</div>'+
+  '</div>';
+}
+function licRenderHistory(){
+  var listEl=el('lic-hist-list');if(!listEl)return;
+  listEl.innerHTML='<div class="empty-state"><p>Cargando...</p></div>';
+  sbFetch('licitaciones?usuario=eq.'+encodeURIComponent(SESSION.user)+'&select=*&order=created_at.desc')
+    .then(function(rows){
+      LIC_HIST=rows||[];
+      var ce=el('lic-hist-count');if(ce)ce.textContent=LIC_HIST.length+' licitacion'+(LIC_HIST.length===1?'':'es');
+      if(!LIC_HIST.length){listEl.innerHTML='<div class="empty-state"><span class="empty-ico">📐</span><h3>Sin licitaciones aún</h3><p>Agregá la primera licitación.</p></div>';return;}
+      listEl.innerHTML=LIC_HIST.map(licHistCardHtml).join('');
+    }).catch(function(err){
+      listEl.innerHTML='<div class="empty-state"><p style="color:var(--red-600);">Error: '+err.message+'</p></div>';
+    });
+}
+function licEditHist(id){
+  var r=LIC_HIST.find(function(x){return x.id===id;});
+  if(!r)return;
+  LIC_CURRENT_ID=id;
+  licLoadFromData(r.data);
+  var nomEl=el('lic-nombre');if(nomEl)nomEl.value=r.nombre;
+  var t=el('lic-form-title');if(t)t.textContent='Editando: '+r.nombre;
+  var w=el('lic-form-wrap');if(w){w.style.display='block';window.scrollTo(0,w.offsetTop-80);}
+  var errEl=el('lic-save-error');if(errEl)errEl.textContent='';
+}
+function licSetEstado(id,estado){
+  sbFetch('licitaciones?id=eq.'+id,'PATCH',{estado:estado,updated_at:new Date().toISOString()})
+    .then(function(){licRenderHistory();})
+    .catch(function(err){alert('Error: '+err.message);});
+}
+function licDeleteHist(id){
+  if(!confirm('¿Eliminar esta licitación?'))return;
+  sbFetch('licitaciones?id=eq.'+id,'DELETE')
+    .then(function(){licRenderHistory();})
+    .catch(function(err){alert('Error: '+err.message);});
+}
+// ── Panel administrador: todas las licitaciones ──
+function renderAdminLicitaciones(){
+  var listEl=el('adm-lic-list');if(!listEl)return;
+  listEl.innerHTML='<div class="empty-state"><p>Cargando...</p></div>';
+  sbFetch('licitaciones?select=*&order=created_at.desc')
+    .then(function(rows){
+      ADM_LIC=rows||[];
+      renderAdminLicitacionesFiltered();
+    }).catch(function(err){
+      listEl.innerHTML='<div class="empty-state"><p style="color:var(--red-600);">Error: '+err.message+'</p></div>';
+    });
+}
+function renderAdminLicitacionesFiltered(){
+  var listEl=el('adm-lic-list');if(!listEl)return;
+  var q=((el('adm-lic-search')||{}).value||'').toLowerCase();
+  var rows=(ADM_LIC||[]).filter(function(r){
+    return !q||(r.nombre||'').toLowerCase().indexOf(q)>-1||(r.usuario||'').toLowerCase().indexOf(q)>-1;
+  });
+  if(!rows.length){listEl.innerHTML='<div class="empty-state"><span class="empty-ico">📐</span><h3>Sin licitaciones</h3></div>';return;}
+  listEl.innerHTML=rows.map(function(r){
+    var estadoTag=r.estado==='finalizada'
+      ?'<span class="tag" style="background:var(--green-50);color:var(--green-500);">Finalizada</span>'
+      :'<span class="tag tag-coral">En curso</span>';
+    var fecha=r.created_at?new Date(r.created_at).toLocaleDateString('es-BO'):'';
+    return '<div class="cot-card" style="margin-bottom:8px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">'+
+        '<div><div style="font-size:13.5px;font-weight:600;">'+r.nombre+'</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">👤 '+r.usuario+' &middot; '+fecha+'</div></div>'+
+      '</div>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;">'+
+        estadoTag+
+        '<span style="font-size:11.5px;color:var(--text-3);">💰 Costo total: Bs '+(r.costo_total_general||0).toFixed(2)+'</span>'+
+        '<span style="font-size:11.5px;color:var(--text-3);">📈 Utilidad: '+(r.utilidad_final_pct||0).toFixed(1)+'%</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
 
 // ═══════════ TABLES / PHOTOS ═══════════
 function pRow(i){return '<div class="trow" id="pr-'+i+'"><input type="text" placeholder="Producto" id="pr-p-'+i+'"><input type="text" placeholder="Unid." id="pr-u-'+i+'"><input type="number" placeholder="0.00" id="pr-v-'+i+'"><button class="remove-btn" onclick="rmPRow('+i+')">✕</button></div>';}
