@@ -830,6 +830,7 @@ function doLogin(){
       sbLoadActivities().catch(function(e){console.warn('Activities load failed:',e);}),
       sbLoadSolicitudes().catch(function(e){console.warn('Solicitudes load failed:',e);})
     ]).then(function(){
+      buildNav();
       showHome();
     });
   }).catch(function(e){
