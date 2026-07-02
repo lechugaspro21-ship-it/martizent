@@ -306,6 +306,10 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
         <div style="font-size:13.5px;font-weight:600;" id="lic-form-title">Nueva licitación</div>
         <button class="btn btn-primary btn-sm" id="lic-newbtn" onclick="licNewLicitacion()">➕ Agregar licitación</button>
       </div>
+      <div class="lic-box" style="margin-bottom:1.5rem;">
+        <h3>📄 Documentación</h3>
+        <div id="lic-docs-list"></div>
+      </div>
       <div id="lic-form-wrap" style="display:none;">
         <div class="lic-box" style="margin-bottom:14px;">
           <div class="frow">
@@ -589,6 +593,24 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
       </div>
       <!-- LICITACIONES (admin, todas) -->
       <div id="adm-licitaciones" style="display:none;">
+        <div class="lic-box" style="margin-bottom:1.5rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <h3 style="margin:0;">📄 Documentación</h3>
+            <button class="btn btn-primary btn-sm" onclick="licToggleDocForm()">➕ Agregar documentación</button>
+          </div>
+          <div id="lic-docform-wrap" style="display:none;margin-bottom:12px;">
+            <div class="frow">
+              <div><label class="flabel">Nombre del documento</label><input type="text" id="lic-doc-nombre" placeholder="Ej. Reglamento de contrataciones"></div>
+              <div><label class="flabel">Archivo PDF</label><input type="file" id="lic-doc-file" accept="application/pdf"></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+              <button class="btn btn-success btn-sm" onclick="licUploadDoc()">Subir documento</button>
+              <button class="btn btn-sm" onclick="licToggleDocForm()">Cancelar</button>
+              <span id="lic-docform-error" style="font-size:12px;color:var(--red-600);"></span>
+            </div>
+          </div>
+          <div id="adm-lic-docs-list"></div>
+        </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
           <div style="font-size:14px;font-weight:600;">Todas las licitaciones</div>
           <input type="text" id="adm-lic-search" placeholder="🔍 Buscar por usuario o nombre..." oninput="renderAdminLicitacionesFiltered()" style="max-width:260px;">
@@ -1992,7 +2014,7 @@ function adminTab(btn,panel){
   if(panel==='adm-catalogo') renderAdmCatalog();
   if(panel==='adm-repuestos') renderRepuestos();
   if(panel==='adm-creditos') renderCreditos();
-  if(panel==='adm-licitaciones') renderAdminLicitaciones();
+  if(panel==='adm-licitaciones'){renderAdminLicitaciones();renderAdminLicDocs();}
   if(panel==='adm-personal') renderUserTable();
 }
 
@@ -2128,7 +2150,7 @@ function licVentaRowHtml(id,v){
   return '<tr id="lic-venta-row-'+id+'"><td id="lic-venta-art-'+id+'">—</td>'+
     '<td><input type="number" id="lic-presup-'+id+'" value="'+(v.presup||0)+'" oninput="licRecalc()"></td>'+
     '<td><input type="number" id="lic-pventa-'+id+'" value="'+(v.pventa||0)+'" oninput="licRecalc()"></td>'+
-    '<td id="lic-cu-'+id+'">0.00</td><td id="lic-ct-'+id+'">0.00</td><td id="lic-dif-'+id+'">0.00</td></tr>';
+    '<td id="lic-cu-'+id+'">0.00</td><td id="lic-ct-'+id+'">0.00</td><td id="lic-dif-'+id+'">0.00</td><td id="lic-diftotal-'+id+'">0.00</td></tr>';
 }
 function licAddItem(v){
   LIC_SEQ++;var id=LIC_SEQ;LIC_ITEMS.push(id);
@@ -2183,17 +2205,18 @@ function renderLicitaciones(){
   if(!LIC_INITIALIZED){
     var gp=el('lic-panel-gastos');if(gp)gp.innerHTML=licGastosPanelHtml();
     var ip=el('lic-panel-impuestos');if(ip)ip.innerHTML='<table class="lic-tax-table"><thead><tr><th>Artículo</th><th>IVA (13%)</th><th>IT (3%)</th><th>IUE</th></tr></thead><tbody id="lic-tax-tbody"></tbody></table>';
-    var vp=el('lic-panel-venta');if(vp)vp.innerHTML='<table class="lic-tax-table"><thead><tr><th>Artículo</th><th>Monto presup.</th><th>P. venta unit.</th><th>Costo unit.</th><th>Costo total</th><th>Dif. presup.</th></tr></thead><tbody id="lic-venta-tbody"></tbody></table>';
+    var vp=el('lic-panel-venta');if(vp)vp.innerHTML='<table class="lic-tax-table"><thead><tr><th>Artículo</th><th>Monto presup.</th><th>P. venta unit.</th><th>Costo unit.</th><th>Costo total</th><th>Dif. presupuesto unitario</th><th>Dif. presupuesto total</th></tr></thead><tbody id="lic-venta-tbody"></tbody></table>';
     var res=el('lic-resultados');if(res)res.innerHTML=
       '<div class="lic-kpi"><div class="lk-l">Utilidad unitaria</div><div class="lk-v" id="lic-kpi-utilidadunit">Bs 0.00</div></div>'+
       '<div class="lic-kpi"><div class="lk-l">Utilidad total</div><div class="lk-v" id="lic-kpi-utilidadtotal">Bs 0.00</div></div>'+
       '<div class="lic-kpi"><div class="lk-l">Costo de la inversión</div><div class="lk-v" id="lic-kpi-inversion">Bs 0.00</div></div>'+
       '<div class="lic-kpi"><div class="lk-l">Costo total general</div><div class="lk-v" id="lic-kpi-costototal">Bs 0.00</div></div>'+
-      '<div class="lic-kpi"><div class="lk-l">Utilidad general</div><div class="lk-v" id="lic-kpi-utilidadgeneral">0.0%</div></div>';
+      '<div class="lic-kpi"><div class="lk-l">Utilidad general</div><div class="lk-v" id="lic-kpi-utilidadgeneral">0.0%</div><div style="font-size:11.5px;color:var(--coral-600);margin-top:2px;" id="lic-kpi-utilidadgeneral-bs">Bs 0.00</div></div>';
     el('lic-form-wrap').style.display='none';
     LIC_INITIALIZED=true;
   }
   licRenderHistory();
+  renderLicDocs();
 }
 function licRecalc(){
   var iueP=(parseFloat((el('lic-iue')||{}).value)||0)/100;
@@ -2215,6 +2238,7 @@ function licRecalc(){
     var ct=cu*cant;
     var pvi=pventa*cant;
     var dif=presup-pventa;
+    var diftotal=dif*cant;
     var ut=pventa-cu;
     var utt=ut*cant;
     Jt+=ct;Lt+=pvi;Qt+=utt;Cantt+=cant;
@@ -2226,6 +2250,7 @@ function licRecalc(){
     setTxt('lic-cu-'+id,cu.toFixed(2));
     setTxt('lic-ct-'+id,ct.toFixed(2));
     setTxt('lic-dif-'+id,dif.toFixed(2));
+    setTxt('lic-diftotal-'+id,diftotal.toFixed(2));
   });
   var comisionPct=(parseFloat((el('lic-comision-pct')||{}).value)||0)/100;
   var comisionMonto=comisionPct*Lt;
@@ -2263,6 +2288,7 @@ function licRecalc(){
   setTxt('lic-kpi-utilidadtotal','Bs '+Qt.toFixed(2));
   setTxt('lic-kpi-costototal','Bs '+costoTotalGeneral.toFixed(2));
   setTxt('lic-kpi-utilidadgeneral',utilidadFinalPct.toFixed(1)+'%');
+  setTxt('lic-kpi-utilidadgeneral-bs','Bs '+utilidadFinal.toFixed(2));
   LIC_LAST_SUMMARY={costoInversion:costoInversion,inversion:inversion,utilidadFinal:utilidadFinal,utilidadUnitaria:utilidadUnitaria,utilidadTotal:Qt,costoTotalGeneral:costoTotalGeneral,utilidadFinalPct:utilidadFinalPct};
 }
 // ── Alta / edición / guardado ──
@@ -2459,6 +2485,83 @@ function renderAdminLicitacionesFiltered(){
   }).join('');
 }
 
+// ── Documentación de licitaciones ──
+var LIC_DOCS=[];
+function sbUploadFile(bucket,path,file){
+  return fetch(SB_URL+'/storage/v1/object/'+bucket+'/'+path,{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':file.type||'application/octet-stream'},
+    body:file
+  }).then(function(r){
+    if(!r.ok)return r.text().then(function(t){throw new Error(t);});
+    return SB_URL+'/storage/v1/object/public/'+bucket+'/'+path;
+  });
+}
+function licDocCardHtml(d,isAdmin){
+  var fecha=d.created_at?new Date(d.created_at).toLocaleDateString('es-BO'):'';
+  return '<div class="cot-card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
+    '<div><div style="font-size:13px;font-weight:600;">📄 '+d.nombre+'</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">'+fecha+(d.subido_por?' &middot; por '+d.subido_por:'')+'</div></div>'+
+    '<div style="display:flex;gap:6px;flex-shrink:0;">'+
+      '<a href="'+d.url+'" target="_blank" class="btn btn-sm btn-primary" style="text-decoration:none;">⬇ Descargar</a>'+
+      (isAdmin?'<button class="btn btn-sm" onclick="licDeleteDoc('+d.id+',\''+d.url+'\')" style="color:var(--red-600);border-color:var(--red-400);">&#128465;</button>':'')+
+    '</div>'+
+  '</div>';
+}
+function renderLicDocs(){
+  var listEl=el('lic-docs-list');if(!listEl)return;
+  listEl.innerHTML='<div class="empty-state"><p>Cargando...</p></div>';
+  sbFetch('licitacion_docs?select=*&order=created_at.desc').then(function(rows){
+    LIC_DOCS=rows||[];
+    if(!LIC_DOCS.length){listEl.innerHTML='<div class="empty-state"><p style="font-size:12.5px;">Sin documentos disponibles.</p></div>';return;}
+    listEl.innerHTML=LIC_DOCS.map(function(d){return licDocCardHtml(d,false);}).join('');
+  }).catch(function(err){listEl.innerHTML='<div class="empty-state"><p style="color:var(--red-600);">Error: '+err.message+'</p></div>';});
+}
+function renderAdminLicDocs(){
+  var listEl=el('adm-lic-docs-list');if(!listEl)return;
+  listEl.innerHTML='<div class="empty-state"><p>Cargando...</p></div>';
+  sbFetch('licitacion_docs?select=*&order=created_at.desc').then(function(rows){
+    LIC_DOCS=rows||[];
+    if(!LIC_DOCS.length){listEl.innerHTML='<div class="empty-state"><p style="font-size:12.5px;">Sin documentos subidos aún.</p></div>';return;}
+    listEl.innerHTML=LIC_DOCS.map(function(d){return licDocCardHtml(d,true);}).join('');
+  }).catch(function(err){listEl.innerHTML='<div class="empty-state"><p style="color:var(--red-600);">Error: '+err.message+'</p></div>';});
+}
+function licToggleDocForm(){
+  var w=el('lic-docform-wrap');if(w)w.style.display=(w.style.display==='none'?'block':'none');
+}
+function licUploadDoc(){
+  var nombreEl=el('lic-doc-nombre');
+  var nombre=(nombreEl?nombreEl.value:'').trim();
+  var fileInput=el('lic-doc-file');
+  var file=fileInput&&fileInput.files&&fileInput.files[0];
+  var errEl=el('lic-docform-error');
+  if(!nombre){if(errEl)errEl.textContent='Ingresá un nombre.';return;}
+  if(!file){if(errEl)errEl.textContent='Seleccioná un archivo PDF.';return;}
+  if(file.type!=='application/pdf'){if(errEl)errEl.textContent='Solo se permiten archivos PDF.';return;}
+  if(errEl)errEl.textContent='Subiendo...';
+  var path='licitaciones/'+Date.now()+'_'+file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
+  sbUploadFile('documentos',path,file).then(function(url){
+    return sbFetch('licitacion_docs','POST',{nombre:nombre,url:url,subido_por:SESSION.user});
+  }).then(function(){
+    if(errEl)errEl.textContent='';
+    if(nombreEl)nombreEl.value='';
+    if(fileInput)fileInput.value='';
+    var w=el('lic-docform-wrap');if(w)w.style.display='none';
+    renderAdminLicDocs();
+  }).catch(function(err){
+    console.error('Error al subir documento:', err);
+    if(errEl)errEl.textContent='Error: '+err.message;
+  });
+}
+function licDeleteDoc(id,url){
+  if(!confirm('¿Eliminar este documento?'))return;
+  sbFetch('licitacion_docs?id=eq.'+id,'DELETE').then(function(){
+    var marker='/storage/v1/object/public/documentos/';
+    var path=url.indexOf(marker)>-1?url.split(marker)[1]:null;
+    if(path)fetch(SB_URL+'/storage/v1/object/documentos/'+path,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).catch(function(){});
+    renderAdminLicDocs();
+  }).catch(function(err){alert('Error: '+err.message);});
+}
+
 // ── PDF de licitación ──
 function licCalcFromData(data){
   data=data||{};
@@ -2473,9 +2576,9 @@ function licCalcFromData(data){
         otros=parseFloat(it.otros)||0,presup=parseFloat(it.presup)||0,pventa=parseFloat(it.pventa)||0;
     var iva=(pventa-fact)*0.13,itax=pventa*0.03,iue=(pventa-fact)*iueP;
     var cu=iva+itax+iue+otros+costo;
-    var ct=cu*cant,pvi=pventa*cant,dif=presup-pventa,ut=pventa-cu,utt=ut*cant;
+    var ct=cu*cant,pvi=pventa*cant,dif=presup-pventa,diftotal=dif*cant,ut=pventa-cu,utt=ut*cant;
     Jt+=ct;Lt+=pvi;Qt+=utt;Cantt+=cant;
-    return {articulo:it.articulo||'—',cantidad:cant,costo:costo,facturado:fact,otros:otros,presup:presup,pventa:pventa,iva:iva,it:itax,iue:iue,cu:cu,ct:ct,pvi:pvi,dif:dif,ut:ut,utt:utt};
+    return {articulo:it.articulo||'—',cantidad:cant,costo:costo,facturado:fact,otros:otros,presup:presup,pventa:pventa,iva:iva,it:itax,iue:iue,cu:cu,ct:ct,pvi:pvi,dif:dif,diftotal:diftotal,ut:ut,utt:utt};
   });
   var g=data.gastos||{};
   var comisionMonto=((parseFloat(g.comisionPct)||0)/100)*Lt;
