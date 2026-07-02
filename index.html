@@ -327,13 +327,13 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
           <!-- SECCION 2: PESTAÑAS (gastos / impuestos / precio de venta) -->
           <div class="lic-box">
             <div class="admin-tabs">
-              <button class="admin-tab active" id="lic-tabbtn-gastos" onclick="licTab('gastos')">💰 Gastos</button>
+              <button class="admin-tab active" id="lic-tabbtn-venta" onclick="licTab('venta')">💵 Precio de venta</button>
+              <button class="admin-tab" id="lic-tabbtn-gastos" onclick="licTab('gastos')">💰 Gastos</button>
               <button class="admin-tab" id="lic-tabbtn-impuestos" onclick="licTab('impuestos')">🧾 Impuestos</button>
-              <button class="admin-tab" id="lic-tabbtn-venta" onclick="licTab('venta')">💵 Precio de venta</button>
             </div>
-            <div id="lic-panel-gastos"></div>
+            <div id="lic-panel-venta"></div>
+            <div id="lic-panel-gastos" style="display:none;"></div>
             <div id="lic-panel-impuestos" style="display:none;"></div>
-            <div id="lic-panel-venta" style="display:none;"></div>
           </div>
           <!-- SECCION 3: RESULTADOS (fija) -->
           <div class="lic-box">
@@ -343,6 +343,7 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
         </div>
         <div style="display:flex;gap:8px;margin-top:14px;">
           <button class="btn btn-success" onclick="licSaveLicitacion()">💾 Guardar licitación</button>
+          <button class="btn" onclick="licDownloadCurrentPdf()">📄 Descargar PDF</button>
           <button class="btn" onclick="licCancelForm()">Cancelar</button>
           <span id="lic-save-error" style="font-size:12px;color:var(--red-600);align-self:center;"></span>
         </div>
@@ -2184,9 +2185,9 @@ function renderLicitaciones(){
     var ip=el('lic-panel-impuestos');if(ip)ip.innerHTML='<table class="lic-tax-table"><thead><tr><th>Artículo</th><th>IVA (13%)</th><th>IT (3%)</th><th>IUE</th></tr></thead><tbody id="lic-tax-tbody"></tbody></table>';
     var vp=el('lic-panel-venta');if(vp)vp.innerHTML='<table class="lic-tax-table"><thead><tr><th>Artículo</th><th>Monto presup.</th><th>P. venta unit.</th><th>Costo unit.</th><th>Costo total</th><th>Dif. presup.</th></tr></thead><tbody id="lic-venta-tbody"></tbody></table>';
     var res=el('lic-resultados');if(res)res.innerHTML=
-      '<div class="lic-kpi"><div class="lk-l">Costo total de la inversión</div><div class="lk-v" id="lic-kpi-inversion">Bs 0.00</div></div>'+
-      '<div class="lic-kpi"><div class="lk-l">Utilidad</div><div class="lk-v" id="lic-kpi-utilidad">Bs 0.00</div></div>'+
+      '<div class="lic-kpi"><div class="lk-l">Utilidad unitaria</div><div class="lk-v" id="lic-kpi-utilidadunit">Bs 0.00</div></div>'+
       '<div class="lic-kpi"><div class="lk-l">Utilidad total</div><div class="lk-v" id="lic-kpi-utilidadtotal">Bs 0.00</div></div>'+
+      '<div class="lic-kpi"><div class="lk-l">Costo de la inversión</div><div class="lk-v" id="lic-kpi-inversion">Bs 0.00</div></div>'+
       '<div class="lic-kpi"><div class="lk-l">Costo total general</div><div class="lk-v" id="lic-kpi-costototal">Bs 0.00</div></div>'+
       '<div class="lic-kpi"><div class="lk-l">Utilidad general</div><div class="lk-v" id="lic-kpi-utilidadgeneral">0.0%</div></div>';
     el('lic-form-wrap').style.display='none';
@@ -2198,7 +2199,7 @@ function licRecalc(){
   var iueP=(parseFloat((el('lic-iue')||{}).value)||0)/100;
   var capP=(parseFloat((el('lic-costo-capital')||{}).value)||0)/100;
   var boletaP=(parseFloat((el('lic-costo-boleta')||{}).value)||0)/100;
-  var Jt=0,Lt=0,Qt=0;
+  var Jt=0,Lt=0,Qt=0,Cantt=0;
   LIC_ITEMS.forEach(function(id){
     var art=(el('lic-art-'+id)||{}).value||'';
     var cant=parseFloat((el('lic-cant-'+id)||{}).value)||0;
@@ -2213,10 +2214,10 @@ function licRecalc(){
     var cu=iva+it+iue+otros+costo;
     var ct=cu*cant;
     var pvi=pventa*cant;
-    var dif=presup-pvi;
+    var dif=presup-pventa;
     var ut=pventa-cu;
     var utt=ut*cant;
-    Jt+=ct;Lt+=pvi;Qt+=utt;
+    Jt+=ct;Lt+=pvi;Qt+=utt;Cantt+=cant;
     setTxt('lic-tax-art-'+id,art||'—');
     setTxt('lic-venta-art-'+id,art||'—');
     setTxt('lic-iva-'+id,iva.toFixed(2));
@@ -2249,6 +2250,7 @@ function licRecalc(){
   var costoTotalGeneral=ggTotal+Jt;
   var utilidadFinal=Lt-Jt-ggTotal;
   var utilidadFinalPct=costoTotalGeneral?(utilidadFinal/costoTotalGeneral*100):0;
+  var utilidadUnitaria=Cantt?(Qt/Cantt):0;
   setTxt('lic-comision-monto',comisionMonto.toFixed(2));
   setTxt('lic-personal-monto',personal.toFixed(2));
   setTxt('lic-docs-total',docsSum.toFixed(2));
@@ -2256,12 +2258,12 @@ function licRecalc(){
   setTxt('lic-inversion-monto',inversion.toFixed(2));
   setTxt('lic-costoinversion-monto',costoInversion.toFixed(2));
   setTxt('lic-gg-total',ggTotal.toFixed(2));
-  setTxt('lic-kpi-inversion','Bs '+costoInversion.toFixed(2));
-  setTxt('lic-kpi-utilidad','Bs '+utilidadFinal.toFixed(2));
+  setTxt('lic-kpi-utilidadunit','Bs '+utilidadUnitaria.toFixed(2));
+  setTxt('lic-kpi-inversion','Bs '+inversion.toFixed(2));
   setTxt('lic-kpi-utilidadtotal','Bs '+Qt.toFixed(2));
   setTxt('lic-kpi-costototal','Bs '+costoTotalGeneral.toFixed(2));
   setTxt('lic-kpi-utilidadgeneral',utilidadFinalPct.toFixed(1)+'%');
-  LIC_LAST_SUMMARY={costoInversion:costoInversion,utilidadFinal:utilidadFinal,utilidadTotal:Qt,costoTotalGeneral:costoTotalGeneral,utilidadFinalPct:utilidadFinalPct};
+  LIC_LAST_SUMMARY={costoInversion:costoInversion,inversion:inversion,utilidadFinal:utilidadFinal,utilidadUnitaria:utilidadUnitaria,utilidadTotal:Qt,costoTotalGeneral:costoTotalGeneral,utilidadFinalPct:utilidadFinalPct};
 }
 // ── Alta / edición / guardado ──
 function licNewLicitacion(){
@@ -2371,6 +2373,7 @@ function licHistCardHtml(r){
       '<div><div style="font-size:13.5px;font-weight:600;">'+r.nombre+'</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">'+fecha+'</div></div>'+
       '<div style="display:flex;gap:6px;flex-shrink:0;">'+
         '<button class="btn btn-sm btn-primary" onclick="licEditHist('+r.id+')" style="font-size:11px;">&#9998; Editar</button>'+
+        '<button class="btn btn-sm" onclick="licDownloadHistPdf('+r.id+')" style="font-size:11px;">&#128196; PDF</button>'+
         (r.estado==='finalizada'
           ?'<button class="btn btn-sm" onclick="licSetEstado('+r.id+',\'en_curso\')" style="font-size:11px;">&#8635; Reabrir</button>'
           :'<button class="btn btn-sm" onclick="licSetEstado('+r.id+',\'finalizada\')" style="font-size:11px;color:var(--teal-600);border-color:var(--teal-400);">&#10003; Finalizar</button>')+
@@ -2445,6 +2448,7 @@ function renderAdminLicitacionesFiltered(){
     return '<div class="cot-card" style="margin-bottom:8px;">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">'+
         '<div><div style="font-size:13.5px;font-weight:600;">'+r.nombre+'</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">👤 '+r.usuario+' &middot; '+fecha+'</div></div>'+
+        '<button class="btn btn-sm" onclick="licDownloadHistPdf('+r.id+')" style="font-size:11px;">&#128196; PDF</button>'+
       '</div>'+
       '<div style="display:flex;gap:10px;flex-wrap:wrap;">'+
         estadoTag+
@@ -2453,6 +2457,106 @@ function renderAdminLicitacionesFiltered(){
       '</div>'+
     '</div>';
   }).join('');
+}
+
+// ── PDF de licitación ──
+function licCalcFromData(data){
+  data=data||{};
+  var p=data.parametros||{};
+  var iueP=(parseFloat(p.iue)||0)/100;
+  var capP=(parseFloat(p.costoCapital)||0)/100;
+  var boletaP=(parseFloat(p.costoBoleta)||0)/100;
+  var items=data.items||[];
+  var Jt=0,Lt=0,Qt=0,Cantt=0;
+  var calcItems=items.map(function(it){
+    var cant=parseFloat(it.cantidad)||0,costo=parseFloat(it.costo)||0,fact=parseFloat(it.facturado)||0,
+        otros=parseFloat(it.otros)||0,presup=parseFloat(it.presup)||0,pventa=parseFloat(it.pventa)||0;
+    var iva=(pventa-fact)*0.13,itax=pventa*0.03,iue=(pventa-fact)*iueP;
+    var cu=iva+itax+iue+otros+costo;
+    var ct=cu*cant,pvi=pventa*cant,dif=presup-pventa,ut=pventa-cu,utt=ut*cant;
+    Jt+=ct;Lt+=pvi;Qt+=utt;Cantt+=cant;
+    return {articulo:it.articulo||'—',cantidad:cant,costo:costo,facturado:fact,otros:otros,presup:presup,pventa:pventa,iva:iva,it:itax,iue:iue,cu:cu,ct:ct,pvi:pvi,dif:dif,ut:ut,utt:utt};
+  });
+  var g=data.gastos||{};
+  var comisionMonto=((parseFloat(g.comisionPct)||0)/100)*Lt;
+  var personal=(parseFloat(g.ndias)||0)*(((parseFloat(g.viaticos)||0)+(parseFloat(g.pago)||0))*(parseFloat(g.npersonas)||0));
+  var docsSum=0;
+  [g.doc1,g.doc2,g.doc3].forEach(function(d){d=d||{};docsSum+=(boletaP*(parseFloat(d.meses)||0))*(parseFloat(d.monto)||0);});
+  var otrosSum=(parseFloat(g.firma)||0)+(parseFloat(g.otrosG)||0);
+  var inversion=Jt+comisionMonto+personal+docsSum+otrosSum;
+  var costoInversion=(inversion*capP)*(parseFloat(g.tiempoCobro)||0);
+  var ggTotal=comisionMonto+personal+docsSum+otrosSum+costoInversion;
+  var costoTotalGeneral=ggTotal+Jt;
+  var utilidadFinal=Lt-Jt-ggTotal;
+  var utilidadFinalPct=costoTotalGeneral?(utilidadFinal/costoTotalGeneral*100):0;
+  var utilidadUnitaria=Cantt?(Qt/Cantt):0;
+  return {items:calcItems,Jt:Jt,Lt:Lt,Qt:Qt,comisionMonto:comisionMonto,personal:personal,docsSum:docsSum,otrosSum:otrosSum,
+    inversion:inversion,costoInversion:costoInversion,ggTotal:ggTotal,costoTotalGeneral:costoTotalGeneral,
+    utilidadFinal:utilidadFinal,utilidadFinalPct:utilidadFinalPct,utilidadUnitaria:utilidadUnitaria};
+}
+function fmtBs(n){return 'Bs '+(n||0).toLocaleString('es-BO',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function licBuildPdfHtml(nombre,data){
+  var r=licCalcFromData(data);
+  var itemRows=r.items.map(function(it){
+    return '<tr>'+
+      '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;">'+it.articulo+'</td>'+
+      '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;text-align:center;">'+it.cantidad+'</td>'+
+      '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;text-align:right;">'+it.costo.toFixed(2)+'</td>'+
+      '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;text-align:right;">'+it.facturado.toFixed(2)+'</td>'+
+      '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;text-align:right;">'+it.pventa.toFixed(2)+'</td>'+
+      '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;text-align:right;">'+it.cu.toFixed(2)+'</td>'+
+      '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;text-align:right;">'+it.ct.toFixed(2)+'</td>'+
+      '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;text-align:right;font-weight:600;">'+it.utt.toFixed(2)+'</td>'+
+    '</tr>';
+  }).join('');
+  var fecha=new Date().toLocaleDateString('es-BO');
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Licitación - '+nombre+'</title>'+
+  '<style>body{font-family:Arial,Helvetica,sans-serif;padding:24px;color:#222;}h1{font-size:16px;margin:0 0 2px;}h2{font-size:13px;margin:0 0 14px;color:#666;font-weight:500;}'+
+  'table{border-collapse:collapse;width:100%;margin-bottom:14px;}th{background:#f2f2f2;border:1px solid #ccc;padding:5px 7px;font-size:9.5px;text-align:left;}'+
+  '.sec-title{font-size:12px;font-weight:700;margin:16px 0 6px;border-bottom:2px solid #333;padding-bottom:3px;}'+
+  '.kpi-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}.kpi{border:1px solid #ccc;border-radius:6px;padding:8px 12px;min-width:150px;}'+
+  '.kpi .l{font-size:9.5px;color:#666;}.kpi .v{font-size:14px;font-weight:700;margin-top:2px;}'+
+  '.gastos-tbl{width:100%;font-size:10.5px;}.gastos-tbl td{padding:4px 6px;border-bottom:1px solid #eee;}.gastos-tbl td:last-child{text-align:right;font-weight:600;}'+
+  '@media print{body{padding:8px;}}</style></head><body>'+
+  '<h1>MARTIZENT S.R.L.</h1><h2>PROCEDIMIENTO DE LICITACIONES — '+nombre+' &middot; '+fecha+'</h2>'+
+  '<div class="sec-title">Artículos</div>'+
+  '<table><thead><tr><th>Artículo</th><th>Cant.</th><th>Costo</th><th>Facturado</th><th>P.Venta Unit.</th><th>Costo Unit.</th><th>Costo Total</th><th>Utilidad Total</th></tr></thead><tbody>'+itemRows+'</tbody></table>'+
+  '<div class="sec-title">Gastos generales</div>'+
+  '<table class="gastos-tbl">'+
+    '<tr><td>Comisiones</td><td>'+fmtBs(r.comisionMonto)+'</td></tr>'+
+    '<tr><td>Gastos de personal</td><td>'+fmtBs(r.personal)+'</td></tr>'+
+    '<tr><td>Gastos de documentación</td><td>'+fmtBs(r.docsSum)+'</td></tr>'+
+    '<tr><td>Otros gastos</td><td>'+fmtBs(r.otrosSum)+'</td></tr>'+
+    '<tr><td>Costo de la inversión (financiero)</td><td>'+fmtBs(r.costoInversion)+'</td></tr>'+
+    '<tr><td><b>Total gastos generales</b></td><td>'+fmtBs(r.ggTotal)+'</td></tr>'+
+  '</table>'+
+  '<div class="sec-title">Resultados</div>'+
+  '<div class="kpi-row">'+
+    '<div class="kpi"><div class="l">Utilidad unitaria</div><div class="v">'+fmtBs(r.utilidadUnitaria)+'</div></div>'+
+    '<div class="kpi"><div class="l">Utilidad total</div><div class="v">'+fmtBs(r.Qt)+'</div></div>'+
+    '<div class="kpi"><div class="l">Costo de la inversión</div><div class="v">'+fmtBs(r.inversion)+'</div></div>'+
+    '<div class="kpi"><div class="l">Costo total general</div><div class="v">'+fmtBs(r.costoTotalGeneral)+'</div></div>'+
+    '<div class="kpi"><div class="l">Utilidad general</div><div class="v">'+r.utilidadFinalPct.toFixed(1)+'%</div></div>'+
+  '</div>'+
+  '</body></html>';
+}
+function licOpenPdfWindow(nombre,data){
+  var html=licBuildPdfHtml(nombre,data);
+  var win=window.open('','_blank');
+  if(!win){alert('Habilitá las ventanas emergentes.');return;}
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(function(){win.print();},600);
+}
+function licDownloadCurrentPdf(){
+  var nombre=((el('lic-nombre')||{}).value||'').trim()||'Sin nombre';
+  licOpenPdfWindow(nombre,licCollectData());
+}
+function licDownloadHistPdf(id){
+  var r=LIC_HIST.find(function(x){return x.id===id;})||(ADM_LIC||[]).find(function(x){return x.id===id;});
+  if(!r)return;
+  licOpenPdfWindow(r.nombre,r.data);
 }
 
 // ═══════════ TABLES / PHOTOS ═══════════
