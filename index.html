@@ -514,7 +514,7 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
         <div class="add-form-box" id="adnp-form" style="display:none;margin-bottom:12px;">
           <h4 style="margin-bottom:10px;">Agregar producto</h4>
           <div class="frow full"><div><label class="flabel">Descripción *</label><input type="text" id="adnp-desc" placeholder="Nombre del producto"></div></div>
-          <div class="frow" style="margin-top:8px;"><div><label class="flabel">Categoría</label><input type="text" id="adnp-cat" placeholder="Ej. Termotanques"></div><div></div></div>
+          <div class="frow" style="margin-top:8px;"><div><label class="flabel">Subgrupo</label><select id="adnp-cat" style="width:100%;"></select></div><div></div></div>
           <div class="frow" style="margin-top:8px;">
             <div><label class="flabel">May. Mínimo (Bs)</label><input type="number" id="adnp-p1" placeholder="0"></div>
             <div><label class="flabel">May. Mín. Nacional (Bs)</label><input type="number" id="adnp-p2" placeholder="0"></div>
@@ -760,6 +760,19 @@ function sbLoadOverrides(){
       if(r.tipo==='prod') PROD_OVERRIDES[r.id]=r.data;
       else if(r.tipo==='rep') REPUESTOS_OVERRIDES[r.id]=r.data;
     });
+    PRODUCTOS_CATALOGO=PRODUCTOS_CATALOGO.filter(function(p){
+      var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id];
+      return !(ov&&ov.deleted);
+    });
+  });
+}
+function sbLoadProductosExtra(){
+  return sbFetch('productos_extra?select=*&order=created_at.asc').then(function(rows){
+    // Evita duplicados si se vuelve a llamar en la misma sesión (re-login sin recargar)
+    PRODUCTOS_CATALOGO=PRODUCTOS_CATALOGO.filter(function(p){return p.id<100000;});
+    (rows||[]).forEach(function(r){
+      PRODUCTOS_CATALOGO.push({id:r.id,descripcion:r.descripcion,categoria:r.categoria,cat_label:r.cat_label,subcat_label:r.subcat_label,precio1:r.precio1,precio2:r.precio2,precio3:r.precio3,precio4:r.precio4,factura_pct:r.factura_pct});
+    });
   });
 }
 
@@ -847,6 +860,7 @@ function doLogin(){
     // Wait for overrides to load BEFORE showing home, so prices/fpct are correct
     Promise.all([
       sbLoadOverrides().catch(function(e){console.warn('Override load failed:',e);}),
+      sbLoadProductosExtra().catch(function(e){console.warn('Productos extra load failed:',e);}),
       sbFetch('usuarios?select=*').then(function(rows){
         USERS=(rows||[]).map(function(r){return {user:r.user_name,pass:r.pass,nombre:r.nombre||r.user_name,rol:r.rol||'user',sucursal:r.sucursal||'\u2014',licitaciones:!!r.licitaciones};});
       }).catch(function(){}),
@@ -855,6 +869,7 @@ function doLogin(){
       sbLoadSolicitudes().catch(function(e){console.warn('Solicitudes load failed:',e);})
     ]).then(function(){
       buildNav();
+      buildCatFilter();
       showHome();
     });
   }).catch(function(e){
@@ -1461,8 +1476,10 @@ function buildCatFilter(){
   sel.innerHTML='<option value="">Todas las categorías</option>';
   Object.keys(cats).forEach(function(k){sel.innerHTML+='<option value="'+k+'">'+cats[k]+'</option>';});
   // also for add form
-  var npcat=el('np-cat');if(!npcat)return;
-  npcat.innerHTML='';Object.keys(cats).forEach(function(k){npcat.innerHTML+='<option value="'+k+'">'+cats[k]+'</option>';});
+  var npcat=el('np-cat');
+  if(npcat)npcat.innerHTML=Object.keys(cats).map(function(k){return '<option value="'+k+'">'+cats[k]+'</option>';}).join('');
+  var adnpcat=el('adnp-cat');
+  if(adnpcat)adnpcat.innerHTML=Object.keys(cats).map(function(k){return '<option value="'+k+'">'+cats[k]+'</option>';}).join('');
 }
 function renderCatalog(){
   var search=(el('cat-search')||{}).value||'';
@@ -4161,7 +4178,8 @@ function renderAdmCatalog(){
     var catLabel=p.subcat_label||p.cat_label||p.categoria||'';
     if(p.categoria!==lastCat){
       lastCat=p.categoria;
-      html+='<tr class="prod-section-row"><td colspan="6">'+catLabel+'</td></tr>';
+      var catEsc=String(p.categoria).replace(/'/g,"\\'");
+      html+='<tr class="prod-section-row"><td colspan="5">'+catLabel+'</td><td style="text-align:right;"><button class="btn btn-sm" onclick="deleteSubgroup(\''+catEsc+'\')" style="color:var(--red-600);border-color:var(--red-400);font-size:11px;">&#128465; Eliminar subgrupo</button></td></tr>';
     }
     var descEsc=desc.replace(/"/g,'&quot;');
     html+='<tr id="admprow-'+p.id+'">'+
@@ -4170,7 +4188,7 @@ function renderAdmCatalog(){
       '<td style="text-align:right;">Bs '+Number(p1).toLocaleString('es-BO')+'</td>'+
       '<td style="text-align:right;">Bs '+Number(p2).toLocaleString('es-BO')+'</td>'+
       '<td style="text-align:center;"><span style="font-size:12px;font-weight:700;color:var(--purple-700);">'+fpct+'%</span></td>'+
-      '<td><button class="btn btn-sm" onclick="toggleAdmProdEdit('+p.id+')">&#9998; Editar</button></td></tr>'+
+      '<td><button class="btn btn-sm" onclick="toggleAdmProdEdit('+p.id+')">&#9998; Editar</button> <button class="btn btn-sm" onclick="deleteProducto('+p.id+')" style="color:var(--red-600);border-color:var(--red-400);">&#128465;</button></td></tr>'+
       '<tr class="prod-edit-row" id="admpedit-'+p.id+'"><td class="prod-edit-cell" colspan="6">'+
       '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:end;">'+
       '<div><label class="flabel">Descripción</label><input type="text" id="adpe-desc-'+p.id+'" value="'+descEsc+'"></div>'+
@@ -4189,6 +4207,39 @@ function renderAdmCatalog(){
   tbody.innerHTML=html;
 }
 function toggleAdmProdEdit(id){var r=el('admpedit-'+id);if(r)r.classList.toggle('open');}
+function deleteProducto(id){
+  var p=PRODUCTOS_CATALOGO.find(function(x){return x.id===id;});
+  if(!p)return;
+  var ov=PROD_OVERRIDES[String(id)]||PROD_OVERRIDES[id]||{};
+  var desc=ov.descripcion||p.descripcion;
+  if(!confirm('¿Eliminar "'+desc+'" del catálogo? Esta acción no se puede deshacer.'))return;
+  PRODUCTOS_CATALOGO=PRODUCTOS_CATALOGO.filter(function(x){return x.id!==id;});
+  if(id>=100000){
+    sbFetch('productos_extra?id=eq.'+id,'DELETE').catch(function(e){console.error('Error al eliminar producto:',e);});
+  }else{
+    var ovData={deleted:true};
+    PROD_OVERRIDES[String(id)]=ovData;
+    sbSaveOverride(String(id),'prod',ovData).catch(function(e){console.error('Error al eliminar producto:',e);});
+  }
+  renderAdmCatalog();buildCatFilter();
+}
+function deleteSubgroup(categoria){
+  var prods=PRODUCTOS_CATALOGO.filter(function(p){return p.categoria===categoria;});
+  if(!prods.length)return;
+  var label=prods[0].subcat_label||prods[0].cat_label||categoria;
+  if(!confirm('¿Eliminar el subgrupo "'+label+'" completo? Se eliminarán '+prods.length+' producto'+(prods.length!==1?'s':'')+'. Esta acción no se puede deshacer.'))return;
+  prods.forEach(function(p){
+    if(p.id>=100000){
+      sbFetch('productos_extra?id=eq.'+p.id,'DELETE').catch(function(e){console.error('Error al eliminar producto del subgrupo:',e);});
+    }else{
+      var ovData={deleted:true};
+      PROD_OVERRIDES[String(p.id)]=ovData;
+      sbSaveOverride(String(p.id),'prod',ovData).catch(function(e){console.error('Error al eliminar producto del subgrupo:',e);});
+    }
+  });
+  PRODUCTOS_CATALOGO=PRODUCTOS_CATALOGO.filter(function(p){return p.categoria!==categoria;});
+  renderAdmCatalog();buildCatFilter();
+}
 function saveAdmProdEdit(id){
   var desc=(el('adpe-desc-'+id)||{}).value||'';
   var p1=parseFloat((el('adpe-p1-'+id)||{}).value)||0;
@@ -4210,7 +4261,9 @@ function saveAdmProdEdit(id){
 function addProducto(){
   var desc=((el('adnp-desc')||{}).value||'').trim();
   if(!desc){var e=el('adnp-error');if(e)e.textContent='Ingresá la descripción.';return;}
-  var cat=((el('adnp-cat')||{}).value||'').trim()||'General';
+  var cat=(el('adnp-cat')||{}).value||'';
+  if(!cat){var e0=el('adnp-error');if(e0)e0.textContent='Seleccioná un subgrupo.';return;}
+  var catObj=PRODUCTOS_CATALOGO.find(function(p){return p.categoria===cat;})||{cat_label:'General',subcat_label:'General'};
   var p1=parseFloat((el('adnp-p1')||{}).value)||0;
   var p2=parseFloat((el('adnp-p2')||{}).value)||0;
   var p3=parseFloat((el('adnp-p3')||{}).value)||0;
@@ -4218,7 +4271,12 @@ function addProducto(){
   var fpct=parseFloat((el('adnp-fpct')||{}).value)||30;
   var sinStock=(el('adnp-sinstock')||{}).checked||false;
   var newId=Date.now();
-  PRODUCTOS_CATALOGO.push({id:newId,descripcion:desc,categoria:cat,cat_label:cat,subcat_label:cat,precio1:p1,precio2:p2,precio3:p3,precio4:p4,factura_pct:fpct});
+  PRODUCTOS_CATALOGO.push({id:newId,descripcion:desc,categoria:cat,cat_label:catObj.cat_label,subcat_label:catObj.subcat_label,precio1:p1,precio2:p2,precio3:p3,precio4:p4,factura_pct:fpct});
+  sbFetch('productos_extra','POST',{id:newId,descripcion:desc,categoria:cat,cat_label:catObj.cat_label,subcat_label:catObj.subcat_label,precio1:p1,precio2:p2,precio3:p3,precio4:p4,factura_pct:fpct,creado_por:SESSION.user})
+    .catch(function(err){
+      console.error('Error al guardar producto en Supabase:',err);
+      alert('El producto se agregó pero no se pudo guardar en la nube (se perderá al recargar): '+err.message);
+    });
   if(sinStock){
     var ovNew={sinStock:true};
     PROD_OVERRIDES[String(newId)]=ovNew;
@@ -4230,7 +4288,7 @@ function addProducto(){
   var e2=el('adnp-error');if(e2)e2.textContent='';
   toggleAddProdAdmin();renderAdmCatalog();
 }
-function toggleAddProdAdmin(){var f=el('adnp-form');if(f)f.style.display=f.style.display==='none'?'block':'none';var e=el('adnp-error');if(e)e.textContent='';}
+function toggleAddProdAdmin(){var f=el('adnp-form');if(!f)return;var opening=f.style.display==='none';f.style.display=opening?'block':'none';if(opening)buildCatFilter();var e=el('adnp-error');if(e)e.textContent='';}
 
 // ═══ Excel import for products ═══
 function importProductsExcel(input){
