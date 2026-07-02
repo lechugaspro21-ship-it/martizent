@@ -507,29 +507,29 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
             <div style="font-size:12px;color:var(--text-3);margin-top:2px;">288 productos · May. Mínimo, May. Mín. Nacional, Mayorista y Mayorista Nacional</div>
           </div>
           <div style="display:flex;gap:8px;">
-            <button class="btn btn-primary btn-sm" onclick="toggleAddProd()">➕ Agregar</button>
+            <button class="btn btn-primary btn-sm" onclick="toggleAddProdAdmin()">➕ Agregar</button>
             <label class="btn btn-sm" style="cursor:pointer;font-size:12px;">📥 Importar Excel<input type="file" accept=".xlsx,.xls" onchange="importProductsExcel(this)" style="display:none;"></label>
           </div>
         </div>
-        <div class="add-form-box" id="add-prod-form" style="display:none;margin-bottom:12px;">
+        <div class="add-form-box" id="adnp-form" style="display:none;margin-bottom:12px;">
           <h4 style="margin-bottom:10px;">Agregar producto</h4>
-          <div class="frow full"><div><label class="flabel">Descripción *</label><input type="text" id="np-desc" placeholder="Nombre del producto"></div></div>
-          <div class="frow" style="margin-top:8px;"><div><label class="flabel">Categoría</label><input type="text" id="np-cat" placeholder="Ej. Termotanques"></div><div></div></div>
+          <div class="frow full"><div><label class="flabel">Descripción *</label><input type="text" id="adnp-desc" placeholder="Nombre del producto"></div></div>
+          <div class="frow" style="margin-top:8px;"><div><label class="flabel">Categoría</label><input type="text" id="adnp-cat" placeholder="Ej. Termotanques"></div><div></div></div>
           <div class="frow" style="margin-top:8px;">
-            <div><label class="flabel">May. Mínimo (Bs)</label><input type="number" id="np-p1" placeholder="0"></div>
-            <div><label class="flabel">May. Mín. Nacional (Bs)</label><input type="number" id="np-p2" placeholder="0"></div>
+            <div><label class="flabel">May. Mínimo (Bs)</label><input type="number" id="adnp-p1" placeholder="0"></div>
+            <div><label class="flabel">May. Mín. Nacional (Bs)</label><input type="number" id="adnp-p2" placeholder="0"></div>
           </div>
           <div class="frow" style="margin-top:8px;">
-            <div><label class="flabel">Mayorista (Bs)</label><input type="number" id="np-p3" placeholder="0"></div>
-            <div><label class="flabel">Mayorista Nacional (Bs)</label><input type="number" id="np-p4" placeholder="0"></div>
-            <div><label class="flabel">Factura %</label><input type="number" id="np-fpct" placeholder="30" value="30" min="0" max="100"></div>
+            <div><label class="flabel">Mayorista (Bs)</label><input type="number" id="adnp-p3" placeholder="0"></div>
+            <div><label class="flabel">Mayorista Nacional (Bs)</label><input type="number" id="adnp-p4" placeholder="0"></div>
+            <div><label class="flabel">Factura %</label><input type="number" id="adnp-fpct" placeholder="30" value="30" min="0" max="100"></div>
           </div>
-          <div style="margin-top:10px;font-size:12.5px;"><input type="checkbox" id="np-sinstock" style="width:15px;height:15px;vertical-align:middle;"> <label for="np-sinstock" style="vertical-align:middle;">🚫 Sin stock</label></div>
+          <div style="margin-top:10px;font-size:12.5px;"><input type="checkbox" id="adnp-sinstock" style="width:15px;height:15px;vertical-align:middle;"> <label for="adnp-sinstock" style="vertical-align:middle;">🚫 Sin stock</label></div>
           <div style="display:flex;gap:8px;margin-top:12px;">
             <button class="btn btn-success" onclick="addProducto()">Guardar</button>
-            <button class="btn" onclick="toggleAddProd()">Cancelar</button>
+            <button class="btn" onclick="toggleAddProdAdmin()">Cancelar</button>
           </div>
-          <div id="np-error" style="font-size:12px;color:var(--red-600);margin-top:6px;"></div>
+          <div id="adnp-error" style="font-size:12px;color:var(--red-600);margin-top:6px;"></div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;">
           <div style="padding:10px 12px;background:var(--bg);border-bottom:1px solid var(--border);">
@@ -4208,15 +4208,15 @@ function saveAdmProdEdit(id){
   toggleAdmProdEdit(id);renderAdmCatalog();
 }
 function addProducto(){
-  var desc=((el('np-desc')||{}).value||'').trim();
-  if(!desc){var e=el('np-error');if(e)e.textContent='Ingresá la descripción.';return;}
-  var cat=((el('np-cat')||{}).value||'').trim()||'General';
-  var p1=parseFloat((el('np-p1')||{}).value)||0;
-  var p2=parseFloat((el('np-p2')||{}).value)||0;
-  var p3=parseFloat((el('np-p3')||{}).value)||0;
-  var p4=parseFloat((el('np-p4')||{}).value)||0;
-  var fpct=parseFloat((el('np-fpct')||{}).value)||30;
-  var sinStock=(el('np-sinstock')||{}).checked||false;
+  var desc=((el('adnp-desc')||{}).value||'').trim();
+  if(!desc){var e=el('adnp-error');if(e)e.textContent='Ingresá la descripción.';return;}
+  var cat=((el('adnp-cat')||{}).value||'').trim()||'General';
+  var p1=parseFloat((el('adnp-p1')||{}).value)||0;
+  var p2=parseFloat((el('adnp-p2')||{}).value)||0;
+  var p3=parseFloat((el('adnp-p3')||{}).value)||0;
+  var p4=parseFloat((el('adnp-p4')||{}).value)||0;
+  var fpct=parseFloat((el('adnp-fpct')||{}).value)||30;
+  var sinStock=(el('adnp-sinstock')||{}).checked||false;
   var newId=Date.now();
   PRODUCTOS_CATALOGO.push({id:newId,descripcion:desc,categoria:cat,cat_label:cat,subcat_label:cat,precio1:p1,precio2:p2,precio3:p3,precio4:p4,factura_pct:fpct});
   if(sinStock){
@@ -4224,12 +4224,13 @@ function addProducto(){
     PROD_OVERRIDES[String(newId)]=ovNew;
     sbSaveOverride(String(newId),'prod',ovNew).catch(function(){});
   }
-  ['np-desc','np-cat','np-p1','np-p2','np-p3','np-p4'].forEach(function(id){var e=el(id);if(e)e.value='';});
-  var fp=el('np-fpct');if(fp)fp.value='30';
-  var sk=el('np-sinstock');if(sk)sk.checked=false;
-  var e=el('np-error');if(e)e.textContent='';
-  toggleAddProd();renderAdmCatalog();
+  ['adnp-desc','adnp-cat','adnp-p1','adnp-p2','adnp-p3','adnp-p4'].forEach(function(id){var e=el(id);if(e)e.value='';});
+  var fp=el('adnp-fpct');if(fp)fp.value='30';
+  var sk=el('adnp-sinstock');if(sk)sk.checked=false;
+  var e2=el('adnp-error');if(e2)e2.textContent='';
+  toggleAddProdAdmin();renderAdmCatalog();
 }
+function toggleAddProdAdmin(){var f=el('adnp-form');if(f)f.style.display=f.style.display==='none'?'block':'none';var e=el('adnp-error');if(e)e.textContent='';}
 
 // ═══ Excel import for products ═══
 function importProductsExcel(input){
