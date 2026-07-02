@@ -524,6 +524,7 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
             <div><label class="flabel">Mayorista Nacional (Bs)</label><input type="number" id="np-p4" placeholder="0"></div>
             <div><label class="flabel">Factura %</label><input type="number" id="np-fpct" placeholder="30" value="30" min="0" max="100"></div>
           </div>
+          <div style="margin-top:10px;font-size:12.5px;"><input type="checkbox" id="np-sinstock" style="width:15px;height:15px;vertical-align:middle;"> <label for="np-sinstock" style="vertical-align:middle;">🚫 Sin stock</label></div>
           <div style="display:flex;gap:8px;margin-top:12px;">
             <button class="btn btn-success" onclick="addProducto()">Guardar</button>
             <button class="btn" onclick="toggleAddProd()">Cancelar</button>
@@ -872,6 +873,8 @@ function initApp(){
 }
 function buildNav(){
   var isAdmin=SESSION.rol==='admin';
+  var tbU=el('tb-user');if(tbU)tbU.textContent=SESSION.nombre;
+  var rt=el('tb-role');if(rt){rt.textContent=isAdmin?'Admin':'Campo';rt.className='role-tag '+(isAdmin?'role-admin':'role-user');}
   var tabs=[{id:'home',l:'🏠 Inicio'},{id:'cotizaciones',l:'📋 Cotizaciones'}];
   if(!isAdmin) tabs.push({id:'inv-mercado',l:'📊 Inv. Mercado'});
   if(!isAdmin) tabs.push({id:'creditos-user',l:'💳 Créditos'});
@@ -2058,6 +2061,7 @@ function renderUserTable(){
             '<button class="btn btn-success btn-sm" onclick="saveEditUser('+i+')">&#10003;</button>'+
             '<button class="btn btn-sm" onclick="toggleEditUser('+i+')">&#10005;</button>'+
           '</div></div>'+
+          '<div style="margin-top:10px;display:flex;align-items:center;gap:8px;font-size:12.5px;"><label class="flabel" style="margin:0;">Contraseña actual:</label><input type="password" id="ue-currentpass-'+i+'" value="'+(u.pass||'').replace(/"/g,'&quot;')+'" readonly style="width:150px;"><button type="button" class="btn btn-sm" onclick="toggleShowPass('+i+')" id="ue-passtoggle-'+i+'">👁 Mostrar</button></div>'+
           '<div style="margin-top:10px;font-size:12.5px;"><input type="checkbox" id="ue-lic-'+i+'" style="width:15px;height:15px;vertical-align:middle;"'+(u.licitaciones?' checked':'')+'> <label for="ue-lic-'+i+'" style="vertical-align:middle;">📐 Habilitar módulo de Licitaciones</label></div>'+
           '<div id="ue-error-'+i+'" style="color:var(--red-600);font-size:12px;margin-top:6px;"></div>'+
         '</td></tr>';
@@ -2067,6 +2071,12 @@ function renderUserTable(){
     });
 }
 function toggleEditUser(i){var r=el('uedit-'+i);if(r)r.classList.toggle('open');}
+function toggleShowPass(i){
+  var inp=el('ue-currentpass-'+i);var btn=el('ue-passtoggle-'+i);
+  if(!inp)return;
+  if(inp.type==='password'){inp.type='text';if(btn)btn.textContent='🙈 Ocultar';}
+  else{inp.type='password';if(btn)btn.textContent='👁 Mostrar';}
+}
 function saveEditUser(i){
   var u=USERS[i];if(!u)return;
   var nombre=(el('ue-nombre-'+i)||{}).value.trim();
@@ -2781,10 +2791,11 @@ function cotSearch(){
     var desc=ov.descripcion||p.descripcion;
     var precio=cotPrecioProducto(p,ov,nacional,modo);
     var fpct=ov.factura_pct!==undefined?ov.factura_pct:(p.factura_pct!==undefined?p.factura_pct:30);
+    var sinStock=!!ov.sinStock;
     var priceLabel={parcial:nacional?'May. Mín. Nac.':'May. Mínimo',total:nacional?'Mayorista Nac.':'Mayorista',utilidad:nacional?'Mayorista Nac.':'Mayorista',publico:nacional?'Venta Públ. Nac.':'Venta Público'}[modo]||'';
     return '<div class="cot-sr-item" style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;">'+
       '<div style="flex:1;min-width:0;">'+
-        '<div style="font-size:13px;font-weight:500;">'+desc+'</div>'+
+        '<div style="font-size:13px;font-weight:500;">'+desc+(sinStock?' <span class="tag" style="background:var(--red-50,#fee2e2);color:var(--red-600);font-size:10px;">Sin stock</span>':'')+'</div>'+
         '<div style="font-size:11.5px;color:var(--text-3);margin-top:2px;">'+p.subcat_label+'&nbsp;·&nbsp;<b>Bs '+Number(precio).toLocaleString('es-BO')+'</b>&nbsp;('+priceLabel+')&nbsp;·&nbsp;Fact:&nbsp;'+fpct+'%</div>'+
       '</div>'+
       '<button class="btn btn-sm btn-success" onmousedown="event.preventDefault();cotSearchAddItem('+p.id+');" title="Agregar" style="flex-shrink:0;font-weight:800;width:32px;height:32px;padding:0;font-size:16px;line-height:1;">+</button>'+
@@ -2864,8 +2875,9 @@ function renderCotItems(){
       seriesCell='<button onmousedown="event.preventDefault();openSeriesModalAll('+gi+');" style="width:100%;padding:4px 5px;font-size:11px;background:var(--blue-50);border:1px solid var(--blue-400);border-radius:var(--r-sm);color:var(--blue-700);cursor:pointer;font-weight:600;">'+(filled>0?filled+'/'+it.cant+' &#10003;':'+ Series')+'</button>';
     }
     var badge=isRep?'<span style="font-size:9px;background:#FEF3C7;color:#92400E;padding:1px 5px;border-radius:8px;margin-left:4px;">REP</span>':'';
+    var stockBadge=it.sinStock?'<span style="font-size:9px;background:#fee2e2;color:#dc2626;padding:1px 5px;border-radius:8px;margin-left:4px;">Sin stock</span>':'';
     html+='<div style="display:grid;grid-template-columns:1fr 52px 100px 70px 48px 75px 28px;padding:7px 8px;border-bottom:1px solid var(--border);align-items:center;gap:4px;">'+
-      '<div style="font-size:11.5px;line-height:1.3;font-weight:500;">'+it.desc+badge+'<div style="font-size:10px;color:var(--text-3);">'+(it.glosa||it.detalle||'')+'</div></div>'+
+      '<div style="font-size:11.5px;line-height:1.3;font-weight:500;">'+it.desc+badge+stockBadge+'<div style="font-size:10px;color:var(--text-3);">'+(it.glosa||it.detalle||'')+'</div></div>'+
       '<div style="text-align:center;"><input type="number" min="1" value="'+it.cant+'" onchange="cotUpdateCantAll('+gi+',this.value)" style="width:46px;text-align:center;padding:3px 4px;font-size:12px;"></div>'+
       '<div>'+seriesCell+'</div>'+
       '<div style="font-size:12px;text-align:right;color:var(--text-2);">'+Math.round(it.precio).toLocaleString('es-BO')+'</div>'+
@@ -2898,7 +2910,7 @@ function renderCotItemsUtilidad(c){
     var utilU=0.84*(factU-precioU);
     var utilTotal=Math.round(utilU*it.cant);
     html+='<div style="display:grid;grid-template-columns:1fr 48px 85px 95px 95px 28px;padding:7px 8px;border-bottom:1px solid var(--border);align-items:center;gap:4px;">'+
-      '<div style="font-size:11.5px;line-height:1.3;font-weight:500;">'+it.desc+'<div style="font-size:10px;color:var(--text-3);">'+(it.glosa||'')+'</div></div>'+
+      '<div style="font-size:11.5px;line-height:1.3;font-weight:500;">'+it.desc+(it.sinStock?' <span style="font-size:9px;background:#fee2e2;color:#dc2626;padding:1px 5px;border-radius:8px;margin-left:4px;">Sin stock</span>':'')+'<div style="font-size:10px;color:var(--text-3);">'+(it.glosa||'')+'</div></div>'+
       '<div style="text-align:center;"><input type="number" min="1" value="'+it.cant+'" onchange="cotUpdateCant('+gi+',this.value)" style="width:42px;text-align:center;padding:3px 4px;font-size:12px;"></div>'+
       '<div style="font-size:12px;text-align:right;color:var(--text-2);">'+Math.round(precioU).toLocaleString('es-BO')+'</div>'+
       '<div><input type="number" min="0" value="'+Math.round(factU)+'" onchange="cotUpdateFacturaSolicitada('+gi+',this.value)" style="width:100%;text-align:right;padding:3px 5px;font-size:12px;"></div>'+
@@ -3930,7 +3942,7 @@ function cotAddItem(prodId){
   var fpct=(modo==='total'||modo==='publico')?100:(ov.factura_pct!==undefined?ov.factura_pct:(p.factura_pct!==undefined?p.factura_pct:30));
   var existing=COT_ITEMS.find(function(it){return it.prodId===prodId;});
   if(existing){existing.cant++;renderCotItems();return;}
-  var newItem={prodId:prodId,desc:desc,glosa:glosa,precio:precio,factura_pct:fpct,cant:1};
+  var newItem={prodId:prodId,desc:desc,glosa:glosa,precio:precio,factura_pct:fpct,cant:1,sinStock:!!ov.sinStock};
   if(modo==='utilidad')newItem.facturaSolicitada=precio;
   COT_ITEMS.push(newItem);
   renderCotItems();
@@ -4145,6 +4157,7 @@ function renderAdmCatalog(){
     var p3=ov.precio3!==undefined?ov.precio3:p.precio3;
     var p4=ov.precio4!==undefined?ov.precio4:p.precio4;
     var fpct=ov.factura_pct!==undefined?ov.factura_pct:(p.factura_pct!==undefined?p.factura_pct:30);
+    var sinStock=!!ov.sinStock;
     var catLabel=p.subcat_label||p.cat_label||p.categoria||'';
     if(p.categoria!==lastCat){
       lastCat=p.categoria;
@@ -4152,7 +4165,7 @@ function renderAdmCatalog(){
     }
     var descEsc=desc.replace(/"/g,'&quot;');
     html+='<tr id="admprow-'+p.id+'">'+
-      '<td style="font-size:12.5px;">'+desc+'</td>'+
+      '<td style="font-size:12.5px;">'+desc+(sinStock?' <span class="tag" style="background:var(--red-50,#fee2e2);color:var(--red-600);font-size:10px;">Sin stock</span>':'')+'</td>'+
       '<td style="font-size:11.5px;color:var(--text-3);">'+(p.cat_label||'')+'</td>'+
       '<td style="text-align:right;">Bs '+Number(p1).toLocaleString('es-BO')+'</td>'+
       '<td style="text-align:right;">Bs '+Number(p2).toLocaleString('es-BO')+'</td>'+
@@ -4169,7 +4182,9 @@ function renderAdmCatalog(){
       '<div style="display:flex;align-items:flex-end;gap:6px;">'+
       '<button class="btn btn-success btn-sm" onclick="saveAdmProdEdit('+p.id+')">&#10003;</button>'+
       '<button class="btn btn-sm" onclick="toggleAdmProdEdit('+p.id+')">&#10005;</button></div>'+
-      '</div></td></tr>';
+      '</div>'+
+      '<div style="margin-top:8px;font-size:12.5px;"><input type="checkbox" id="adpe-sinstock-'+p.id+'" style="width:15px;height:15px;vertical-align:middle;"'+(sinStock?' checked':'')+'> <label for="adpe-sinstock-'+p.id+'" style="vertical-align:middle;">🚫 Sin stock</label></div>'+
+      '</td></tr>';
   });
   tbody.innerHTML=html;
 }
@@ -4181,7 +4196,8 @@ function saveAdmProdEdit(id){
   var p3=parseFloat((el('adpe-p3-'+id)||{}).value)||0;
   var p4=parseFloat((el('adpe-p4-'+id)||{}).value)||0;
   var fpct=parseFloat((el('adpe-fpct-'+id)||{}).value);if(isNaN(fpct))fpct=30;
-  var ovData={descripcion:desc,precio1:p1,precio2:p2,precio3:p3,precio4:p4,factura_pct:fpct};
+  var sinStock=(el('adpe-sinstock-'+id)||{}).checked||false;
+  var ovData={descripcion:desc,precio1:p1,precio2:p2,precio3:p3,precio4:p4,factura_pct:fpct,sinStock:sinStock};
   PROD_OVERRIDES[String(id)]=ovData;PROD_OVERRIDES[id]=ovData;
   sbSaveOverride(String(id),'prod',ovData).then(function(){
     console.log('Producto guardado en Supabase:',id);
@@ -4200,10 +4216,17 @@ function addProducto(){
   var p3=parseFloat((el('np-p3')||{}).value)||0;
   var p4=parseFloat((el('np-p4')||{}).value)||0;
   var fpct=parseFloat((el('np-fpct')||{}).value)||30;
+  var sinStock=(el('np-sinstock')||{}).checked||false;
   var newId=Date.now();
   PRODUCTOS_CATALOGO.push({id:newId,descripcion:desc,categoria:cat,cat_label:cat,subcat_label:cat,precio1:p1,precio2:p2,precio3:p3,precio4:p4,factura_pct:fpct});
+  if(sinStock){
+    var ovNew={sinStock:true};
+    PROD_OVERRIDES[String(newId)]=ovNew;
+    sbSaveOverride(String(newId),'prod',ovNew).catch(function(){});
+  }
   ['np-desc','np-cat','np-p1','np-p2','np-p3','np-p4'].forEach(function(id){var e=el(id);if(e)e.value='';});
   var fp=el('np-fpct');if(fp)fp.value='30';
+  var sk=el('np-sinstock');if(sk)sk.checked=false;
   var e=el('np-error');if(e)e.textContent='';
   toggleAddProd();renderAdmCatalog();
 }
