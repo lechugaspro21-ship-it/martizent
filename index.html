@@ -514,7 +514,8 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
         <div class="add-form-box" id="adnp-form" style="display:none;margin-bottom:12px;">
           <h4 style="margin-bottom:10px;">Agregar producto</h4>
           <div class="frow full"><div><label class="flabel">Descripción *</label><input type="text" id="adnp-desc" placeholder="Nombre del producto"></div></div>
-          <div class="frow" style="margin-top:8px;"><div><label class="flabel">Subgrupo</label><select id="adnp-cat" style="width:100%;"></select></div><div></div></div>
+          <div class="frow" style="margin-top:8px;"><div><label class="flabel">Subgrupo</label><select id="adnp-cat" style="width:100%;" onchange="adnpCatChanged()"></select></div><div></div></div>
+          <div id="adnp-newcat-wrap" style="display:none;margin-top:8px;"><label class="flabel">Nombre del nuevo subgrupo</label><input type="text" id="adnp-newcat-name" placeholder="Ej. Termotanque Marca X"></div>
           <div class="frow" style="margin-top:8px;">
             <div><label class="flabel">May. Mínimo (Bs)</label><input type="number" id="adnp-p1" placeholder="0"></div>
             <div><label class="flabel">May. Mín. Nacional (Bs)</label><input type="number" id="adnp-p2" placeholder="0"></div>
@@ -1479,7 +1480,12 @@ function buildCatFilter(){
   var npcat=el('np-cat');
   if(npcat)npcat.innerHTML=Object.keys(cats).map(function(k){return '<option value="'+k+'">'+cats[k]+'</option>';}).join('');
   var adnpcat=el('adnp-cat');
-  if(adnpcat)adnpcat.innerHTML=Object.keys(cats).map(function(k){return '<option value="'+k+'">'+cats[k]+'</option>';}).join('');
+  if(adnpcat)adnpcat.innerHTML='<option value="__new__">➕ Crear nuevo subgrupo...</option>'+Object.keys(cats).map(function(k){return '<option value="'+k+'">'+cats[k]+'</option>';}).join('');
+}
+function adnpCatChanged(){
+  var sel=el('adnp-cat');var w=el('adnp-newcat-wrap');
+  if(!sel||!w)return;
+  w.style.display=sel.value==='__new__'?'block':'none';
 }
 function renderCatalog(){
   var search=(el('cat-search')||{}).value||'';
@@ -4158,12 +4164,21 @@ function cotRemoveItemAll(i){
 function renderAdmCatalog(){
   var q=((el('adm-cat-search')||{}).value||'').toLowerCase();
   var tbody=el('adm-prod-tbody');if(!tbody)return;
-  var list=PRODUCTOS_CATALOGO.filter(function(p){
+  var filtered=PRODUCTOS_CATALOGO.filter(function(p){
     if(!q)return true;
     var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id]||{};
     var desc=(ov.descripcion||p.descripcion).toLowerCase();
     return desc.indexOf(q)>-1||(p.cat_label||'').toLowerCase().indexOf(q)>-1||(p.subcat_label||'').toLowerCase().indexOf(q)>-1;
   });
+  // Agrupar por categoria (aunque productos del mismo subgrupo no queden contiguos en el array,
+  // por ejemplo productos nuevos agregados al final) para que no se dupliquen encabezados de subgrupo.
+  var catOrder=[],groups={};
+  filtered.forEach(function(p){
+    if(!groups[p.categoria]){groups[p.categoria]=[];catOrder.push(p.categoria);}
+    groups[p.categoria].push(p);
+  });
+  var list=[];
+  catOrder.forEach(function(c){list=list.concat(groups[c]);});
   if(!list.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-3);">Sin resultados</td></tr>';return;}
   var lastCat='';var html='';
   list.forEach(function(p){
@@ -4258,12 +4273,27 @@ function saveAdmProdEdit(id){
   });
   toggleAdmProdEdit(id);renderAdmCatalog();
 }
+function slugifyCat(s){
+  var r=(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'.').replace(/^\.+|\.+$/g,'');
+  return r||'subgrupo';
+}
 function addProducto(){
   var desc=((el('adnp-desc')||{}).value||'').trim();
   if(!desc){var e=el('adnp-error');if(e)e.textContent='Ingresá la descripción.';return;}
-  var cat=(el('adnp-cat')||{}).value||'';
-  if(!cat){var e0=el('adnp-error');if(e0)e0.textContent='Seleccioná un subgrupo.';return;}
-  var catObj=PRODUCTOS_CATALOGO.find(function(p){return p.categoria===cat;})||{cat_label:'General',subcat_label:'General'};
+  var catSel=(el('adnp-cat')||{}).value||'';
+  var cat,catObj;
+  if(catSel==='__new__'){
+    var newName=((el('adnp-newcat-name')||{}).value||'').trim();
+    if(!newName){var e0=el('adnp-error');if(e0)e0.textContent='Ingresá el nombre del nuevo subgrupo.';return;}
+    var slug=slugifyCat(newName),base=slug,n=2;
+    while(PRODUCTOS_CATALOGO.some(function(p){return p.categoria===slug;})){slug=base+'.'+n;n++;}
+    cat=slug;
+    catObj={cat_label:newName,subcat_label:newName};
+  }else{
+    if(!catSel){var e1=el('adnp-error');if(e1)e1.textContent='Seleccioná un subgrupo.';return;}
+    cat=catSel;
+    catObj=PRODUCTOS_CATALOGO.find(function(p){return p.categoria===cat;})||{cat_label:'General',subcat_label:'General'};
+  }
   var p1=parseFloat((el('adnp-p1')||{}).value)||0;
   var p2=parseFloat((el('adnp-p2')||{}).value)||0;
   var p3=parseFloat((el('adnp-p3')||{}).value)||0;
@@ -4282,13 +4312,14 @@ function addProducto(){
     PROD_OVERRIDES[String(newId)]=ovNew;
     sbSaveOverride(String(newId),'prod',ovNew).catch(function(){});
   }
-  ['adnp-desc','adnp-cat','adnp-p1','adnp-p2','adnp-p3','adnp-p4'].forEach(function(id){var e=el(id);if(e)e.value='';});
+  ['adnp-desc','adnp-cat','adnp-p1','adnp-p2','adnp-p3','adnp-p4','adnp-newcat-name'].forEach(function(id){var e=el(id);if(e)e.value='';});
   var fp=el('adnp-fpct');if(fp)fp.value='30';
   var sk=el('adnp-sinstock');if(sk)sk.checked=false;
+  var ncw=el('adnp-newcat-wrap');if(ncw)ncw.style.display='none';
   var e2=el('adnp-error');if(e2)e2.textContent='';
-  toggleAddProdAdmin();renderAdmCatalog();
+  toggleAddProdAdmin();renderAdmCatalog();buildCatFilter();
 }
-function toggleAddProdAdmin(){var f=el('adnp-form');if(!f)return;var opening=f.style.display==='none';f.style.display=opening?'block':'none';if(opening)buildCatFilter();var e=el('adnp-error');if(e)e.textContent='';}
+function toggleAddProdAdmin(){var f=el('adnp-form');if(!f)return;var opening=f.style.display==='none';f.style.display=opening?'block':'none';if(opening){buildCatFilter();adnpCatChanged();}var e=el('adnp-error');if(e)e.textContent='';}
 
 // ═══ Excel import for products ═══
 function importProductsExcel(input){
