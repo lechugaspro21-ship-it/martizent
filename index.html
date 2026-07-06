@@ -255,24 +255,11 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
   <div class="content">
     <!-- HOME ADMIN -->
     <div id="sc-home-admin" class="screen">
-      <div class="home-greeting"><h2 id="hg-admin">Bienvenido</h2><p>Selecciona el módulo</p></div>
-      <div class="home-grid" style="grid-template-columns:1fr 1fr;">
-
-        <div class="hcard hc-teal" onclick="showMain('cotizaciones')"><div class="hcard-bar"></div><div class="hcard-icon">📋</div><h3>Cotizaciones</h3><p>Crear cotizaciones, productos y ver historial completo.</p><div class="hcard-foot"><span class="tag tag-teal">Ventas</span><span style="color:var(--text-3)">›</span></div></div>
-        <div class="hcard hc-purple" onclick="showMain('admin')"><div class="hcard-bar"></div><div class="hcard-icon">🛡️</div><h3>Administrador</h3><p>Informes recibidos, actividades y personal.</p><div class="hcard-foot"><span class="tag tag-purple">Gestión</span><span style="color:var(--text-3)">›</span></div></div>
-        <div class="hcard hc-coral" id="hc-lic-admin" onclick="showMain('licitaciones')" style="display:none;"><div class="hcard-bar"></div><div class="hcard-icon">📐</div><h3>Licitaciones</h3><p>Cálculo de costos y utilidad para procesos de licitación.</p><div class="hcard-foot"><span class="tag tag-coral">Licitaciones</span><span style="color:var(--text-3)">›</span></div></div>
-      </div>
+      <div class="home-greeting"><h2 id="hg-admin">Bienvenido</h2></div>
     </div>
     <!-- HOME USER -->
     <div id="sc-home-user" class="screen">
-      <div class="home-greeting"><h2 id="hg-user">Bienvenido</h2><p>Selecciona el módulo</p></div>
-      <div class="home-grid" style="grid-template-columns:1fr 1fr;">
-
-        <div class="hcard hc-teal" onclick="showMain('cotizaciones')"><div class="hcard-bar"></div><div class="hcard-icon">📋</div><h3>Cotizaciones</h3><p>Crear cotizaciones y ver tu historial.</p><div class="hcard-foot"><span class="tag tag-teal">Ventas</span><span style="color:var(--text-3)">›</span></div></div>
-        <div class="hcard hc-blue" onclick="showMain('inv-mercado')"><div class="hcard-bar"></div><div class="hcard-icon">📊</div><h3>Inv. de mercado</h3><p>Investigación de mercado y actividades.</p><div class="hcard-foot"><span class="tag tag-blue">Análisis</span><span style="color:var(--text-3)">›</span></div></div>
-        <div class="hcard hc-amber" onclick="showMain('creditos-user')"><div class="hcard-bar"></div><div class="hcard-icon">💳</div><h3>Créditos</h3><p>Créditos asignados y cobranza pendiente.</p><div class="hcard-foot"><span class="tag tag-amber">Cobranza</span><span style="color:var(--text-3)">›</span></div></div>
-        <div class="hcard hc-coral" id="hc-lic-user" onclick="showMain('licitaciones')" style="display:none;"><div class="hcard-bar"></div><div class="hcard-icon">📐</div><h3>Licitaciones</h3><p>Cálculo de costos y utilidad para procesos de licitación.</p><div class="hcard-foot"><span class="tag tag-coral">Licitaciones</span><span style="color:var(--text-3)">›</span></div></div>
-      </div>
+      <div class="home-greeting"><h2 id="hg-user">Bienvenido</h2></div>
     </div>
     <!-- MERCADO -->
     <div id="sc-mercado" class="screen">
@@ -330,14 +317,19 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
         <div id="lic-hist-list"></div>
         <div id="lic-form-wrap" style="display:none;margin-top:1.5rem;">
           <div class="lic-box" style="margin-bottom:14px;" id="lic-general-box">
-            <h3>ℹ️ Información general</h3>
+            <h3 onclick="licToggleGeneralBox()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;">ℹ️ Información general <span id="lic-general-arrow" style="font-size:12px;">▾</span></h3>
+            <div id="lic-general-body" style="display:none;">
             <div class="frow">
               <div><label class="flabel">Nombre de la licitación <span class="req">*</span></label><input type="text" id="lic-nombre" placeholder="Ej. Licitación Hospital San Juan de Dios"></div>
               <div><label class="flabel">Encargado de la licitación</label><select id="lic-encargado"></select></div>
             </div>
             <div class="frow" style="margin-top:12px;">
-              <div><label class="flabel">Tiempo (fecha límite de presentación)</label><input type="date" id="lic-tiempo"></div>
-              <div></div>
+              <div><label class="flabel">Contacto (nombre y teléfono)</label><input type="text" id="lic-contacto" placeholder="Ej. Juan Pérez — 700-00000"></div>
+              <div><label class="flabel">Correo</label><input type="email" id="lic-correo" placeholder="correo@ejemplo.com"></div>
+            </div>
+            <div class="frow" style="margin-top:12px;">
+              <div><label class="flabel">Tiempo (fecha límite de presentación)</label><input type="date" id="lic-tiempo" oninput="licUpdateCountdown()"></div>
+              <div id="lic-countdown-wrap"><label class="flabel">Tiempo restante</label><div id="lic-countdown" style="font-size:13px;font-weight:700;color:var(--coral-600);padding-top:6px;">—</div></div>
             </div>
             <div style="margin-top:16px;">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -350,6 +342,19 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
                 <input type="text" id="lic-req-newname" placeholder="Nombre del documento requerido" style="flex:1;">
                 <button class="btn btn-sm btn-primary" onclick="licAddRequisito()">➕</button>
               </div>
+            </div>
+            <div style="margin-top:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <label class="flabel" style="margin:0;">Consultas a realizar</label>
+                <span style="font-size:12px;font-weight:700;color:var(--coral-600);" id="lic-cons-progress">0%</span>
+              </div>
+              <div style="background:var(--border);border-radius:6px;height:6px;overflow:hidden;margin-bottom:10px;"><div id="lic-cons-bar" style="background:var(--coral-400);height:100%;width:0%;transition:width .2s;"></div></div>
+              <div id="lic-cons-list"></div>
+              <div style="display:flex;gap:6px;margin-top:8px;" id="lic-cons-addrow">
+                <input type="text" id="lic-cons-newname" placeholder="Consulta a realizar" style="flex:1;">
+                <button class="btn btn-sm btn-primary" onclick="licAddConsulta()">➕</button>
+              </div>
+            </div>
             </div>
           </div>
           <div class="lic-box" style="margin-bottom:14px;">
@@ -673,7 +678,15 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
           <div class="frow"><div><label class="flabel">Nombre <span class="req">*</span></label><input type="text" id="nu-nombre" placeholder="Nombre y apellido"></div><div><label class="flabel">Usuario <span class="req">*</span></label><input type="text" id="nu-user" placeholder="nombre.apellido" autocomplete="off"></div></div>
           <div class="frow" style="margin-top:12px;"><div><label class="flabel">Contraseña <span class="req">*</span></label><input type="password" id="nu-pass" autocomplete="new-password" placeholder="Mínimo 6 caracteres"></div><div><label class="flabel">Rol</label><select id="nu-rol"><option value="user">Usuario de campo</option><option value="admin">Administrador</option></select></div></div>
           <div class="frow" style="margin-top:12px;"><div><label class="flabel">Sucursal</label><select id="nu-suc"><option value="—">—</option><option>Tarija</option><option>Cochabamba</option><option>Santa Cruz</option><option>La Paz</option></select></div><div style="display:flex;align-items:flex-end;gap:8px;"><button class="btn btn-success" onclick="addUser()" style="flex:1;">Guardar</button><button class="btn" onclick="toggleAddUser()">Cancelar</button></div></div>
-          <div style="margin-top:12px;font-size:13px;"><input type="checkbox" id="nu-lic" style="width:16px;height:16px;vertical-align:middle;"> <label for="nu-lic" style="vertical-align:middle;">📐 Habilitar módulo de Licitaciones</label></div>
+          <div style="margin-top:12px;font-size:13px;">
+            <label class="flabel" style="margin-bottom:6px;">Módulos habilitados</label>
+            <div style="display:flex;flex-wrap:wrap;gap:14px;">
+              <span><input type="checkbox" id="nu-cot" checked style="width:16px;height:16px;vertical-align:middle;"> <label for="nu-cot" style="vertical-align:middle;">📋 Cotizaciones</label></span>
+              <span><input type="checkbox" id="nu-merc" checked style="width:16px;height:16px;vertical-align:middle;"> <label for="nu-merc" style="vertical-align:middle;">📊 Mercados</label></span>
+              <span><input type="checkbox" id="nu-cred" checked style="width:16px;height:16px;vertical-align:middle;"> <label for="nu-cred" style="vertical-align:middle;">💳 Créditos</label></span>
+              <span><input type="checkbox" id="nu-lic" style="width:16px;height:16px;vertical-align:middle;"> <label for="nu-lic" style="vertical-align:middle;">📐 Licitaciones</label></span>
+            </div>
+          </div>
           <div id="nu-error" style="font-size:12px;color:var(--red-600);margin-top:8px;"></div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-top:10px;">
@@ -900,7 +913,7 @@ function doLogin(){
   console.log('Logging in user:', u);
   sbLogin(u,p).then(function(usr){
     console.log('Login success:', JSON.stringify(usr));
-    SESSION={user:usr.user_name,nombre:usr.nombre||usr.user_name,rol:usr.rol||'user',sucursal:usr.sucursal||'\u2014',licitaciones:!!usr.licitaciones};
+    SESSION={user:usr.user_name,nombre:usr.nombre||usr.user_name,rol:usr.rol||'user',sucursal:usr.sucursal||'\u2014',licitaciones:!!usr.licitaciones,cotizaciones:usr.cotizaciones!==false,mercados:usr.mercados!==false,creditos:usr.creditos!==false};
     var lp=el('login-page');if(lp)lp.style.display='none';
     if(btn)btn.textContent='Ingresar';
     // Wait for overrides to load BEFORE showing home, so prices/fpct are correct
@@ -908,7 +921,7 @@ function doLogin(){
       sbLoadOverrides().catch(function(e){console.warn('Override load failed:',e);}),
       sbLoadProductosExtra().catch(function(e){console.warn('Productos extra load failed:',e);}),
       sbFetch('usuarios?select=*').then(function(rows){
-        USERS=(rows||[]).map(function(r){return {user:r.user_name,pass:r.pass,nombre:r.nombre||r.user_name,rol:r.rol||'user',sucursal:r.sucursal||'\u2014',licitaciones:!!r.licitaciones};});
+        USERS=(rows||[]).map(function(r){return {user:r.user_name,pass:r.pass,nombre:r.nombre||r.user_name,rol:r.rol||'user',sucursal:r.sucursal||'\u2014',licitaciones:!!r.licitaciones,cotizaciones:r.cotizaciones!==false,mercados:r.mercados!==false,creditos:r.creditos!==false};});
       }).catch(function(){}),
       sbLoadCotizaciones(SESSION.user,SESSION.rol).then(function(cots){COTIZACIONES=cots||[];}).catch(function(e){console.warn('Cot load failed:',e);}),
       sbLoadActivities().catch(function(e){console.warn('Activities load failed:',e);}),
@@ -936,9 +949,10 @@ function buildNav(){
   var isAdmin=SESSION.rol==='admin';
   var tbU=el('tb-user');if(tbU)tbU.textContent=SESSION.nombre;
   var rt=el('tb-role');if(rt){rt.textContent=isAdmin?'Admin':'Campo';rt.className='role-tag '+(isAdmin?'role-admin':'role-user');}
-  var tabs=[{id:'home',l:'🏠 Inicio'},{id:'cotizaciones',l:'📋 Cotizaciones'}];
-  if(!isAdmin) tabs.push({id:'inv-mercado',l:'📊 Inv. Mercado'});
-  if(!isAdmin) tabs.push({id:'creditos-user',l:'💳 Créditos'});
+  var tabs=[{id:'home',l:'🏠 Inicio'}];
+  if(isAdmin||SESSION.cotizaciones!==false) tabs.push({id:'cotizaciones',l:'📋 Cotizaciones'});
+  if(!isAdmin&&SESSION.mercados!==false) tabs.push({id:'inv-mercado',l:'📊 Inv. Mercado'});
+  if(!isAdmin&&SESSION.creditos!==false) tabs.push({id:'creditos-user',l:'💳 Créditos'});
   if(SESSION.licitaciones) tabs.push({id:'licitaciones',l:'📐 Licitaciones'});
   if(isAdmin) tabs.push({id:'admin',l:'🛡️ Administrador'});
   el('nav-bar').innerHTML=tabs.map(function(t){return '<button class="nav-tab" onclick="showMain(\''+t.id+'\')" id="nt-'+t.id+'">'+t.l+'</button>';}).join('');
@@ -2113,7 +2127,7 @@ function renderUserTable(){
   tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:1rem;color:var(--text-3);">Cargando...</td></tr>';
   sbFetch('usuarios?select=*&order=created_at.asc')
     .then(function(rows){
-      USERS=(rows||[]).map(function(r){return {user:r.user_name,pass:r.pass,nombre:r.nombre||r.user_name,rol:r.rol||'user',sucursal:r.sucursal||'—',licitaciones:!!r.licitaciones};});
+      USERS=(rows||[]).map(function(r){return {user:r.user_name,pass:r.pass,nombre:r.nombre||r.user_name,rol:r.rol||'user',sucursal:r.sucursal||'—',licitaciones:!!r.licitaciones,cotizaciones:r.cotizaciones!==false,mercados:r.mercados!==false,creditos:r.creditos!==false};});
       if(!USERS.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--text-3);">Sin usuarios</td></tr>';return;}
       var sucOpts=['—','Tarija','Cochabamba','Santa Cruz','La Paz'];
       tbody.innerHTML=USERS.map(function(u,i){
@@ -2140,7 +2154,15 @@ function renderUserTable(){
             '<button class="btn btn-sm" onclick="toggleEditUser('+i+')">&#10005;</button>'+
           '</div></div>'+
           '<div style="margin-top:10px;display:flex;align-items:center;gap:8px;font-size:12.5px;"><label class="flabel" style="margin:0;">Contraseña actual:</label><input type="password" id="ue-currentpass-'+i+'" value="'+(u.pass||'').replace(/"/g,'&quot;')+'" readonly style="width:150px;"><button type="button" class="btn btn-sm" onclick="toggleShowPass('+i+')" id="ue-passtoggle-'+i+'">👁 Mostrar</button></div>'+
-          '<div style="margin-top:10px;font-size:12.5px;"><input type="checkbox" id="ue-lic-'+i+'" style="width:15px;height:15px;vertical-align:middle;"'+(u.licitaciones?' checked':'')+'> <label for="ue-lic-'+i+'" style="vertical-align:middle;">📐 Habilitar módulo de Licitaciones</label></div>'+
+          '<div style="margin-top:10px;font-size:12.5px;">'+
+            '<label class="flabel" style="margin-bottom:6px;">Módulos habilitados</label>'+
+            '<div style="display:flex;flex-wrap:wrap;gap:14px;">'+
+              '<span><input type="checkbox" id="ue-cot-'+i+'" style="width:15px;height:15px;vertical-align:middle;"'+(u.cotizaciones!==false?' checked':'')+'> <label for="ue-cot-'+i+'" style="vertical-align:middle;">📋 Cotizaciones</label></span>'+
+              '<span><input type="checkbox" id="ue-merc-'+i+'" style="width:15px;height:15px;vertical-align:middle;"'+(u.mercados!==false?' checked':'')+'> <label for="ue-merc-'+i+'" style="vertical-align:middle;">📊 Mercados</label></span>'+
+              '<span><input type="checkbox" id="ue-cred-'+i+'" style="width:15px;height:15px;vertical-align:middle;"'+(u.creditos!==false?' checked':'')+'> <label for="ue-cred-'+i+'" style="vertical-align:middle;">💳 Créditos</label></span>'+
+              '<span><input type="checkbox" id="ue-lic-'+i+'" style="width:15px;height:15px;vertical-align:middle;"'+(u.licitaciones?' checked':'')+'> <label for="ue-lic-'+i+'" style="vertical-align:middle;">📐 Licitaciones</label></span>'+
+            '</div>'+
+          '</div>'+
           '<div id="ue-error-'+i+'" style="color:var(--red-600);font-size:12px;margin-top:6px;"></div>'+
         '</td></tr>';
       }).join('');
@@ -2162,16 +2184,19 @@ function saveEditUser(i){
   var suc=(el('ue-suc-'+i)||{}).value||'—';
   var pass=(el('ue-pass-'+i)||{}).value;
   var lic=(el('ue-lic-'+i)||{}).checked||false;
+  var cot=(el('ue-cot-'+i)||{}).checked||false;
+  var merc=(el('ue-merc-'+i)||{}).checked||false;
+  var cred=(el('ue-cred-'+i)||{}).checked||false;
   var errEl=el('ue-error-'+i);
   if(!nombre){if(errEl)errEl.textContent='El nombre no puede estar vac\u00EDo.';return;}
   if(pass&&pass.length<3){if(errEl)errEl.textContent='La nueva contrase\u00F1a es muy corta.';return;}
   if(errEl)errEl.textContent='Guardando...';
-  var patch={nombre:nombre,rol:rol,sucursal:suc,licitaciones:lic};
+  var patch={nombre:nombre,rol:rol,sucursal:suc,licitaciones:lic,cotizaciones:cot,mercados:merc,creditos:cred};
   if(pass)patch.pass=pass;
   sbFetch('usuarios?user_name=eq.'+encodeURIComponent(u.user),'PATCH',patch)
     .then(function(){
-      u.nombre=nombre;u.rol=rol;u.sucursal=suc;u.licitaciones=lic;if(pass)u.pass=pass;
-      if(SESSION&&SESSION.user===u.user){SESSION.nombre=nombre;SESSION.sucursal=suc;SESSION.rol=rol;SESSION.licitaciones=lic;buildNav();}
+      u.nombre=nombre;u.rol=rol;u.sucursal=suc;u.licitaciones=lic;u.cotizaciones=cot;u.mercados=merc;u.creditos=cred;if(pass)u.pass=pass;
+      if(SESSION&&SESSION.user===u.user){SESSION.nombre=nombre;SESSION.sucursal=suc;SESSION.rol=rol;SESSION.licitaciones=lic;SESSION.cotizaciones=cot;SESSION.mercados=merc;SESSION.creditos=cred;buildNav();}
       renderUserTable();
     }).catch(function(err){
       console.error('Error al editar usuario:', err);
@@ -2186,16 +2211,20 @@ function addUser(){
   var rol=(el('nu-rol')||{}).value;
   var suc=(el('nu-suc')||{}).value||'—';
   var lic=(el('nu-lic')||{}).checked||false;
+  var cot=(el('nu-cot')||{}).checked||false;
+  var merc=(el('nu-merc')||{}).checked||false;
+  var cred=(el('nu-cred')||{}).checked||false;
   var errEl=el('nu-error');
   if(!nombre||!user||!pass){if(errEl)errEl.textContent='Completá nombre, usuario y contraseña.';return;}
   if(pass.length<3){if(errEl)errEl.textContent='Contraseña muy corta.';return;}
   if(USERS.find(function(u){return u.user===user;})){if(errEl)errEl.textContent='Ese usuario ya existe.';return;}
   if(errEl)errEl.textContent='Guardando...';
-  sbFetch('usuarios','POST',{user_name:user,pass:pass,nombre:nombre,rol:rol,sucursal:suc,licitaciones:lic})
+  sbFetch('usuarios','POST',{user_name:user,pass:pass,nombre:nombre,rol:rol,sucursal:suc,licitaciones:lic,cotizaciones:cot,mercados:merc,creditos:cred})
     .then(function(res){
-      var newUser={user:user,pass:pass,nombre:nombre,rol:rol,sucursal:suc,licitaciones:lic};
+      var newUser={user:user,pass:pass,nombre:nombre,rol:rol,sucursal:suc,licitaciones:lic,cotizaciones:cot,mercados:merc,creditos:cred};
       USERS.push(newUser);
       el('nu-nombre').value='';el('nu-user').value='';el('nu-pass').value='';el('nu-lic').checked=false;
+      el('nu-cot').checked=true;el('nu-merc').checked=true;el('nu-cred').checked=true;
       if(errEl)errEl.textContent='';
       toggleAddUser();
       renderUserTable();
@@ -2264,7 +2293,7 @@ var LIC_REQ_ITEMS=[];
 var LIC_REQ_SEQ=0;
 function licReqRowHtml(id,nombre,checked){
   return '<div class="lic-req-row" id="lic-req-row-'+id+'">'+
-    '<input type="checkbox" id="lic-req-check-'+id+'"'+(checked?' checked':'')+' onchange="licRecalcRequisitos()">'+
+    '<input type="checkbox" id="lic-req-check-'+id+'"'+(checked?' checked':'')+' onchange="licReqCheckChanged('+id+')">'+
     '<span class="lic-req-label" id="lic-req-label-'+id+'">'+escAttr(nombre)+'</span>'+
     '<button type="button" class="lic-req-rm" onclick="licRemoveRequisito('+id+')" title="Quitar">✕</button>'+
   '</div>';
@@ -2288,12 +2317,96 @@ function licClearRequisitos(){
   LIC_REQ_ITEMS=[];
   licRecalcRequisitos();
 }
+function licReqCheckChanged(id){
+  var chk=el('lic-req-check-'+id);if(!chk)return;
+  if(!chk.checked){
+    // Se está deseleccionando: pedir confirmación para evitar destildar por error
+    if(!confirm('¿Seguro que querés desmarcar este documento como no reunido?')){
+      chk.checked=true;return;
+    }
+  }
+  licRecalcRequisitos();
+}
 function licRecalcRequisitos(){
   var total=LIC_REQ_ITEMS.length;
   var done=LIC_REQ_ITEMS.filter(function(id){return (el('lic-req-check-'+id)||{}).checked;}).length;
   var pct=total?Math.round(done/total*100):0;
   setTxt('lic-req-progress',pct+'% ('+done+'/'+total+')');
   var bar=el('lic-req-bar');if(bar)bar.style.width=pct+'%';
+}
+// ── Consultas a realizar (mismo patrón que requisitos) ──
+var LIC_CONS_ITEMS=[];
+var LIC_CONS_SEQ=0;
+function licConsRowHtml(id,nombre,checked){
+  return '<div class="lic-req-row" id="lic-cons-row-'+id+'">'+
+    '<input type="checkbox" id="lic-cons-check-'+id+'"'+(checked?' checked':'')+' onchange="licConsCheckChanged('+id+')">'+
+    '<span class="lic-req-label" id="lic-cons-label-'+id+'">'+escAttr(nombre)+'</span>'+
+    '<button type="button" class="lic-req-rm" onclick="licRemoveConsulta('+id+')" title="Quitar">✕</button>'+
+  '</div>';
+}
+function licAddConsulta(nombre){
+  var inp=el('lic-cons-newname');
+  var name=nombre!=null?nombre:((inp?inp.value:'').trim());
+  if(!name)return;
+  LIC_CONS_SEQ++;var id=LIC_CONS_SEQ;LIC_CONS_ITEMS.push(id);
+  var list=el('lic-cons-list');if(list)list.insertAdjacentHTML('beforeend',licConsRowHtml(id,name,false));
+  if(inp&&nombre==null)inp.value='';
+  licRecalcConsultas();
+}
+function licRemoveConsulta(id){
+  LIC_CONS_ITEMS=LIC_CONS_ITEMS.filter(function(x){return x!==id;});
+  var r=el('lic-cons-row-'+id);if(r)r.remove();
+  licRecalcConsultas();
+}
+function licClearConsultas(){
+  var list=el('lic-cons-list');if(list)list.innerHTML='';
+  LIC_CONS_ITEMS=[];
+  licRecalcConsultas();
+}
+function licConsCheckChanged(id){
+  var chk=el('lic-cons-check-'+id);if(!chk)return;
+  if(!chk.checked){
+    if(!confirm('¿Seguro que querés desmarcar esta consulta como no realizada?')){
+      chk.checked=true;return;
+    }
+  }
+  licRecalcConsultas();
+}
+function licRecalcConsultas(){
+  var total=LIC_CONS_ITEMS.length;
+  var done=LIC_CONS_ITEMS.filter(function(id){return (el('lic-cons-check-'+id)||{}).checked;}).length;
+  var pct=total?Math.round(done/total*100):0;
+  setTxt('lic-cons-progress',pct+'% ('+done+'/'+total+')');
+  var bar=el('lic-cons-bar');if(bar)bar.style.width=pct+'%';
+}
+// ── Colapsar/expandir Información general ──
+function licToggleGeneralBox(){
+  var body=el('lic-general-body');var arrow=el('lic-general-arrow');
+  if(!body)return;
+  var open=body.style.display==='none';
+  body.style.display=open?'block':'none';
+  if(arrow)arrow.textContent=open?'▴':'▾';
+}
+// ── Contador de tiempo restante ──
+var LIC_COUNTDOWN_TIMER=null;
+function licUpdateCountdown(){
+  var tieEl=el('lic-tiempo');var out=el('lic-countdown');
+  if(!tieEl||!out)return;
+  var val=tieEl.value;
+  if(!val){out.textContent='—';return;}
+  var target=new Date(val+'T23:59:59');
+  var now=new Date();
+  var diffMs=target-now;
+  if(diffMs<=0){out.textContent='Vencido';out.style.color='var(--red-600)';return;}
+  var totalHrs=Math.floor(diffMs/3600000);
+  var dias=Math.floor(totalHrs/24);
+  var horas=totalHrs%24;
+  out.style.color='var(--coral-600)';
+  out.textContent=dias+' día'+(dias!==1?'s':'')+' y '+horas+' hora'+(horas!==1?'s':'');
+}
+function licStartCountdownTimer(){
+  if(LIC_COUNTDOWN_TIMER)clearInterval(LIC_COUNTDOWN_TIMER);
+  LIC_COUNTDOWN_TIMER=setInterval(licUpdateCountdown,60000);
 }
 // ── Encargado (usuarios con licitaciones habilitado) ──
 function licBuildEncargadoOptions(selected){
@@ -2309,13 +2422,17 @@ function licApplyRoleUI(){
   var enc=el('lic-encargado');if(enc)enc.disabled=!isAdmin;
   var tie=el('lic-tiempo');if(tie)tie.disabled=!isAdmin;
   var nom=el('lic-nombre');if(nom)nom.disabled=!isAdmin;
+  var cont=el('lic-contacto');if(cont)cont.disabled=!isAdmin;
+  var corr=el('lic-correo');if(corr)corr.disabled=!isAdmin;
   var addrow=el('lic-req-addrow');if(addrow)addrow.style.display=isAdmin?'flex':'none';
+  var consaddrow=el('lic-cons-addrow');if(consaddrow)consaddrow.style.display=isAdmin?'flex':'none';
   document.querySelectorAll('.lic-req-rm').forEach(function(b){b.style.display=isAdmin?'inline-block':'none';});
   document.querySelectorAll('.lic-rm').forEach(function(b){b.style.display=isAdmin?'inline-block':'none';});
   var addItemBtn=el('lic-additem-btn');if(addItemBtn)addItemBtn.style.display=isAdmin?'block':'none';
   LIC_ITEMS.forEach(function(id){
     var art=el('lic-art-'+id);if(art)art.disabled=!isAdmin;
     var marca=el('lic-marca-'+id);if(marca)marca.disabled=!isAdmin;
+    var cant=el('lic-cant-'+id);if(cant)cant.disabled=!isAdmin;
   });
 }
 function licTab(panel){
@@ -2457,9 +2574,13 @@ function licNewLicitacion(){
   LIC_CURRENT_ID=null;
   licClearItemsDom();
   licClearRequisitos();
+  licClearConsultas();
   var nomEl=el('lic-nombre');if(nomEl)nomEl.value='';
   licBuildEncargadoOptions('');
+  var contEl=el('lic-contacto');if(contEl)contEl.value='';
+  var corrEl=el('lic-correo');if(corrEl)corrEl.value='';
   var tieEl=el('lic-tiempo');if(tieEl)tieEl.value='';
+  licUpdateCountdown();
   ['lic-costo-capital','lic-costo-boleta'].forEach(function(id){var e=el(id);if(e)e.value='0';});
   var iueEl=el('lic-iue');if(iueEl)iueEl.value='25';
   ['lic-comision-pct','lic-viaticos','lic-pago','lic-npersonas','lic-ndias','lic-doc-meses-1','lic-doc-monto-1','lic-doc-meses-2','lic-doc-monto-2','lic-doc-meses-3','lic-doc-monto-3','lic-firma','lic-otrosg','lic-tiempocobro'].forEach(function(id){var e=el(id);if(e)e.value='0';});
@@ -2467,7 +2588,10 @@ function licNewLicitacion(){
   var t=el('lic-form-title');if(t)t.textContent='Nueva licitación';
   var w=el('lic-form-wrap');if(w){w.style.display='block';window.scrollTo(0,w.offsetTop-80);}
   var errEl=el('lic-save-error');if(errEl)errEl.textContent='';
+  var gb=el('lic-general-body');if(gb)gb.style.display='block';
+  var ga=el('lic-general-arrow');if(ga)ga.textContent='▴';
   licApplyRoleUI();
+  licStartCountdownTimer();
 }
 function licCancelForm(){var w=el('lic-form-wrap');if(w)w.style.display='none';}
 function licCollectData(){
@@ -2486,9 +2610,14 @@ function licCollectData(){
   return {
     general:{
       encargado:(el('lic-encargado')||{}).value||'',
+      contacto:(el('lic-contacto')||{}).value||'',
+      correo:(el('lic-correo')||{}).value||'',
       tiempo:(el('lic-tiempo')||{}).value||'',
       requisitos:LIC_REQ_ITEMS.map(function(id){
         return {nombre:(el('lic-req-label-'+id)||{}).textContent||'',checked:(el('lic-req-check-'+id)||{}).checked||false};
+      }),
+      consultas:LIC_CONS_ITEMS.map(function(id){
+        return {nombre:(el('lic-cons-label-'+id)||{}).textContent||'',checked:(el('lic-cons-check-'+id)||{}).checked||false};
       })
     },
     parametros:{
@@ -2515,16 +2644,29 @@ function licCollectData(){
 function licLoadFromData(data){
   licClearItemsDom();
   licClearRequisitos();
+  licClearConsultas();
   data=data||{};
   var g0=data.general||{};
   licBuildEncargadoOptions(g0.encargado||'');
+  var contEl=el('lic-contacto');if(contEl)contEl.value=g0.contacto||'';
+  var corrEl=el('lic-correo');if(corrEl)corrEl.value=g0.correo||'';
   var tieEl=el('lic-tiempo');if(tieEl)tieEl.value=g0.tiempo||'';
+  licUpdateCountdown();
+  licStartCountdownTimer();
   (g0.requisitos||[]).forEach(function(r){
     licAddRequisito(r.nombre);
     var lastId=LIC_REQ_ITEMS[LIC_REQ_ITEMS.length-1];
     var chk=el('lic-req-check-'+lastId);if(chk)chk.checked=!!r.checked;
   });
   licRecalcRequisitos();
+  (g0.consultas||[]).forEach(function(c){
+    licAddConsulta(c.nombre);
+    var lastId=LIC_CONS_ITEMS[LIC_CONS_ITEMS.length-1];
+    var chk=el('lic-cons-check-'+lastId);if(chk)chk.checked=!!c.checked;
+  });
+  licRecalcConsultas();
+  var gb=el('lic-general-body');if(gb)gb.style.display='none';
+  var ga=el('lic-general-arrow');if(ga)ga.textContent='▾';
   var p=data.parametros||{};
   var cc=el('lic-costo-capital');if(cc)cc.value=p.costoCapital||0;
   var cb=el('lic-costo-boleta');if(cb)cb.value=p.costoBoleta||0;
@@ -2584,11 +2726,14 @@ function licHistCardHtml(r){
   var reqs=(r.data&&r.data.general&&r.data.general.requisitos)||[];
   var reqDone=reqs.filter(function(x){return x.checked;}).length;
   var reqPct=reqs.length?Math.round(reqDone/reqs.length*100):null;
+  var conss=(r.data&&r.data.general&&r.data.general.consultas)||[];
+  var consDone=conss.filter(function(x){return x.checked;}).length;
+  var consPct=conss.length?Math.round(consDone/conss.length*100):null;
   return '<div class="cot-card" style="margin-bottom:8px;">'+
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">'+
       '<div><div style="font-size:13.5px;font-weight:600;">'+r.nombre+'</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">'+fecha+(r.tiempo?' &middot; Vence: '+r.tiempo:'')+'</div></div>'+
       '<div style="display:flex;gap:6px;flex-shrink:0;">'+
-        '<button class="btn btn-sm btn-primary" onclick="licEditHist('+r.id+')" style="font-size:11px;">&#9998; '+(isAdmin?'Editar':'Ver')+'</button>'+
+        '<button class="btn btn-sm btn-primary" onclick="licEditHist('+r.id+')" style="font-size:11px;">&#9998; Editar</button>'+
         '<button class="btn btn-sm" onclick="licDownloadHistPdf('+r.id+')" style="font-size:11px;">&#128196; PDF</button>'+
         (r.estado==='finalizada'
           ?'<button class="btn btn-sm" onclick="licSetEstado('+r.id+',\'en_curso\')" style="font-size:11px;">&#8635; Reabrir</button>'
@@ -2601,6 +2746,7 @@ function licHistCardHtml(r){
       '<span style="font-size:11.5px;color:var(--text-3);">💰 Costo total: Bs '+(r.costo_total_general||0).toFixed(2)+'</span>'+
       '<span style="font-size:11.5px;color:var(--text-3);">📈 Utilidad: '+(r.utilidad_final_pct||0).toFixed(1)+'%</span>'+
       (reqPct!==null?'<span style="font-size:11.5px;color:var(--text-3);">📋 Documentación: '+reqPct+'%</span>':'')+
+      (consPct!==null?'<span style="font-size:11.5px;color:var(--text-3);">❓ Consultas: '+consPct+'%</span>':'')+
     '</div>'+
   '</div>';
 }
@@ -2689,6 +2835,9 @@ function renderAdminLicitacionesFiltered(){
     var reqs=(r.data&&r.data.general&&r.data.general.requisitos)||[];
     var reqDone=reqs.filter(function(x){return x.checked;}).length;
     var reqPct=reqs.length?Math.round(reqDone/reqs.length*100):null;
+    var conss=(r.data&&r.data.general&&r.data.general.consultas)||[];
+    var consDone=conss.filter(function(x){return x.checked;}).length;
+    var consPct=conss.length?Math.round(consDone/conss.length*100):null;
     return '<div class="cot-card" style="margin-bottom:8px;">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">'+
         '<div><div style="font-size:13.5px;font-weight:600;">'+r.nombre+'</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">👤 Encargado: '+encargadoNombre+' &middot; '+fecha+(r.tiempo?' &middot; Vence: '+r.tiempo:'')+'</div></div>'+
@@ -2703,6 +2852,7 @@ function renderAdminLicitacionesFiltered(){
         '<span style="font-size:11.5px;color:var(--text-3);">💰 Costo total: Bs '+(r.costo_total_general||0).toFixed(2)+'</span>'+
         '<span style="font-size:11.5px;color:var(--text-3);">📈 Utilidad: '+(r.utilidad_final_pct||0).toFixed(1)+'%</span>'+
         (reqPct!==null?'<span style="font-size:11.5px;color:var(--text-3);">📋 Documentación: '+reqPct+'%</span>':'')+
+        (consPct!==null?'<span style="font-size:11.5px;color:var(--text-3);">❓ Consultas: '+consPct+'%</span>':'')+
       '</div>'+
     '</div>';
   }).join('');
@@ -2845,6 +2995,12 @@ function licBuildPdfHtml(nombre,data){
     return '<tr><td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;">'+(rq.checked?'&#9989;':'&#11036;')+' '+rq.nombre+'</td>'+
       '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;text-align:center;">'+(rq.checked?'Completo':'Pendiente')+'</td></tr>';
   }).join('');
+  var conss=g.consultas||[];
+  var consDone=conss.filter(function(x){return x.checked;}).length;
+  var consRows=conss.map(function(cq){
+    return '<tr><td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;">'+(cq.checked?'&#9989;':'&#11036;')+' '+cq.nombre+'</td>'+
+      '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;text-align:center;">'+(cq.checked?'Realizada':'Pendiente')+'</td></tr>';
+  }).join('');
   return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Licitación - '+nombre+'</title>'+
   '<style>body{font-family:Arial,Helvetica,sans-serif;padding:24px;color:#222;}h1{font-size:16px;margin:0 0 2px;}h2{font-size:13px;margin:0 0 14px;color:#666;font-weight:500;}'+
   'table{border-collapse:collapse;width:100%;margin-bottom:14px;}th{background:#f2f2f2;border:1px solid #ccc;padding:5px 7px;font-size:9.5px;text-align:left;}'+
@@ -2857,10 +3013,13 @@ function licBuildPdfHtml(nombre,data){
   '<div class="sec-title">Información general</div>'+
   '<div class="kpi-row">'+
     '<div class="kpi"><div class="l">Encargado</div><div class="v" style="font-size:12px;">'+(g.encargado||'—')+'</div></div>'+
+    '<div class="kpi"><div class="l">Contacto</div><div class="v" style="font-size:12px;">'+(g.contacto||'—')+'</div></div>'+
+    '<div class="kpi"><div class="l">Correo</div><div class="v" style="font-size:12px;">'+(g.correo||'—')+'</div></div>'+
     '<div class="kpi"><div class="l">Tiempo (fecha límite)</div><div class="v" style="font-size:12px;">'+(g.tiempo||'—')+'</div></div>'+
     '<div class="kpi"><div class="l">Documentación reunida</div><div class="v">'+reqPct+'% ('+reqDone+'/'+reqs.length+')</div></div>'+
   '</div>'+
   (reqs.length?'<div class="sec-title">Documentación requerida</div><table><thead><tr><th>Documento</th><th>Estado</th></tr></thead><tbody>'+reqRows+'</tbody></table>':'')+
+  (conss.length?'<div class="sec-title">Consultas a realizar ('+consDone+'/'+conss.length+')</div><table><thead><tr><th>Consulta</th><th>Estado</th></tr></thead><tbody>'+consRows+'</tbody></table>':'')+
   '<div class="sec-title">Artículos</div>'+
   '<table><thead><tr><th>Artículo</th><th>Marca</th><th>Cant.</th><th>Costo</th><th>Facturado</th><th>P.Venta Unit.</th><th>Costo Unit.</th><th>Costo Total</th><th>Utilidad Total</th></tr></thead><tbody>'+itemRows+'</tbody></table>'+
   '<div class="sec-title">Gastos generales</div>'+
@@ -4796,7 +4955,7 @@ function renderCreditos(){
             var saldo=cr.saldo_pagar||0;
             return '<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;">'+
               '<div>'+
-                '<div style="font-size:12.5px;font-weight:600;">'+cr.nombre_completo+'</div>'+
+                '<div style="font-size:12.5px;font-weight:600;">'+cr.nombre_completo+(cr.solicitud_cierre?' <span class="tag" style="background:var(--green-50);color:var(--green-500);font-size:10px;">🔔 Solicitó cierre</span>':'')+'</div>'+
                 '<div style="font-size:11px;color:var(--text-3);">'+cr.fecha_credito+'</div>'+
               '</div>'+
               '<div style="display:flex;gap:10px;align-items:center;text-align:right;">'+
@@ -4854,10 +5013,15 @@ function renderCreditosUser(){
             (enMora?'<span style="font-size:11px;background:#FEE2E2;color:#B91C1C;padding:3px 10px;border-radius:10px;font-weight:600;">&#9888; En mora</span>':
               '<span style="font-size:11px;background:#D1FAE5;color:#065F46;padding:3px 10px;border-radius:10px;font-weight:600;">Al d\u00EDa</span>')+
           '</div>'+
-          '<div style="display:flex;gap:14px;margin-top:10px;">'+
+          '<div style="display:flex;gap:14px;margin-top:10px;align-items:center;flex-wrap:wrap;">'+
             '<div><div style="font-size:10px;color:var(--text-3);">Monto</div><div style="font-size:13px;font-weight:600;">Bs '+Number(cr.monto_credito).toLocaleString('es-BO')+'</div></div>'+
             '<div><div style="font-size:10px;color:var(--text-3);">Pagado</div><div style="font-size:13px;color:var(--teal-600);font-weight:600;">Bs '+Number(pagado).toLocaleString('es-BO')+'</div></div>'+
             '<div><div style="font-size:10px;color:var(--text-3);">Saldo a cobrar</div><div style="font-size:13px;color:'+(enMora?'#B91C1C':'#065F46')+';font-weight:800;">Bs '+Number(saldo).toLocaleString('es-BO')+'</div></div>'+
+            (saldo>0
+              ?'<button class="btn btn-sm btn-primary" onclick="creditoAgregarPago('+cr.id+','+cr.monto_credito+','+pagado+')" style="margin-left:auto;">➕ Agregar pago</button>'
+              :(cr.solicitud_cierre
+                ?'<span class="tag" style="background:var(--green-50);color:var(--green-500);margin-left:auto;">✓ Cierre solicitado</span>'
+                :'<button class="btn btn-sm" style="margin-left:auto;color:var(--teal-600);border-color:var(--teal-400);" onclick="creditoSolicitarCierre('+cr.id+')">📤 Solicitar cierre</button>'))+
           '</div>'+
         '</div>';
       }).join('');
@@ -4912,6 +5076,23 @@ function saveCredito(userName){
   }).then(function(){
     closeCreditoModal();renderCreditos();
   }).catch(function(err){var e=el('cr-error');if(e)e.textContent='Error: '+err.message;});
+}
+function creditoAgregarPago(id,montoCredito,montoPagadoActual){
+  var input=prompt('Monto del pago a registrar (Bs):');
+  if(input===null)return;
+  var pago=parseFloat(input);
+  if(isNaN(pago)||pago<=0){alert('Ingresá un monto válido.');return;}
+  var nuevoPagado=montoPagadoActual+pago;
+  var nuevoSaldo=Math.max(0,montoCredito-nuevoPagado);
+  sbFetch('creditos?id=eq.'+id,'PATCH',{monto_pagado:nuevoPagado,saldo_pagar:nuevoSaldo})
+    .then(function(){renderCreditosUser();})
+    .catch(function(err){alert('Error: '+err.message);});
+}
+function creditoSolicitarCierre(id){
+  if(!confirm('¿Solicitar el cierre de este crédito? El administrador podrá darlo de baja al verlo.'))return;
+  sbFetch('creditos?id=eq.'+id,'PATCH',{solicitud_cierre:true})
+    .then(function(){renderCreditosUser();})
+    .catch(function(err){alert('Error: '+err.message);});
 }
 function darBajaCredito(id){
   if(!confirm('\u00BFDar de baja este crédito?')) return;
