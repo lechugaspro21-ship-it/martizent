@@ -20,7 +20,7 @@
   --r-sm:6px;--r-md:8px;--r-lg:12px;--r-xl:16px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{min-height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:var(--text);background:var(--bg);}
+html,body{min-height:100%;font-family:'Times New Roman',Times,serif;font-size:14px;color:var(--text);background:var(--bg);}
 input,select,textarea,button{font-family:inherit;font-size:13px;color:var(--text);}
 input,select,textarea{width:100%;padding:7px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);outline:none;transition:border-color .15s;}
 input:focus,select:focus,textarea:focus{border-color:var(--blue-400);}
@@ -46,11 +46,21 @@ textarea{resize:vertical;min-height:68px;line-height:1.5;}
 .role-user{background:var(--blue-50);color:var(--blue-700);}
 .btn-logout{background:none;border:1px solid var(--border);border-radius:var(--r-md);padding:5px 10px;font-size:12px;color:var(--text-3);cursor:pointer;}
 .btn-logout:hover{color:var(--red-600);border-color:var(--red-400);}
-.nav-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;overflow-x:auto;}
-.nav-tab{padding:11px 14px;font-size:12.5px;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;display:flex;align-items:center;gap:6px;white-space:nowrap;transition:color .15s;background:none;border-left:none;border-right:none;border-top:none;}
-.nav-tab:hover{color:var(--text);}
-.nav-tab.active{color:var(--blue-500);border-bottom-color:var(--blue-500);font-weight:600;}
+.app-body{display:flex;align-items:flex-start;flex:1;min-height:0;}
+.sidebar{width:230px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);align-self:stretch;}
+.sidebar-toggle{width:100%;padding:13px 16px;background:none;border:none;border-bottom:1px solid var(--border);cursor:pointer;font-size:13.5px;font-weight:700;display:flex;justify-content:space-between;align-items:center;color:var(--text);font-family:inherit;}
+.sidebar-toggle:hover{background:var(--surface-2,rgba(0,0,0,.03));}
+.nav-bar{background:var(--surface);padding:6px;display:none;flex-direction:column;gap:2px;}
+.nav-bar.open{display:flex;}
+.nav-tab{padding:10px 12px;font-size:13px;color:var(--text-3);cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px;white-space:nowrap;transition:background .15s;background:none;border:none;border-radius:var(--r-md);width:100%;}
+.nav-tab:hover{background:var(--surface-2,rgba(0,0,0,.04));color:var(--text);}
+.nav-tab.active{color:var(--blue-500);background:var(--blue-50);font-weight:600;}
+.main-area{flex:1;min-width:0;display:flex;flex-direction:column;}
 .stepper{background:var(--surface);border-bottom:1px solid var(--border);padding:.6rem 1.5rem;display:flex;gap:4px;align-items:center;flex-wrap:wrap;}
+@media(max-width:768px){
+  .app-body{flex-direction:column;}
+  .sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border);}
+}
 .step-p{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11.5px;user-select:none;}
 .step-p.done{background:var(--teal-50);color:var(--teal-800);}
 .step-p.active{background:var(--blue-500);color:#fff;font-weight:600;}
@@ -89,6 +99,10 @@ textarea{resize:vertical;min-height:68px;line-height:1.5;}
 .lic-tax-table th{text-align:left;font-size:10.5px;color:var(--text-3);padding:4px 6px;border-bottom:1px solid var(--border);}
 .lic-tax-table td{padding:6px;border-bottom:1px solid var(--border);}
 .lic-tax-table input{width:90px;}
+.lic-req-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+.lic-req-row input[type="checkbox"]{width:16px;height:16px;flex-shrink:0;}
+.lic-req-row .lic-req-label{flex:1;}
+.lic-req-row .lic-req-rm{background:none;border:none;color:var(--red-600);cursor:pointer;font-size:13px;flex-shrink:0;}
 .sec-header{background:var(--surface);border:1px solid var(--border);border-radius:0 var(--r-lg) var(--r-lg) 0;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:12px;}
 .sec-icon{width:40px;height:40px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
 .sec-header h2{font-size:15px;font-weight:600;}.sec-header p{font-size:11.5px;color:var(--text-3);margin-top:2px;}
@@ -234,7 +248,12 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
       <button class="btn-logout" onclick="doLogout()">Salir</button>
     </div>
   </div>
-  <div class="nav-bar" id="nav-bar"></div>
+  <div class="app-body">
+    <div class="sidebar">
+      <button class="sidebar-toggle" onclick="toggleSidebarMenu()">☰ Menú <span id="sidebar-arrow">▾</span></button>
+      <div class="nav-bar" id="nav-bar"></div>
+    </div>
+    <div class="main-area">
   <div class="stepper" id="stepper-bar" style="display:none;"></div>
   <div class="content">
     <!-- HOME ADMIN -->
@@ -303,20 +322,39 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
         <div><h2>PROCEDIMIENTO DE LICITACIONES</h2><p>Cálculo de costos, impuestos y utilidad para una licitación</p></div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;" id="lic-actionbar">
-        <div style="font-size:13.5px;font-weight:600;" id="lic-form-title">Nueva licitación</div>
-        <button class="btn btn-primary btn-sm" id="lic-newbtn" onclick="licNewLicitacion()">➕ Agregar licitación</button>
+        <div style="font-size:13.5px;font-weight:600;" id="lic-form-title">Licitaciones</div>
       </div>
       <div class="lic-box" style="margin-bottom:1.5rem;">
         <h3>📄 Documentación</h3>
         <div id="lic-docs-list"></div>
       </div>
       <div id="lic-form-wrap" style="display:none;">
-        <div class="lic-box" style="margin-bottom:14px;">
+        <div class="lic-box" style="margin-bottom:14px;" id="lic-general-box">
+          <h3>ℹ️ Información general</h3>
           <div class="frow">
             <div><label class="flabel">Nombre de la licitación <span class="req">*</span></label><input type="text" id="lic-nombre" placeholder="Ej. Licitación Hospital San Juan de Dios"></div>
-            <div><label class="flabel">Costo capital mensual (%)</label><input type="number" step="0.01" id="lic-costo-capital" value="0" oninput="licRecalc()"></div>
+            <div><label class="flabel">Encargado de la licitación</label><select id="lic-encargado"></select></div>
           </div>
           <div class="frow" style="margin-top:12px;">
+            <div><label class="flabel">Tiempo (fecha límite de presentación)</label><input type="date" id="lic-tiempo"></div>
+            <div></div>
+          </div>
+          <div style="margin-top:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <label class="flabel" style="margin:0;">Documentación requerida</label>
+              <span style="font-size:12px;font-weight:700;color:var(--coral-600);" id="lic-req-progress">0%</span>
+            </div>
+            <div style="background:var(--border);border-radius:6px;height:6px;overflow:hidden;margin-bottom:10px;"><div id="lic-req-bar" style="background:var(--coral-400);height:100%;width:0%;transition:width .2s;"></div></div>
+            <div id="lic-req-list"></div>
+            <div style="display:flex;gap:6px;margin-top:8px;" id="lic-req-addrow">
+              <input type="text" id="lic-req-newname" placeholder="Nombre del documento requerido" style="flex:1;">
+              <button class="btn btn-sm btn-primary" onclick="licAddRequisito()">➕</button>
+            </div>
+          </div>
+        </div>
+        <div class="lic-box" style="margin-bottom:14px;">
+          <div class="frow triple">
+            <div><label class="flabel">Costo capital mensual (%)</label><input type="number" step="0.01" id="lic-costo-capital" value="0" oninput="licRecalc()"></div>
             <div><label class="flabel">Costo boleta mensual (%)</label><input type="number" step="0.01" id="lic-costo-boleta" value="0" oninput="licRecalc()"></div>
             <div><label class="flabel">% IUE</label><input type="number" step="0.01" id="lic-iue" value="25" oninput="licRecalc()"></div>
           </div>
@@ -352,7 +390,7 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
           <span id="lic-save-error" style="font-size:12px;color:var(--red-600);align-self:center;"></span>
         </div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin:1.5rem 0 10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:1.5rem 0 10px;" id="lic-hist-title-wrap">
         <div style="font-size:13.5px;font-weight:600;">Historial de licitaciones</div>
         <span style="font-size:11.5px;color:var(--text-3);" id="lic-hist-count"></span>
       </div>
@@ -613,9 +651,12 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
           </div>
           <div id="adm-lic-docs-list"></div>
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;">
           <div style="font-size:14px;font-weight:600;">Todas las licitaciones</div>
-          <input type="text" id="adm-lic-search" placeholder="🔍 Buscar por usuario o nombre..." oninput="renderAdminLicitacionesFiltered()" style="max-width:260px;">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="adm-lic-search" placeholder="🔍 Buscar por usuario o nombre..." oninput="renderAdminLicitacionesFiltered()" style="max-width:220px;">
+            <button class="btn btn-primary btn-sm" onclick="licAdminNew()">➕ Agregar licitación</button>
+          </div>
         </div>
         <div id="adm-lic-list"></div>
       </div>
@@ -639,6 +680,8 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
       </div>
     </div>
   </div><!-- /content -->
+    </div><!-- /main-area -->
+  </div><!-- /app-body -->
   <div class="form-footer" id="form-footer" style="display:none;">
     <button class="btn btn-danger" onclick="clearForm()">🗑 Limpiar</button>
     <div style="display:flex;align-items:center;gap:8px;">
@@ -912,15 +955,25 @@ function showHome(){
 function hideAll(){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});}
 function setTab(id){document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});var n=el('nt-'+id);if(n)n.classList.add('active');}
 function showMain(id){
-  hideAll();if(id==='home'){showHome();return;}
+  hideAll();if(id==='home'){showHome();closeSidebarMenu();return;}
   var sc=el('sc-'+id);if(sc)sc.classList.add('active');
   setTab(id);el('stepper-bar').style.display='none';el('form-footer').style.display='none';CUR_FORM=null;window.scrollTo(0,0);
+  closeSidebarMenu();
 
   if(id==='cotizaciones') renderCotizaciones();
   if(id==='inv-mercado'){renderInvMercado();}
   if(id==='creditos-user'){renderCreditosUser();}
   if(id==='licitaciones'){renderLicitaciones();}
   if(id==='admin') renderAdmin();
+}
+function toggleSidebarMenu(){
+  var m=el('nav-bar');if(!m)return;
+  m.classList.toggle('open');
+  var a=el('sidebar-arrow');if(a)a.textContent=m.classList.contains('open')?'▴':'▾';
+}
+function closeSidebarMenu(){
+  var m=el('nav-bar');if(m)m.classList.remove('open');
+  var a=el('sidebar-arrow');if(a)a.textContent='▾';
 }
 function curTab(){var a=document.querySelector('.nav-tab.active');return a?a.id.replace('nt-',''):'home';}
 function openForm(id,afterBuild){
@@ -2203,6 +2256,59 @@ function licClearItemsDom(){
   var venb=el('lic-venta-tbody');if(venb)venb.innerHTML='';
   LIC_ITEMS=[];
 }
+// ── Requisitos de documentación ──
+var LIC_REQ_ITEMS=[];
+var LIC_REQ_SEQ=0;
+function licReqRowHtml(id,nombre,checked){
+  return '<div class="lic-req-row" id="lic-req-row-'+id+'">'+
+    '<input type="checkbox" id="lic-req-check-'+id+'"'+(checked?' checked':'')+' onchange="licRecalcRequisitos()">'+
+    '<span class="lic-req-label" id="lic-req-label-'+id+'">'+escAttr(nombre)+'</span>'+
+    '<button type="button" class="lic-req-rm" onclick="licRemoveRequisito('+id+')" title="Quitar">✕</button>'+
+  '</div>';
+}
+function licAddRequisito(nombre){
+  var inp=el('lic-req-newname');
+  var name=nombre!=null?nombre:((inp?inp.value:'').trim());
+  if(!name)return;
+  LIC_REQ_SEQ++;var id=LIC_REQ_SEQ;LIC_REQ_ITEMS.push(id);
+  var list=el('lic-req-list');if(list)list.insertAdjacentHTML('beforeend',licReqRowHtml(id,name,false));
+  if(inp&&nombre==null)inp.value='';
+  licRecalcRequisitos();
+}
+function licRemoveRequisito(id){
+  LIC_REQ_ITEMS=LIC_REQ_ITEMS.filter(function(x){return x!==id;});
+  var r=el('lic-req-row-'+id);if(r)r.remove();
+  licRecalcRequisitos();
+}
+function licClearRequisitos(){
+  var list=el('lic-req-list');if(list)list.innerHTML='';
+  LIC_REQ_ITEMS=[];
+  licRecalcRequisitos();
+}
+function licRecalcRequisitos(){
+  var total=LIC_REQ_ITEMS.length;
+  var done=LIC_REQ_ITEMS.filter(function(id){return (el('lic-req-check-'+id)||{}).checked;}).length;
+  var pct=total?Math.round(done/total*100):0;
+  setTxt('lic-req-progress',pct+'% ('+done+'/'+total+')');
+  var bar=el('lic-req-bar');if(bar)bar.style.width=pct+'%';
+}
+// ── Encargado (usuarios con licitaciones habilitado) ──
+function licBuildEncargadoOptions(selected){
+  var sel=el('lic-encargado');if(!sel)return;
+  var opts=(USERS||[]).filter(function(u){return u.licitaciones;});
+  sel.innerHTML='<option value="">— Seleccionar —</option>'+opts.map(function(u){
+    return '<option value="'+u.user+'"'+(u.user===selected?' selected':'')+'>'+u.nombre+'</option>';
+  }).join('');
+}
+// ── Restricciones por rol ──
+function licApplyRoleUI(){
+  var isAdmin=SESSION.rol==='admin';
+  var enc=el('lic-encargado');if(enc)enc.disabled=!isAdmin;
+  var tie=el('lic-tiempo');if(tie)tie.disabled=!isAdmin;
+  var nom=el('lic-nombre');if(nom)nom.disabled=!isAdmin;
+  var addrow=el('lic-req-addrow');if(addrow)addrow.style.display=isAdmin?'flex':'none';
+  document.querySelectorAll('.lic-req-rm').forEach(function(b){b.style.display=isAdmin?'inline-block':'none';});
+}
 function licTab(panel){
   ['gastos','impuestos','venta'].forEach(function(p){
     var pe=el('lic-panel-'+p);if(pe)pe.style.display=(p===panel?'block':'none');
@@ -2248,7 +2354,12 @@ function renderLicitaciones(){
     el('lic-form-wrap').style.display='none';
     LIC_INITIALIZED=true;
   }
-  licRenderHistory();
+  var isAdmin=SESSION.rol==='admin';
+  var histTitle=el('lic-hist-title-wrap');
+  if(histTitle)histTitle.style.display=isAdmin?'none':'flex';
+  var histList=el('lic-hist-list');
+  if(histList)histList.style.display=isAdmin?'none':'block';
+  if(!isAdmin) licRenderHistory();
   renderLicDocs();
 }
 function licRecalc(){
@@ -2326,9 +2437,13 @@ function licRecalc(){
 }
 // ── Alta / edición / guardado ──
 function licNewLicitacion(){
+  if(SESSION.rol!=='admin')return;
   LIC_CURRENT_ID=null;
   licClearItemsDom();
+  licClearRequisitos();
   var nomEl=el('lic-nombre');if(nomEl)nomEl.value='';
+  licBuildEncargadoOptions('');
+  var tieEl=el('lic-tiempo');if(tieEl)tieEl.value='';
   ['lic-costo-capital','lic-costo-boleta'].forEach(function(id){var e=el(id);if(e)e.value='0';});
   var iueEl=el('lic-iue');if(iueEl)iueEl.value='25';
   ['lic-comision-pct','lic-viaticos','lic-pago','lic-npersonas','lic-ndias','lic-doc-meses-1','lic-doc-monto-1','lic-doc-meses-2','lic-doc-monto-2','lic-doc-meses-3','lic-doc-monto-3','lic-firma','lic-otrosg','lic-tiempocobro'].forEach(function(id){var e=el(id);if(e)e.value='0';});
@@ -2336,6 +2451,7 @@ function licNewLicitacion(){
   var t=el('lic-form-title');if(t)t.textContent='Nueva licitación';
   var w=el('lic-form-wrap');if(w){w.style.display='block';window.scrollTo(0,w.offsetTop-80);}
   var errEl=el('lic-save-error');if(errEl)errEl.textContent='';
+  licApplyRoleUI();
 }
 function licCancelForm(){var w=el('lic-form-wrap');if(w)w.style.display='none';}
 function licCollectData(){
@@ -2351,6 +2467,13 @@ function licCollectData(){
     };
   });
   return {
+    general:{
+      encargado:(el('lic-encargado')||{}).value||'',
+      tiempo:(el('lic-tiempo')||{}).value||'',
+      requisitos:LIC_REQ_ITEMS.map(function(id){
+        return {nombre:(el('lic-req-label-'+id)||{}).textContent||'',checked:(el('lic-req-check-'+id)||{}).checked||false};
+      })
+    },
     parametros:{
       costoCapital:parseFloat((el('lic-costo-capital')||{}).value)||0,
       costoBoleta:parseFloat((el('lic-costo-boleta')||{}).value)||0,
@@ -2374,7 +2497,17 @@ function licCollectData(){
 }
 function licLoadFromData(data){
   licClearItemsDom();
+  licClearRequisitos();
   data=data||{};
+  var g0=data.general||{};
+  licBuildEncargadoOptions(g0.encargado||'');
+  var tieEl=el('lic-tiempo');if(tieEl)tieEl.value=g0.tiempo||'';
+  (g0.requisitos||[]).forEach(function(r){
+    licAddRequisito(r.nombre);
+    var lastId=LIC_REQ_ITEMS[LIC_REQ_ITEMS.length-1];
+    var chk=el('lic-req-check-'+lastId);if(chk)chk.checked=!!r.checked;
+  });
+  licRecalcRequisitos();
   var p=data.parametros||{};
   var cc=el('lic-costo-capital');if(cc)cc.value=p.costoCapital||0;
   var cb=el('lic-costo-boleta');if(cb)cb.value=p.costoBoleta||0;
@@ -2393,18 +2526,21 @@ function licLoadFromData(data){
   set('lic-doc-meses-3',(g.doc3||{}).meses);set('lic-doc-monto-3',(g.doc3||{}).monto);
   set('lic-firma',g.firma);set('lic-otrosg',g.otrosG);set('lic-tiempocobro',g.tiempoCobro);
   licRecalc();
+  licApplyRoleUI();
 }
 function licSaveLicitacion(){
   var nombreEl=el('lic-nombre');
   var nombre=(nombreEl?nombreEl.value:'').trim();
   var errEl=el('lic-save-error');
   if(!nombre){if(errEl)errEl.textContent='Ingresá un nombre para la licitación.';return;}
+  var encargado=(el('lic-encargado')||{}).value||'';
+  if(!encargado){if(errEl)errEl.textContent='Seleccioná un encargado para la licitación.';return;}
   if(!LIC_ITEMS.length){if(errEl)errEl.textContent='Agregá al menos un artículo.';return;}
   licRecalc();
   if(errEl)errEl.textContent='Guardando...';
   var data=licCollectData();
   var s=LIC_LAST_SUMMARY;
-  var body={usuario:SESSION.user,nombre:nombre,costo_total_general:s.costoTotalGeneral||0,utilidad_final:s.utilidadFinal||0,utilidad_final_pct:s.utilidadFinalPct||0,data:data,updated_at:new Date().toISOString()};
+  var body={usuario:SESSION.user,nombre:nombre,encargado:encargado,tiempo:data.general.tiempo||null,costo_total_general:s.costoTotalGeneral||0,utilidad_final:s.utilidadFinal||0,utilidad_final_pct:s.utilidadFinalPct||0,data:data,updated_at:new Date().toISOString()};
   var req;
   if(LIC_CURRENT_ID){
     req=sbFetch('licitaciones?id=eq.'+LIC_CURRENT_ID,'PATCH',body);
@@ -2415,7 +2551,7 @@ function licSaveLicitacion(){
   req.then(function(){
     if(errEl)errEl.textContent='';
     var w=el('lic-form-wrap');if(w)w.style.display='none';
-    licRenderHistory();
+    if(SESSION.rol==='admin'){renderAdminLicitaciones();}else{licRenderHistory();}
   }).catch(function(err){
     console.error('Error al guardar licitación:', err);
     if(errEl)errEl.textContent='Error: '+err.message;
@@ -2423,37 +2559,42 @@ function licSaveLicitacion(){
 }
 // ── Historial (usuario) ──
 function licHistCardHtml(r){
+  var isAdmin=SESSION.rol==='admin';
   var estadoTag=r.estado==='finalizada'
     ?'<span class="tag" style="background:var(--green-50);color:var(--green-500);">Finalizada</span>'
     :'<span class="tag tag-coral">En curso</span>';
   var fecha=r.created_at?new Date(r.created_at).toLocaleDateString('es-BO'):'';
+  var reqs=(r.data&&r.data.general&&r.data.general.requisitos)||[];
+  var reqDone=reqs.filter(function(x){return x.checked;}).length;
+  var reqPct=reqs.length?Math.round(reqDone/reqs.length*100):null;
   return '<div class="cot-card" style="margin-bottom:8px;">'+
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">'+
-      '<div><div style="font-size:13.5px;font-weight:600;">'+r.nombre+'</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">'+fecha+'</div></div>'+
+      '<div><div style="font-size:13.5px;font-weight:600;">'+r.nombre+'</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">'+fecha+(r.tiempo?' &middot; Vence: '+r.tiempo:'')+'</div></div>'+
       '<div style="display:flex;gap:6px;flex-shrink:0;">'+
-        '<button class="btn btn-sm btn-primary" onclick="licEditHist('+r.id+')" style="font-size:11px;">&#9998; Editar</button>'+
+        '<button class="btn btn-sm btn-primary" onclick="licEditHist('+r.id+')" style="font-size:11px;">&#9998; '+(isAdmin?'Editar':'Ver')+'</button>'+
         '<button class="btn btn-sm" onclick="licDownloadHistPdf('+r.id+')" style="font-size:11px;">&#128196; PDF</button>'+
         (r.estado==='finalizada'
           ?'<button class="btn btn-sm" onclick="licSetEstado('+r.id+',\'en_curso\')" style="font-size:11px;">&#8635; Reabrir</button>'
           :'<button class="btn btn-sm" onclick="licSetEstado('+r.id+',\'finalizada\')" style="font-size:11px;color:var(--teal-600);border-color:var(--teal-400);">&#10003; Finalizar</button>')+
-        '<button class="btn btn-sm" onclick="licDeleteHist('+r.id+')" style="font-size:11px;color:var(--red-600);border-color:var(--red-400);">&#128465;</button>'+
+        (isAdmin?'<button class="btn btn-sm" onclick="licDeleteHist('+r.id+')" style="font-size:11px;color:var(--red-600);border-color:var(--red-400);">&#128465;</button>':'')+
       '</div>'+
     '</div>'+
     '<div style="display:flex;gap:10px;flex-wrap:wrap;">'+
       estadoTag+
       '<span style="font-size:11.5px;color:var(--text-3);">💰 Costo total: Bs '+(r.costo_total_general||0).toFixed(2)+'</span>'+
       '<span style="font-size:11.5px;color:var(--text-3);">📈 Utilidad: '+(r.utilidad_final_pct||0).toFixed(1)+'%</span>'+
+      (reqPct!==null?'<span style="font-size:11.5px;color:var(--text-3);">📋 Documentación: '+reqPct+'%</span>':'')+
     '</div>'+
   '</div>';
 }
 function licRenderHistory(){
   var listEl=el('lic-hist-list');if(!listEl)return;
   listEl.innerHTML='<div class="empty-state"><p>Cargando...</p></div>';
-  sbFetch('licitaciones?usuario=eq.'+encodeURIComponent(SESSION.user)+'&select=*&order=created_at.desc')
+  sbFetch('licitaciones?encargado=eq.'+encodeURIComponent(SESSION.user)+'&select=*&order=created_at.desc')
     .then(function(rows){
       LIC_HIST=rows||[];
       var ce=el('lic-hist-count');if(ce)ce.textContent=LIC_HIST.length+' licitacion'+(LIC_HIST.length===1?'':'es');
-      if(!LIC_HIST.length){listEl.innerHTML='<div class="empty-state"><span class="empty-ico">📐</span><h3>Sin licitaciones aún</h3><p>Agregá la primera licitación.</p></div>';return;}
+      if(!LIC_HIST.length){listEl.innerHTML='<div class="empty-state"><span class="empty-ico">📐</span><h3>Sin licitaciones asignadas</h3><p>El administrador aún no te asignó ninguna licitación.</p></div>';return;}
       listEl.innerHTML=LIC_HIST.map(licHistCardHtml).join('');
     }).catch(function(err){
       listEl.innerHTML='<div class="empty-state"><p style="color:var(--red-600);">Error: '+err.message+'</p></div>';
@@ -2471,16 +2612,31 @@ function licEditHist(id){
 }
 function licSetEstado(id,estado){
   sbFetch('licitaciones?id=eq.'+id,'PATCH',{estado:estado,updated_at:new Date().toISOString()})
-    .then(function(){licRenderHistory();})
+    .then(function(){if(SESSION.rol==='admin'){renderAdminLicitaciones();}else{licRenderHistory();}})
     .catch(function(err){alert('Error: '+err.message);});
 }
 function licDeleteHist(id){
   if(!confirm('¿Eliminar esta licitación?'))return;
   sbFetch('licitaciones?id=eq.'+id,'DELETE')
-    .then(function(){licRenderHistory();})
+    .then(function(){if(SESSION.rol==='admin'){renderAdminLicitaciones();}else{licRenderHistory();}})
     .catch(function(err){alert('Error: '+err.message);});
 }
 // ── Panel administrador: todas las licitaciones ──
+function licAdminNew(){
+  showMain('licitaciones');
+  licNewLicitacion();
+}
+function licAdminEditHist(id){
+  var r=(ADM_LIC||[]).find(function(x){return x.id===id;});
+  if(!r)return;
+  showMain('licitaciones');
+  LIC_CURRENT_ID=id;
+  licLoadFromData(r.data);
+  var nomEl=el('lic-nombre');if(nomEl)nomEl.value=r.nombre;
+  var t=el('lic-form-title');if(t)t.textContent='Editando: '+r.nombre;
+  var w=el('lic-form-wrap');if(w){w.style.display='block';window.scrollTo(0,w.offsetTop-80);}
+  var errEl=el('lic-save-error');if(errEl)errEl.textContent='';
+}
 function renderAdminLicitaciones(){
   var listEl=el('adm-lic-list');if(!listEl)return;
   listEl.innerHTML='<div class="empty-state"><p>Cargando...</p></div>';
@@ -2496,7 +2652,7 @@ function renderAdminLicitacionesFiltered(){
   var listEl=el('adm-lic-list');if(!listEl)return;
   var q=((el('adm-lic-search')||{}).value||'').toLowerCase();
   var rows=(ADM_LIC||[]).filter(function(r){
-    return !q||(r.nombre||'').toLowerCase().indexOf(q)>-1||(r.usuario||'').toLowerCase().indexOf(q)>-1;
+    return !q||(r.nombre||'').toLowerCase().indexOf(q)>-1||(r.usuario||'').toLowerCase().indexOf(q)>-1||(r.encargado||'').toLowerCase().indexOf(q)>-1;
   });
   if(!rows.length){listEl.innerHTML='<div class="empty-state"><span class="empty-ico">📐</span><h3>Sin licitaciones</h3></div>';return;}
   listEl.innerHTML=rows.map(function(r){
@@ -2504,15 +2660,25 @@ function renderAdminLicitacionesFiltered(){
       ?'<span class="tag" style="background:var(--green-50);color:var(--green-500);">Finalizada</span>'
       :'<span class="tag tag-coral">En curso</span>';
     var fecha=r.created_at?new Date(r.created_at).toLocaleDateString('es-BO'):'';
+    var encargadoUser=(USERS||[]).find(function(u){return u.user===r.encargado;});
+    var encargadoNombre=encargadoUser?encargadoUser.nombre:(r.encargado||'Sin asignar');
+    var reqs=(r.data&&r.data.general&&r.data.general.requisitos)||[];
+    var reqDone=reqs.filter(function(x){return x.checked;}).length;
+    var reqPct=reqs.length?Math.round(reqDone/reqs.length*100):null;
     return '<div class="cot-card" style="margin-bottom:8px;">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">'+
-        '<div><div style="font-size:13.5px;font-weight:600;">'+r.nombre+'</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">👤 '+r.usuario+' &middot; '+fecha+'</div></div>'+
-        '<button class="btn btn-sm" onclick="licDownloadHistPdf('+r.id+')" style="font-size:11px;">&#128196; PDF</button>'+
+        '<div><div style="font-size:13.5px;font-weight:600;">'+r.nombre+'</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">👤 Encargado: '+encargadoNombre+' &middot; '+fecha+(r.tiempo?' &middot; Vence: '+r.tiempo:'')+'</div></div>'+
+        '<div style="display:flex;gap:6px;flex-shrink:0;">'+
+          '<button class="btn btn-sm btn-primary" onclick="licAdminEditHist('+r.id+')" style="font-size:11px;">&#9998; Editar</button>'+
+          '<button class="btn btn-sm" onclick="licDownloadHistPdf('+r.id+')" style="font-size:11px;">&#128196; PDF</button>'+
+          '<button class="btn btn-sm" onclick="licDeleteHist('+r.id+')" style="font-size:11px;color:var(--red-600);border-color:var(--red-400);">&#128465;</button>'+
+        '</div>'+
       '</div>'+
       '<div style="display:flex;gap:10px;flex-wrap:wrap;">'+
         estadoTag+
         '<span style="font-size:11.5px;color:var(--text-3);">💰 Costo total: Bs '+(r.costo_total_general||0).toFixed(2)+'</span>'+
         '<span style="font-size:11.5px;color:var(--text-3);">📈 Utilidad: '+(r.utilidad_final_pct||0).toFixed(1)+'%</span>'+
+        (reqPct!==null?'<span style="font-size:11.5px;color:var(--text-3);">📋 Documentación: '+reqPct+'%</span>':'')+
       '</div>'+
     '</div>';
   }).join('');
