@@ -46,21 +46,18 @@ textarea{resize:vertical;min-height:68px;line-height:1.5;}
 .role-user{background:var(--blue-50);color:var(--blue-700);}
 .btn-logout{background:none;border:1px solid var(--border);border-radius:var(--r-md);padding:5px 10px;font-size:12px;color:var(--text-3);cursor:pointer;}
 .btn-logout:hover{color:var(--red-600);border-color:var(--red-400);}
-.app-body{display:flex;align-items:flex-start;flex:1;min-height:0;}
-.sidebar{width:230px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);align-self:stretch;}
-.sidebar-toggle{width:100%;padding:13px 16px;background:none;border:none;border-bottom:1px solid var(--border);cursor:pointer;font-size:13.5px;font-weight:700;display:flex;justify-content:space-between;align-items:center;color:var(--text);font-family:inherit;}
-.sidebar-toggle:hover{background:var(--surface-2,rgba(0,0,0,.03));}
-.nav-bar{background:var(--surface);padding:6px;display:none;flex-direction:column;gap:2px;}
+.app-body{position:relative;flex:1;min-height:0;}
+.sidebar{position:relative;padding:10px 0 0 1.5rem;}
+.sidebar-toggle{padding:9px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;font-size:17px;line-height:1;color:var(--text);font-family:inherit;display:inline-flex;align-items:center;gap:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.sidebar-toggle:hover{background:var(--surface-2,rgba(0,0,0,.04));}
+.sidebar-toggle span{font-size:11px;}
+.nav-bar{position:absolute;top:calc(100% + 6px);left:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:0 10px 32px rgba(0,0,0,.16);z-index:200;min-width:220px;max-width:280px;display:none;flex-direction:column;padding:6px;gap:2px;}
 .nav-bar.open{display:flex;}
 .nav-tab{padding:10px 12px;font-size:13px;color:var(--text-3);cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px;white-space:nowrap;transition:background .15s;background:none;border:none;border-radius:var(--r-md);width:100%;}
 .nav-tab:hover{background:var(--surface-2,rgba(0,0,0,.04));color:var(--text);}
 .nav-tab.active{color:var(--blue-500);background:var(--blue-50);font-weight:600;}
 .main-area{flex:1;min-width:0;display:flex;flex-direction:column;}
 .stepper{background:var(--surface);border-bottom:1px solid var(--border);padding:.6rem 1.5rem;display:flex;gap:4px;align-items:center;flex-wrap:wrap;}
-@media(max-width:768px){
-  .app-body{flex-direction:column;}
-  .sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border);}
-}
 .step-p{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11.5px;user-select:none;}
 .step-p.done{background:var(--teal-50);color:var(--teal-800);}
 .step-p.active{background:var(--blue-500);color:#fff;font-weight:600;}
@@ -250,7 +247,7 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
   </div>
   <div class="app-body">
     <div class="sidebar">
-      <button class="sidebar-toggle" onclick="toggleSidebarMenu()">☰ Menú <span id="sidebar-arrow">▾</span></button>
+      <button class="sidebar-toggle" onclick="toggleSidebarMenu()">☰ <span>Menú <span id="sidebar-arrow">▾</span></span></button>
       <div class="nav-bar" id="nav-bar"></div>
     </div>
     <div class="main-area">
@@ -321,80 +318,85 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
         <div class="sec-icon" style="background:var(--coral-50);">📐</div>
         <div><h2>PROCEDIMIENTO DE LICITACIONES</h2><p>Cálculo de costos, impuestos y utilidad para una licitación</p></div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;" id="lic-actionbar">
-        <div style="font-size:13.5px;font-weight:600;" id="lic-form-title">Licitaciones</div>
+      <div class="admin-tabs">
+        <button class="admin-tab active" id="lic-maintab-btn-proc" onclick="licMainTab('proc')">📋 Procedimiento de licitaciones</button>
+        <button class="admin-tab" id="lic-maintab-btn-docs" onclick="licMainTab('docs')">📄 Documentación</button>
       </div>
-      <div class="lic-box" style="margin-bottom:1.5rem;">
-        <h3>📄 Documentación</h3>
-        <div id="lic-docs-list"></div>
-      </div>
-      <div id="lic-form-wrap" style="display:none;">
-        <div class="lic-box" style="margin-bottom:14px;" id="lic-general-box">
-          <h3>ℹ️ Información general</h3>
-          <div class="frow">
-            <div><label class="flabel">Nombre de la licitación <span class="req">*</span></label><input type="text" id="lic-nombre" placeholder="Ej. Licitación Hospital San Juan de Dios"></div>
-            <div><label class="flabel">Encargado de la licitación</label><select id="lic-encargado"></select></div>
-          </div>
-          <div class="frow" style="margin-top:12px;">
-            <div><label class="flabel">Tiempo (fecha límite de presentación)</label><input type="date" id="lic-tiempo"></div>
-            <div></div>
-          </div>
-          <div style="margin-top:16px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-              <label class="flabel" style="margin:0;">Documentación requerida</label>
-              <span style="font-size:12px;font-weight:700;color:var(--coral-600);" id="lic-req-progress">0%</span>
+      <div id="lic-maintab-proc">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 10px;" id="lic-hist-title-wrap">
+          <div style="font-size:13.5px;font-weight:600;">Historial de licitaciones</div>
+          <span style="font-size:11.5px;color:var(--text-3);" id="lic-hist-count"></span>
+        </div>
+        <div id="lic-hist-list"></div>
+        <div id="lic-form-wrap" style="display:none;margin-top:1.5rem;">
+          <div class="lic-box" style="margin-bottom:14px;" id="lic-general-box">
+            <h3>ℹ️ Información general</h3>
+            <div class="frow">
+              <div><label class="flabel">Nombre de la licitación <span class="req">*</span></label><input type="text" id="lic-nombre" placeholder="Ej. Licitación Hospital San Juan de Dios"></div>
+              <div><label class="flabel">Encargado de la licitación</label><select id="lic-encargado"></select></div>
             </div>
-            <div style="background:var(--border);border-radius:6px;height:6px;overflow:hidden;margin-bottom:10px;"><div id="lic-req-bar" style="background:var(--coral-400);height:100%;width:0%;transition:width .2s;"></div></div>
-            <div id="lic-req-list"></div>
-            <div style="display:flex;gap:6px;margin-top:8px;" id="lic-req-addrow">
-              <input type="text" id="lic-req-newname" placeholder="Nombre del documento requerido" style="flex:1;">
-              <button class="btn btn-sm btn-primary" onclick="licAddRequisito()">➕</button>
+            <div class="frow" style="margin-top:12px;">
+              <div><label class="flabel">Tiempo (fecha límite de presentación)</label><input type="date" id="lic-tiempo"></div>
+              <div></div>
+            </div>
+            <div style="margin-top:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <label class="flabel" style="margin:0;">Documentación requerida</label>
+                <span style="font-size:12px;font-weight:700;color:var(--coral-600);" id="lic-req-progress">0%</span>
+              </div>
+              <div style="background:var(--border);border-radius:6px;height:6px;overflow:hidden;margin-bottom:10px;"><div id="lic-req-bar" style="background:var(--coral-400);height:100%;width:0%;transition:width .2s;"></div></div>
+              <div id="lic-req-list"></div>
+              <div style="display:flex;gap:6px;margin-top:8px;" id="lic-req-addrow">
+                <input type="text" id="lic-req-newname" placeholder="Nombre del documento requerido" style="flex:1;">
+                <button class="btn btn-sm btn-primary" onclick="licAddRequisito()">➕</button>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="lic-box" style="margin-bottom:14px;">
-          <div class="frow triple">
-            <div><label class="flabel">Costo capital mensual (%)</label><input type="number" step="0.01" id="lic-costo-capital" value="0" oninput="licRecalc()"></div>
-            <div><label class="flabel">Costo boleta mensual (%)</label><input type="number" step="0.01" id="lic-costo-boleta" value="0" oninput="licRecalc()"></div>
-            <div><label class="flabel">% IUE</label><input type="number" step="0.01" id="lic-iue" value="25" oninput="licRecalc()"></div>
-          </div>
-        </div>
-        <div class="lic-grid">
-          <!-- SECCION 1: ARTICULOS (fija) -->
-          <div class="lic-box">
-            <h3>📦 Artículos</h3>
-            <div id="lic-items-wrap"></div>
-            <button class="btn btn-sm btn-primary" style="width:100%;" onclick="licAddItem()">➕ Agregar artículo</button>
-          </div>
-          <!-- SECCION 2: PESTAÑAS (gastos / impuestos / precio de venta) -->
-          <div class="lic-box">
-            <div class="admin-tabs">
-              <button class="admin-tab active" id="lic-tabbtn-venta" onclick="licTab('venta')">💵 Precio de venta</button>
-              <button class="admin-tab" id="lic-tabbtn-gastos" onclick="licTab('gastos')">💰 Gastos</button>
-              <button class="admin-tab" id="lic-tabbtn-impuestos" onclick="licTab('impuestos')">🧾 Impuestos</button>
+          <div class="lic-box" style="margin-bottom:14px;">
+            <div class="frow triple">
+              <div><label class="flabel">Costo capital mensual (%)</label><input type="number" step="0.01" id="lic-costo-capital" value="0" oninput="licRecalc()"></div>
+              <div><label class="flabel">Costo boleta mensual (%)</label><input type="number" step="0.01" id="lic-costo-boleta" value="0" oninput="licRecalc()"></div>
+              <div><label class="flabel">% IUE</label><input type="number" step="0.01" id="lic-iue" value="25" oninput="licRecalc()"></div>
             </div>
-            <div id="lic-panel-venta"></div>
-            <div id="lic-panel-gastos" style="display:none;"></div>
-            <div id="lic-panel-impuestos" style="display:none;"></div>
           </div>
-          <!-- SECCION 3: RESULTADOS (fija) -->
-          <div class="lic-box">
-            <h3>📊 Resultados</h3>
-            <div id="lic-resultados"></div>
+          <div class="lic-grid">
+            <!-- SECCION 1: ARTICULOS (fija) -->
+            <div class="lic-box">
+              <h3>📦 Artículos</h3>
+              <div id="lic-items-wrap"></div>
+              <button class="btn btn-sm btn-primary" style="width:100%;" id="lic-additem-btn" onclick="licAddItem()">➕ Agregar artículo</button>
+            </div>
+            <!-- SECCION 2: PESTAÑAS (gastos / impuestos / precio de venta) -->
+            <div class="lic-box">
+              <div class="admin-tabs">
+                <button class="admin-tab active" id="lic-tabbtn-venta" onclick="licTab('venta')">💵 Precio de venta</button>
+                <button class="admin-tab" id="lic-tabbtn-gastos" onclick="licTab('gastos')">💰 Gastos</button>
+                <button class="admin-tab" id="lic-tabbtn-impuestos" onclick="licTab('impuestos')">🧾 Impuestos</button>
+              </div>
+              <div id="lic-panel-venta"></div>
+              <div id="lic-panel-gastos" style="display:none;"></div>
+              <div id="lic-panel-impuestos" style="display:none;"></div>
+            </div>
+            <!-- SECCION 3: RESULTADOS (fija) -->
+            <div class="lic-box">
+              <h3>📊 Resultados</h3>
+              <div id="lic-resultados"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button class="btn btn-success" onclick="licSaveLicitacion()">💾 Guardar licitación</button>
+            <button class="btn" onclick="licDownloadCurrentPdf()">📄 Descargar PDF</button>
+            <button class="btn" onclick="licCancelForm()">Cancelar</button>
+            <span id="lic-save-error" style="font-size:12px;color:var(--red-600);align-self:center;"></span>
           </div>
         </div>
-        <div style="display:flex;gap:8px;margin-top:14px;">
-          <button class="btn btn-success" onclick="licSaveLicitacion()">💾 Guardar licitación</button>
-          <button class="btn" onclick="licDownloadCurrentPdf()">📄 Descargar PDF</button>
-          <button class="btn" onclick="licCancelForm()">Cancelar</button>
-          <span id="lic-save-error" style="font-size:12px;color:var(--red-600);align-self:center;"></span>
+      </div>
+      <div id="lic-maintab-docs" style="display:none;">
+        <div class="lic-box" style="margin-top:14px;">
+          <h3>📄 Documentación</h3>
+          <div id="lic-docs-list"></div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin:1.5rem 0 10px;" id="lic-hist-title-wrap">
-        <div style="font-size:13.5px;font-weight:600;">Historial de licitaciones</div>
-        <span style="font-size:11.5px;color:var(--text-3);" id="lic-hist-count"></span>
-      </div>
-      <div id="lic-hist-list"></div>
     </div>
 
     <!-- COTIZACIONES -->
@@ -2219,13 +2221,14 @@ function licItemRowHtml(id,v){
   return '<div class="lic-item" id="lic-item-'+id+'">'+
     '<button type="button" class="lic-rm" onclick="licRemoveItem('+id+')" title="Quitar artículo">✕</button>'+
     '<label>Artículo</label><input type="text" id="lic-art-'+id+'" placeholder="Nombre del artículo" value="'+escAttr(v.articulo)+'" oninput="licRecalc()">'+
+    '<label>Marca</label><input type="text" id="lic-marca-'+id+'" placeholder="Marca" value="'+escAttr(v.marca)+'" oninput="licRecalc()">'+
     '<label>Cantidad</label><input type="number" id="lic-cant-'+id+'" value="'+(v.cantidad||0)+'" oninput="licRecalc()">'+
     '<label>Costo / Facturado (Bs)</label>'+
     '<div style="display:flex;gap:6px;">'+
       '<input type="number" id="lic-costo-'+id+'" placeholder="Costo" value="'+(v.costo||0)+'" style="margin-bottom:0;" oninput="licRecalc()">'+
       '<input type="number" id="lic-fact-'+id+'" placeholder="Facturado" value="'+(v.facturado||0)+'" style="margin-bottom:0;" oninput="licRecalc()">'+
     '</div>'+
-    '<label style="margin-top:6px;">Otros gastos (Bs)</label><input type="number" id="lic-otros-'+id+'" value="'+(v.otros||0)+'" oninput="licRecalc()">'+
+    '<label style="margin-top:6px;">Gastos unitarios (Bs)</label><input type="number" id="lic-otros-'+id+'" value="'+(v.otros||0)+'" oninput="licRecalc()">'+
   '</div>';
 }
 function licTaxRowHtml(id){
@@ -2308,12 +2311,25 @@ function licApplyRoleUI(){
   var nom=el('lic-nombre');if(nom)nom.disabled=!isAdmin;
   var addrow=el('lic-req-addrow');if(addrow)addrow.style.display=isAdmin?'flex':'none';
   document.querySelectorAll('.lic-req-rm').forEach(function(b){b.style.display=isAdmin?'inline-block':'none';});
+  document.querySelectorAll('.lic-rm').forEach(function(b){b.style.display=isAdmin?'inline-block':'none';});
+  var addItemBtn=el('lic-additem-btn');if(addItemBtn)addItemBtn.style.display=isAdmin?'block':'none';
+  LIC_ITEMS.forEach(function(id){
+    var art=el('lic-art-'+id);if(art)art.disabled=!isAdmin;
+    var marca=el('lic-marca-'+id);if(marca)marca.disabled=!isAdmin;
+  });
 }
 function licTab(panel){
   ['gastos','impuestos','venta'].forEach(function(p){
     var pe=el('lic-panel-'+p);if(pe)pe.style.display=(p===panel?'block':'none');
     var be=el('lic-tabbtn-'+p);if(be)be.classList.toggle('active',p===panel);
   });
+}
+function licMainTab(panel){
+  ['proc','docs'].forEach(function(p){
+    var pe=el('lic-maintab-'+p);if(pe)pe.style.display=(p===panel?'block':'none');
+    var be=el('lic-maintab-btn-'+p);if(be)be.classList.toggle('active',p===panel);
+  });
+  if(panel==='docs') renderLicDocs();
 }
 function licGastosPanelHtml(){
   return '<h4 style="font-size:12.5px;font-weight:700;margin-bottom:8px;">Comisiones</h4>'+
@@ -2458,6 +2474,7 @@ function licCollectData(){
   var items=LIC_ITEMS.map(function(id){
     return {
       articulo:(el('lic-art-'+id)||{}).value||'',
+      marca:(el('lic-marca-'+id)||{}).value||'',
       cantidad:parseFloat((el('lic-cant-'+id)||{}).value)||0,
       costo:parseFloat((el('lic-costo-'+id)||{}).value)||0,
       facturado:parseFloat((el('lic-fact-'+id)||{}).value)||0,
@@ -2514,7 +2531,7 @@ function licLoadFromData(data){
   var iu=el('lic-iue');if(iu)iu.value=(p.iue!=null?p.iue:25);
   var items=data.items||[];
   items.forEach(function(it){
-    licAddItem({articulo:it.articulo,cantidad:it.cantidad,costo:it.costo,facturado:it.facturado,otros:it.otros,presup:it.presup,pventa:it.pventa});
+    licAddItem({articulo:it.articulo,marca:it.marca,cantidad:it.cantidad,costo:it.costo,facturado:it.facturado,otros:it.otros,presup:it.presup,pventa:it.pventa});
   });
   if(!items.length) licAddItem();
   var g=data.gastos||{};
@@ -2575,7 +2592,7 @@ function licHistCardHtml(r){
         '<button class="btn btn-sm" onclick="licDownloadHistPdf('+r.id+')" style="font-size:11px;">&#128196; PDF</button>'+
         (r.estado==='finalizada'
           ?'<button class="btn btn-sm" onclick="licSetEstado('+r.id+',\'en_curso\')" style="font-size:11px;">&#8635; Reabrir</button>'
-          :'<button class="btn btn-sm" onclick="licSetEstado('+r.id+',\'finalizada\')" style="font-size:11px;color:var(--teal-600);border-color:var(--teal-400);">&#10003; Finalizar</button>')+
+          :'<button class="btn btn-sm" onclick="licFinalizarConPassword('+r.id+')" style="font-size:11px;color:var(--teal-600);border-color:var(--teal-400);">&#10003; Finalizar</button>')+
         (isAdmin?'<button class="btn btn-sm" onclick="licDeleteHist('+r.id+')" style="font-size:11px;color:var(--red-600);border-color:var(--red-400);">&#128465;</button>':'')+
       '</div>'+
     '</div>'+
@@ -2614,6 +2631,13 @@ function licSetEstado(id,estado){
   sbFetch('licitaciones?id=eq.'+id,'PATCH',{estado:estado,updated_at:new Date().toISOString()})
     .then(function(){if(SESSION.rol==='admin'){renderAdminLicitaciones();}else{licRenderHistory();}})
     .catch(function(err){alert('Error: '+err.message);});
+}
+function licFinalizarConPassword(id){
+  var pass=prompt('Para finalizar esta licitación, ingresá tu contraseña:');
+  if(pass===null)return;
+  var u=(USERS||[]).find(function(x){return x.user===SESSION.user;});
+  if(!u||u.pass!==pass){alert('Contraseña incorrecta.');return;}
+  licSetEstado(id,'finalizada');
 }
 function licDeleteHist(id){
   if(!confirm('¿Eliminar esta licitación?'))return;
@@ -2777,7 +2801,7 @@ function licCalcFromData(data){
     var cu=iva+itax+iue+otros+costo;
     var ct=cu*cant,pvi=pventa*cant,dif=presup-pventa,diftotal=dif*cant,ut=pventa-cu,utt=ut*cant;
     Jt+=ct;Lt+=pvi;Qt+=utt;Cantt+=cant;
-    return {articulo:it.articulo||'—',cantidad:cant,costo:costo,facturado:fact,otros:otros,presup:presup,pventa:pventa,iva:iva,it:itax,iue:iue,cu:cu,ct:ct,pvi:pvi,dif:dif,diftotal:diftotal,ut:ut,utt:utt};
+    return {articulo:it.articulo||'—',marca:it.marca||'',cantidad:cant,costo:costo,facturado:fact,otros:otros,presup:presup,pventa:pventa,iva:iva,it:itax,iue:iue,cu:cu,ct:ct,pvi:pvi,dif:dif,diftotal:diftotal,ut:ut,utt:utt};
   });
   var g=data.gastos||{};
   var comisionMonto=((parseFloat(g.comisionPct)||0)/100)*Lt;
@@ -2802,6 +2826,7 @@ function licBuildPdfHtml(nombre,data){
   var itemRows=r.items.map(function(it){
     return '<tr>'+
       '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;">'+it.articulo+'</td>'+
+      '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;">'+(it.marca||'—')+'</td>'+
       '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;text-align:center;">'+it.cantidad+'</td>'+
       '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;text-align:right;">'+it.costo.toFixed(2)+'</td>'+
       '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;text-align:right;">'+it.facturado.toFixed(2)+'</td>'+
@@ -2812,6 +2837,14 @@ function licBuildPdfHtml(nombre,data){
     '</tr>';
   }).join('');
   var fecha=new Date().toLocaleDateString('es-BO');
+  var g=data.general||{};
+  var reqs=g.requisitos||[];
+  var reqDone=reqs.filter(function(x){return x.checked;}).length;
+  var reqPct=reqs.length?Math.round(reqDone/reqs.length*100):0;
+  var reqRows=reqs.map(function(rq){
+    return '<tr><td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;">'+(rq.checked?'&#9989;':'&#11036;')+' '+rq.nombre+'</td>'+
+      '<td style="border:1px solid #ccc;padding:5px 7px;font-size:10px;text-align:center;">'+(rq.checked?'Completo':'Pendiente')+'</td></tr>';
+  }).join('');
   return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Licitación - '+nombre+'</title>'+
   '<style>body{font-family:Arial,Helvetica,sans-serif;padding:24px;color:#222;}h1{font-size:16px;margin:0 0 2px;}h2{font-size:13px;margin:0 0 14px;color:#666;font-weight:500;}'+
   'table{border-collapse:collapse;width:100%;margin-bottom:14px;}th{background:#f2f2f2;border:1px solid #ccc;padding:5px 7px;font-size:9.5px;text-align:left;}'+
@@ -2820,9 +2853,16 @@ function licBuildPdfHtml(nombre,data){
   '.kpi .l{font-size:9.5px;color:#666;}.kpi .v{font-size:14px;font-weight:700;margin-top:2px;}'+
   '.gastos-tbl{width:100%;font-size:10.5px;}.gastos-tbl td{padding:4px 6px;border-bottom:1px solid #eee;}.gastos-tbl td:last-child{text-align:right;font-weight:600;}'+
   '@media print{body{padding:8px;}}</style></head><body>'+
-  '<h1>MARTIZENT S.R.L.</h1><h2>PROCEDIMIENTO DE LICITACIONES — '+nombre+' &middot; '+fecha+'</h2>'+
+  '<h1>MARTIZENT S.R.L. — Informe de avance</h1><h2>PROCEDIMIENTO DE LICITACIONES — '+nombre+' &middot; '+fecha+'</h2>'+
+  '<div class="sec-title">Información general</div>'+
+  '<div class="kpi-row">'+
+    '<div class="kpi"><div class="l">Encargado</div><div class="v" style="font-size:12px;">'+(g.encargado||'—')+'</div></div>'+
+    '<div class="kpi"><div class="l">Tiempo (fecha límite)</div><div class="v" style="font-size:12px;">'+(g.tiempo||'—')+'</div></div>'+
+    '<div class="kpi"><div class="l">Documentación reunida</div><div class="v">'+reqPct+'% ('+reqDone+'/'+reqs.length+')</div></div>'+
+  '</div>'+
+  (reqs.length?'<div class="sec-title">Documentación requerida</div><table><thead><tr><th>Documento</th><th>Estado</th></tr></thead><tbody>'+reqRows+'</tbody></table>':'')+
   '<div class="sec-title">Artículos</div>'+
-  '<table><thead><tr><th>Artículo</th><th>Cant.</th><th>Costo</th><th>Facturado</th><th>P.Venta Unit.</th><th>Costo Unit.</th><th>Costo Total</th><th>Utilidad Total</th></tr></thead><tbody>'+itemRows+'</tbody></table>'+
+  '<table><thead><tr><th>Artículo</th><th>Marca</th><th>Cant.</th><th>Costo</th><th>Facturado</th><th>P.Venta Unit.</th><th>Costo Unit.</th><th>Costo Total</th><th>Utilidad Total</th></tr></thead><tbody>'+itemRows+'</tbody></table>'+
   '<div class="sec-title">Gastos generales</div>'+
   '<table class="gastos-tbl">'+
     '<tr><td>Comisiones</td><td>'+fmtBs(r.comisionMonto)+'</td></tr>'+
@@ -3454,6 +3494,11 @@ document.addEventListener('click',function(e){
   var res=el('cot-search-results');if(!res)return;
   var inp=el('cot-search-input');
   if(res.style.display!=='none'&&inp&&!inp.contains(e.target)&&!res.contains(e.target)) res.style.display='none';
+});
+document.addEventListener('click',function(e){
+  var nb=el('nav-bar');if(!nb||!nb.classList.contains('open'))return;
+  var sb=document.querySelector('.sidebar');
+  if(sb&&!sb.contains(e.target)) closeSidebarMenu();
 });
 
 // ═══════════ PRINT COTIZACION ═══════════
