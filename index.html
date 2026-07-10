@@ -475,6 +475,7 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
         <button class="admin-tab" onclick="adminTab(this,'adm-repuestos')">🔧 Repuestos</button>
         <button class="admin-tab" onclick="adminTab(this,'adm-creditos')">💳 Créditos</button>
         <button class="admin-tab" onclick="adminTab(this,'adm-licitaciones')">📐 Licitaciones</button>
+        <button class="admin-tab" onclick="adminTab(this,'adm-clientes')">🏬 Clientes</button>
         <button class="admin-tab" onclick="adminTab(this,'adm-personal')">👥 Personal</button>
       </div>
       <!-- INFORMES -->
@@ -570,7 +571,10 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
             <div><label class="flabel">Mayorista Nacional (Bs)</label><input type="number" id="adnp-p4" placeholder="0"></div>
             <div><label class="flabel">Factura %</label><input type="number" id="adnp-fpct" placeholder="30" value="30" min="0" max="100"></div>
           </div>
-          <div style="margin-top:10px;font-size:12.5px;"><input type="checkbox" id="adnp-sinstock" style="width:15px;height:15px;vertical-align:middle;"> <label for="adnp-sinstock" style="vertical-align:middle;">🚫 Sin stock</label></div>
+          <div style="margin-top:10px;font-size:12.5px;display:flex;gap:16px;">
+            <span><input type="checkbox" id="adnp-sinstock" style="width:15px;height:15px;vertical-align:middle;"> <label for="adnp-sinstock" style="vertical-align:middle;">🚫 Sin stock</label></span>
+            <span><input type="checkbox" id="adnp-nuevo" style="width:15px;height:15px;vertical-align:middle;"> <label for="adnp-nuevo" style="vertical-align:middle;">🆕 Producto nuevo</label></span>
+          </div>
           <div style="display:flex;gap:8px;margin-top:12px;">
             <button class="btn btn-success" onclick="addProducto()">Guardar</button>
             <button class="btn" onclick="toggleAddProdAdmin()">Cancelar</button>
@@ -666,6 +670,40 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
           </div>
         </div>
         <div id="adm-lic-list"></div>
+      </div>
+      <!-- CLIENTES -->
+      <div id="adm-clientes" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:14px;font-weight:600;">Clientes mayoristas</div>
+          <button class="btn btn-primary btn-sm" onclick="toggleAddCliente()">➕ Agregar cliente</button>
+        </div>
+        <div class="lic-box" id="add-cliente-form" style="display:none;margin-bottom:16px;">
+          <h4 style="margin-bottom:10px;">Nuevo cliente</h4>
+          <div class="frow">
+            <div><label class="flabel">Nombre completo <span class="req">*</span></label><input type="text" id="cli-nombre" placeholder="Ej. Gloria James Araujo"></div>
+            <div><label class="flabel">Usuario <span class="req">*</span></label><input type="text" id="cli-user" placeholder="usuario de acceso"></div>
+          </div>
+          <div class="frow" style="margin-top:10px;">
+            <div><label class="flabel">Contraseña <span class="req">*</span></label><input type="password" id="cli-pass" autocomplete="new-password"></div>
+            <div><label class="flabel">Vendedor asignado <span class="req">*</span></label><select id="cli-vendedor"></select></div>
+          </div>
+          <div class="frow" style="margin-top:10px;">
+            <div><label class="flabel">Tipo de precio <span class="req">*</span></label><select id="cli-tipoprecio">
+              <option value="local">Cliente Local (Mayorista Mínimo)</option>
+              <option value="nacional">Cliente Nacional (Mayorista Mínimo Nacional)</option>
+              <option value="envios">Cliente Envíos (Mayorista Mínimo + Bs 15 en termotanques)</option>
+            </select></div>
+            <div><label class="flabel">Historial de compras (Excel, opcional)</label><input type="file" id="cli-excel" accept=".xlsx,.xls" onchange="parseHistorialExcel(this)"></div>
+          </div>
+          <div id="cli-import-summary" style="margin-top:12px;"></div>
+          <div id="cli-import-review" style="margin-top:10px;"></div>
+          <div style="display:flex;gap:8px;margin-top:14px;align-items:center;">
+            <button class="btn btn-success" onclick="crearCliente()">Guardar cliente</button>
+            <button class="btn" onclick="toggleAddCliente()">Cancelar</button>
+            <span id="cli-error" style="font-size:12px;color:var(--red-600);"></span>
+          </div>
+        </div>
+        <div id="adm-clientes-list"></div>
       </div>
       <!-- PERSONAL -->
       <div id="adm-personal" style="display:none;">
@@ -2100,7 +2138,7 @@ function renderReports(filter){
 function toggleReport(id){var d=el('rd-'+id);if(d)d.classList.toggle('open');var r=REPORTS.find(function(x){return x.id===id;});if(r&&!r.leido){r.leido=true;var b=el('rbadge-'+id);if(b){b.textContent='Leído';b.className='rbadge rb-read';}updateStats();}}
 function adminTab(btn,panel){
   document.querySelectorAll('.admin-tab').forEach(function(t){t.classList.remove('active');});btn.classList.add('active');
-  ['adm-informes','adm-actividades','adm-catalogo','adm-repuestos','adm-creditos','adm-licitaciones','adm-personal'].forEach(function(p){var e=el(p);if(e)e.style.display=p===panel?'block':'none';});
+  ['adm-informes','adm-actividades','adm-catalogo','adm-repuestos','adm-creditos','adm-licitaciones','adm-clientes','adm-personal'].forEach(function(p){var e=el(p);if(e)e.style.display=p===panel?'block':'none';});
   if(panel==='adm-actividades'){
     ADM_ACT_VIEW={level:'root'};
     Promise.all([sbLoadActivities().catch(function(){}),sbLoadSolicitudes().catch(function(){})]).then(function(){renderAdmActList();});
@@ -2110,6 +2148,7 @@ function adminTab(btn,panel){
   if(panel==='adm-repuestos') renderRepuestos();
   if(panel==='adm-creditos') renderCreditos();
   if(panel==='adm-licitaciones'){renderAdminLicitaciones();renderAdminLicDocs();}
+  if(panel==='adm-clientes') renderAdmClientes();
   if(panel==='adm-personal') renderUserTable();
 }
 
@@ -3058,6 +3097,180 @@ function licDownloadHistPdf(id){
   var r=LIC_HIST.find(function(x){return x.id===id;})||(ADM_LIC||[]).find(function(x){return x.id===id;});
   if(!r)return;
   licOpenPdfWindow(r.nombre,r.data);
+}
+
+// ═══════════ CLIENTES MAYORISTAS ═══════════
+var CLI_IMPORT_ROWS=[];
+var MESES_MAP={enero:1,febrero:2,marzo:3,abril:4,mayo:5,junio:6,julio:7,agosto:8,septiembre:9,setiembre:9,octubre:10,noviembre:11,diciembre:12};
+function parseMesHeader(s){
+  var m=String(s||'').trim().toLowerCase().match(/^([a-záéíóúñ]+)\s+(\d{4})$/i);
+  if(!m)return null;
+  var mesNombre=m[1].normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  var num=MESES_MAP[mesNombre];
+  if(!num)return null;
+  return m[2]+'-'+(num<10?'0'+num:num);
+}
+function normalizeProdName(s){
+  return (s||'').toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
+}
+function matchHistorialProduct(desc){
+  var norm=normalizeProdName(desc);
+  if(!norm)return null;
+  var exact=PRODUCTOS_CATALOGO.find(function(p){return normalizeProdName(p.descripcion)===norm;});
+  if(exact)return {product:exact,confidence:'exacta'};
+  var partial=PRODUCTOS_CATALOGO.find(function(p){
+    var pn=normalizeProdName(p.descripcion);
+    return pn.indexOf(norm)>-1||norm.indexOf(pn)>-1;
+  });
+  if(partial)return {product:partial,confidence:'aproximada'};
+  return null;
+}
+function parseHistorialExcel(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:'binary'});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      var rows=[];
+      var currentMes=null;
+      for(var i=0;i<data.length;i++){
+        var row=data[i];
+        var c0=String(row[0]||'').trim();
+        if(!c0)continue;
+        var mesKey=parseMesHeader(c0);
+        if(mesKey){currentMes=mesKey;continue;}
+        if(/^descripcion$/i.test(c0))continue;
+        if(/^total\s/i.test(c0))continue;
+        if(/^total general/i.test(c0))continue;
+        if(/sin datos disponibles/i.test(c0))continue;
+        if(!currentMes)continue;
+        var cantContado=parseFloat(row[1])||0;
+        var cantCredito=parseFloat(row[2])||0;
+        var cantTotal=parseFloat(row[3])||(cantContado+cantCredito);
+        if(cantTotal<=0&&cantContado<=0&&cantCredito<=0)continue;
+        var match=matchHistorialProduct(c0);
+        rows.push({
+          desc:c0,mes:currentMes,cantContado:cantContado,cantCredito:cantCredito,cantTotal:cantTotal,
+          productoId:match?match.product.id:null,confidence:match?match.confidence:'sin_match'
+        });
+      }
+      CLI_IMPORT_ROWS=rows;
+      renderImportReview();
+    }catch(err){
+      alert('Error al leer el archivo: '+err.message);
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+function clienteProductSelectHtml(rowIdx,selectedId){
+  var opts='<option value="">— Ignorar esta línea —</option>'+PRODUCTOS_CATALOGO.map(function(p){
+    return '<option value="'+p.id+'"'+(p.id===selectedId?' selected':'')+'>'+p.descripcion+'</option>';
+  }).join('');
+  return '<select onchange="cliReviewRowChanged('+rowIdx+',this.value)" style="width:100%;font-size:12px;">'+opts+'</select>';
+}
+function cliReviewRowChanged(rowIdx,val){
+  CLI_IMPORT_ROWS[rowIdx].productoId=val?parseInt(val):null;
+  CLI_IMPORT_ROWS[rowIdx].confidence=val?'manual':'sin_match';
+}
+function renderImportReview(){
+  var sumEl=el('cli-import-summary');var revEl=el('cli-import-review');
+  if(!sumEl||!revEl)return;
+  var total=CLI_IMPORT_ROWS.length;
+  var exactas=CLI_IMPORT_ROWS.filter(function(r){return r.confidence==='exacta';}).length;
+  var revisar=CLI_IMPORT_ROWS.map(function(r,i){return {r:r,i:i};}).filter(function(x){return x.r.confidence!=='exacta';});
+  sumEl.innerHTML='<div style="font-size:12.5px;padding:8px 10px;background:var(--surface-2,#f5f5f5);border-radius:var(--r-md);">'+
+    '📄 '+total+' líneas leídas &middot; ✅ '+exactas+' emparejadas automáticamente &middot; ⚠️ '+revisar.length+' necesitan revisión</div>';
+  if(!revisar.length){revEl.innerHTML='';return;}
+  revEl.innerHTML='<div style="font-size:12px;font-weight:600;margin-bottom:6px;">Revisá estas líneas (elegí el producto correcto o ignorá la línea):</div>'+
+    '<div style="max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r-md);">'+
+    revisar.map(function(x){
+      var badge=x.r.confidence==='aproximada'?'<span class="tag tag-amber" style="font-size:9px;">aproximada</span>':'<span class="tag" style="background:var(--red-50,#fee2e2);color:var(--red-600);font-size:9px;">sin coincidencia</span>';
+      return '<div style="padding:8px 10px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;">'+
+        '<div style="font-size:11.5px;">'+x.r.desc+' '+badge+'<div style="font-size:10px;color:var(--text-3);">'+x.r.mes+' &middot; cant. '+x.r.cantTotal+'</div></div>'+
+        clienteProductSelectHtml(x.i,x.r.productoId)+
+      '</div>';
+    }).join('')+
+    '</div>';
+}
+function clienteBuildVendedorOptions(){
+  var sel=el('cli-vendedor');if(!sel)return;
+  sel.innerHTML='<option value="">— Seleccionar —</option>'+(USERS||[]).filter(function(u){return u.rol!=='cliente';}).map(function(u){
+    return '<option value="'+u.user+'">'+u.nombre+'</option>';
+  }).join('');
+}
+function toggleAddCliente(){
+  var f=el('add-cliente-form');if(!f)return;
+  var opening=f.style.display==='none';
+  f.style.display=opening?'block':'none';
+  if(opening){
+    clienteBuildVendedorOptions();
+    CLI_IMPORT_ROWS=[];
+    ['cli-nombre','cli-user','cli-pass'].forEach(function(id){var e=el(id);if(e)e.value='';});
+    var ex=el('cli-excel');if(ex)ex.value='';
+    var sumEl=el('cli-import-summary');if(sumEl)sumEl.innerHTML='';
+    var revEl=el('cli-import-review');if(revEl)revEl.innerHTML='';
+    var errEl=el('cli-error');if(errEl)errEl.textContent='';
+  }
+}
+function crearCliente(){
+  var nombre=(el('cli-nombre')||{}).value.trim();
+  var user=(el('cli-user')||{}).value.trim();
+  var pass=(el('cli-pass')||{}).value;
+  var vendedor=(el('cli-vendedor')||{}).value;
+  var tipoPrecio=(el('cli-tipoprecio')||{}).value;
+  var errEl=el('cli-error');
+  if(!nombre||!user||!pass){if(errEl)errEl.textContent='Completá nombre, usuario y contraseña.';return;}
+  if(pass.length<3){if(errEl)errEl.textContent='Contraseña muy corta.';return;}
+  if(!vendedor){if(errEl)errEl.textContent='Seleccioná un vendedor asignado.';return;}
+  if(USERS.find(function(u){return u.user===user;})){if(errEl)errEl.textContent='Ese usuario ya existe.';return;}
+  if(errEl)errEl.textContent='Guardando...';
+  sbFetch('usuarios','POST',{user_name:user,pass:pass,nombre:nombre,rol:'cliente',sucursal:'—',vendedor_asignado:vendedor,tipo_precio:tipoPrecio})
+    .then(function(){
+      USERS.push({user:user,pass:pass,nombre:nombre,rol:'cliente',sucursal:'—',vendedor_asignado:vendedor,tipo_precio:tipoPrecio});
+      var validRows=CLI_IMPORT_ROWS.filter(function(r){return r.productoId;});
+      if(!validRows.length)return Promise.resolve();
+      var payload=validRows.map(function(r){
+        return {cliente_user:user,producto_id:r.productoId,producto_nombre_original:r.desc,mes:r.mes,cantidad_contado:r.cantContado,cantidad_credito:r.cantCredito,cantidad_total:r.cantTotal};
+      });
+      return sbFetch('historial_compras','POST',payload);
+    }).then(function(){
+      if(errEl)errEl.textContent='';
+      var cargados=CLI_IMPORT_ROWS.filter(function(r){return r.productoId;}).length;
+      alert('Cliente creado correctamente.'+(cargados?' Se cargaron '+cargados+' líneas de historial.':''));
+      toggleAddCliente();
+      renderAdmClientes();
+    }).catch(function(err){
+      console.error('Error al crear cliente:',err);
+      if(errEl)errEl.textContent='Error: '+err.message;
+    });
+}
+function renderAdmClientes(){
+  var listEl=el('adm-clientes-list');if(!listEl)return;
+  listEl.innerHTML='<div class="empty-state"><p>Cargando...</p></div>';
+  sbFetch('usuarios?rol=eq.cliente&select=*&order=nombre.asc')
+    .then(function(rows){
+      if(!rows||!rows.length){listEl.innerHTML='<div class="empty-state"><span class="empty-ico">🏬</span><h3>Sin clientes aún</h3><p>Agregá el primer cliente mayorista.</p></div>';return;}
+      listEl.innerHTML=rows.map(function(c){
+        var vendedorUser=(USERS||[]).find(function(u){return u.user===c.vendedor_asignado;});
+        var vendedorNombre=vendedorUser?vendedorUser.nombre:(c.vendedor_asignado||'—');
+        var tipoLabel={local:'Cliente Local',nacional:'Cliente Nacional',envios:'Cliente Envíos'}[c.tipo_precio]||c.tipo_precio||'—';
+        return '<div class="cot-card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">'+
+          '<div><div style="font-size:13.5px;font-weight:600;">'+c.nombre+'</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">👤 '+c.user_name+' &middot; Vendedor: '+vendedorNombre+' &middot; '+tipoLabel+'</div></div>'+
+          '<button class="btn btn-sm" onclick="deleteCliente(\''+c.user_name+'\')" style="color:var(--red-600);border-color:var(--red-400);">&#128465;</button>'+
+        '</div>';
+      }).join('');
+    }).catch(function(err){
+      listEl.innerHTML='<div class="empty-state"><p style="color:var(--red-600);">Error: '+err.message+'</p></div>';
+    });
+}
+function deleteCliente(userName){
+  if(!confirm('¿Eliminar este cliente? También se borrará su historial de compras.'))return;
+  sbFetch('usuarios?user_name=eq.'+encodeURIComponent(userName),'DELETE')
+    .then(function(){return sbFetch('historial_compras?cliente_user=eq.'+encodeURIComponent(userName),'DELETE');})
+    .then(function(){renderAdmClientes();})
+    .catch(function(err){alert('Error: '+err.message);});
 }
 
 // ═══════════ TABLES / PHOTOS ═══════════
@@ -4560,6 +4773,7 @@ function renderAdmCatalog(){
     var p4=ov.precio4!==undefined?ov.precio4:p.precio4;
     var fpct=ov.factura_pct!==undefined?ov.factura_pct:(p.factura_pct!==undefined?p.factura_pct:30);
     var sinStock=!!ov.sinStock;
+    var esNuevo=!!ov.nuevo;
     var catLabel=p.subcat_label||p.cat_label||p.categoria||'';
     if(p.categoria!==lastCat){
       lastCat=p.categoria;
@@ -4568,7 +4782,7 @@ function renderAdmCatalog(){
     }
     var descEsc=desc.replace(/"/g,'&quot;');
     html+='<tr id="admprow-'+p.id+'">'+
-      '<td style="font-size:12.5px;">'+desc+(sinStock?' <span class="tag" style="background:var(--red-50,#fee2e2);color:var(--red-600);font-size:10px;">Sin stock</span>':'')+'</td>'+
+      '<td style="font-size:12.5px;">'+desc+(sinStock?' <span class="tag" style="background:var(--red-50,#fee2e2);color:var(--red-600);font-size:10px;">Sin stock</span>':'')+(esNuevo?' <span class="tag" style="background:var(--teal-50);color:var(--teal-800);font-size:10px;">🆕 Nuevo</span>':'')+'</td>'+
       '<td style="font-size:11.5px;color:var(--text-3);">'+(p.cat_label||'')+'</td>'+
       '<td style="text-align:right;">Bs '+Number(p1).toLocaleString('es-BO')+'</td>'+
       '<td style="text-align:right;">Bs '+Number(p2).toLocaleString('es-BO')+'</td>'+
@@ -4586,7 +4800,10 @@ function renderAdmCatalog(){
       '<button class="btn btn-success btn-sm" onclick="saveAdmProdEdit('+p.id+')">&#10003;</button>'+
       '<button class="btn btn-sm" onclick="toggleAdmProdEdit('+p.id+')">&#10005;</button></div>'+
       '</div>'+
-      '<div style="margin-top:8px;font-size:12.5px;"><input type="checkbox" id="adpe-sinstock-'+p.id+'" style="width:15px;height:15px;vertical-align:middle;"'+(sinStock?' checked':'')+'> <label for="adpe-sinstock-'+p.id+'" style="vertical-align:middle;">🚫 Sin stock</label></div>'+
+      '<div style="margin-top:8px;font-size:12.5px;display:flex;gap:16px;">'+
+        '<span><input type="checkbox" id="adpe-sinstock-'+p.id+'" style="width:15px;height:15px;vertical-align:middle;"'+(sinStock?' checked':'')+'> <label for="adpe-sinstock-'+p.id+'" style="vertical-align:middle;">🚫 Sin stock</label></span>'+
+        '<span><input type="checkbox" id="adpe-nuevo-'+p.id+'" style="width:15px;height:15px;vertical-align:middle;"'+(esNuevo?' checked':'')+'> <label for="adpe-nuevo-'+p.id+'" style="vertical-align:middle;">🆕 Producto nuevo</label></span>'+
+      '</div>'+
       '</td></tr>';
   });
   tbody.innerHTML=html;
@@ -4633,7 +4850,8 @@ function saveAdmProdEdit(id){
   var p4=parseFloat((el('adpe-p4-'+id)||{}).value)||0;
   var fpct=parseFloat((el('adpe-fpct-'+id)||{}).value);if(isNaN(fpct))fpct=30;
   var sinStock=(el('adpe-sinstock-'+id)||{}).checked||false;
-  var ovData={descripcion:desc,precio1:p1,precio2:p2,precio3:p3,precio4:p4,factura_pct:fpct,sinStock:sinStock};
+  var esNuevo=(el('adpe-nuevo-'+id)||{}).checked||false;
+  var ovData={descripcion:desc,precio1:p1,precio2:p2,precio3:p3,precio4:p4,factura_pct:fpct,sinStock:sinStock,nuevo:esNuevo};
   PROD_OVERRIDES[String(id)]=ovData;PROD_OVERRIDES[id]=ovData;
   sbSaveOverride(String(id),'prod',ovData).then(function(){
     console.log('Producto guardado en Supabase:',id);
@@ -4670,6 +4888,7 @@ function addProducto(){
   var p4=parseFloat((el('adnp-p4')||{}).value)||0;
   var fpct=parseFloat((el('adnp-fpct')||{}).value)||30;
   var sinStock=(el('adnp-sinstock')||{}).checked||false;
+  var esNuevo=(el('adnp-nuevo')||{}).checked||false;
   var newId=Date.now();
   PRODUCTOS_CATALOGO.push({id:newId,descripcion:desc,categoria:cat,cat_label:catObj.cat_label,subcat_label:catObj.subcat_label,precio1:p1,precio2:p2,precio3:p3,precio4:p4,factura_pct:fpct});
   sbFetch('productos_extra','POST',{id:newId,descripcion:desc,categoria:cat,cat_label:catObj.cat_label,subcat_label:catObj.subcat_label,precio1:p1,precio2:p2,precio3:p3,precio4:p4,factura_pct:fpct,creado_por:SESSION.user})
@@ -4677,14 +4896,15 @@ function addProducto(){
       console.error('Error al guardar producto en Supabase:',err);
       alert('El producto se agregó pero no se pudo guardar en la nube (se perderá al recargar): '+err.message);
     });
-  if(sinStock){
-    var ovNew={sinStock:true};
+  if(sinStock||esNuevo){
+    var ovNew={sinStock:sinStock,nuevo:esNuevo};
     PROD_OVERRIDES[String(newId)]=ovNew;
     sbSaveOverride(String(newId),'prod',ovNew).catch(function(){});
   }
   ['adnp-desc','adnp-cat','adnp-p1','adnp-p2','adnp-p3','adnp-p4','adnp-newcat-name'].forEach(function(id){var e=el(id);if(e)e.value='';});
   var fp=el('adnp-fpct');if(fp)fp.value='30';
   var sk=el('adnp-sinstock');if(sk)sk.checked=false;
+  var nk=el('adnp-nuevo');if(nk)nk.checked=false;
   var ncw=el('adnp-newcat-wrap');if(ncw)ncw.style.display='none';
   var e2=el('adnp-error');if(e2)e2.textContent='';
   toggleAddProdAdmin();renderAdmCatalog();buildCatFilter();
