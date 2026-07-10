@@ -3117,6 +3117,10 @@ function extractCodeTokens(desc){
   var norm=normalizeProdName(desc);
   return norm.split(/[\s,\/()]+/).filter(function(t){return t.length>=3&&/[0-9]/.test(t)&&/[A-Z]/.test(t);});
 }
+function extractNumericTokens(desc){
+  var norm=normalizeProdName(desc);
+  return norm.match(/[0-9]{3,}/g)||[];
+}
 function coreCode(t){return t.replace(/[^A-Z0-9]/g,'');}
 function matchHistorialProduct(desc){
   var norm=normalizeProdName(desc);
@@ -3147,6 +3151,17 @@ function matchHistorialProduct(desc){
       });
     });
     if(byCore)return {product:byCore,confidence:'por_codigo'};
+  }
+  // Último recurso: todos los números de 3+ dígitos en común (ej. "4200" y "4044"),
+  // solo se acepta si hay un único producto candidato (si hay varios con el mismo
+  // número, como distintos colores/acabados, se deja para revisión manual).
+  var histNums=extractNumericTokens(desc);
+  if(histNums.length){
+    var candidates=PRODUCTOS_CATALOGO.filter(function(p){
+      var prodNums=extractNumericTokens(p.descripcion);
+      return histNums.every(function(hn){return prodNums.indexOf(hn)>-1;});
+    });
+    if(candidates.length===1)return {product:candidates[0],confidence:'aproximada'};
   }
   return null;
 }
@@ -3203,12 +3218,13 @@ function renderImportReview(){
   var sumEl=el('cli-import-summary');var revEl=el('cli-import-review');
   if(!sumEl||!revEl)return;
   var total=CLI_IMPORT_ROWS.length;
-  var exactas=CLI_IMPORT_ROWS.filter(function(r){return r.confidence==='exacta';}).length;
+  var preLlenadas=CLI_IMPORT_ROWS.filter(function(r){return r.confidence!=='sin_match';}).length;
+  var sinMatch=total-preLlenadas;
   var revisar=CLI_IMPORT_ROWS.map(function(r,i){return {r:r,i:i};}).filter(function(x){return x.r.confidence!=='exacta';});
   sumEl.innerHTML='<div style="font-size:12.5px;padding:8px 10px;background:var(--surface-2,#f5f5f5);border-radius:var(--r-md);">'+
-    '📄 '+total+' líneas leídas &middot; ✅ '+exactas+' emparejadas automáticamente &middot; ⚠️ '+revisar.length+' necesitan revisión</div>';
+    '📄 '+total+' líneas leídas &middot; ✅ '+preLlenadas+' con producto sugerido (solo confirmá) &middot; ❗ '+sinMatch+' sin ninguna coincidencia (elegí manualmente o ignorá)</div>';
   if(!revisar.length){revEl.innerHTML='';return;}
-  revEl.innerHTML='<div style="font-size:12px;font-weight:600;margin-bottom:6px;">Revisá estas líneas (elegí el producto correcto o ignorá la línea):</div>'+
+  revEl.innerHTML='<div style="font-size:12px;font-weight:600;margin-bottom:6px;">Confirmá o corregí estas líneas antes de guardar:</div>'+
     '<div style="max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r-md);">'+
     revisar.map(function(x){
       var badge=x.r.confidence==='aproximada'?'<span class="tag tag-amber" style="font-size:9px;">aproximada</span>':
