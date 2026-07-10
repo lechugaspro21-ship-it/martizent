@@ -96,6 +96,14 @@ textarea{resize:vertical;min-height:68px;line-height:1.5;}
 .lic-tax-table th{text-align:left;font-size:10.5px;color:var(--text-3);padding:4px 6px;border-bottom:1px solid var(--border);}
 .lic-tax-table td{padding:6px;border-bottom:1px solid var(--border);}
 .lic-tax-table input{width:90px;}
+/* ═══ PORTAL DE CLIENTE ═══ */
+.cli-prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
+.cli-prod-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px;display:flex;flex-direction:column;gap:4px;}
+.cli-prod-name{font-size:12.5px;font-weight:500;line-height:1.35;min-height:34px;}
+.cli-prod-price{font-size:15px;font-weight:700;color:var(--blue-500);margin:4px 0;}
+@media(max-width:600px){.cli-prod-grid{grid-template-columns:1fr 1fr;}}
+.cli-carousel{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch;}
+.cli-carousel .cli-prod-card{min-width:190px;max-width:190px;flex-shrink:0;}
 .lic-req-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
 .lic-req-row input[type="checkbox"]{width:16px;height:16px;flex-shrink:0;}
 .lic-req-row .lic-req-label{flex:1;}
@@ -744,6 +752,59 @@ hr.fdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
     </div>
   </div>
 </div><!-- /app -->
+<!-- PORTAL DE CLIENTE -->
+<div class="app" id="client-page" style="display:none;">
+  <div class="topbar">
+    <div class="logo" style="cursor:default;">📍</div>
+    <div><div class="topbar-title">MARTIZENT S.R.L.</div><div class="topbar-sub">Portal de pedidos</div></div>
+    <div class="topbar-right">
+      <div class="user-badge"><span id="cli-tb-user">—</span></div>
+      <button class="btn-logout" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+  <div class="content" style="padding:1.25rem 1.5rem 6rem;">
+    <div class="sec-header" style="border-left:3px solid var(--blue-500);">
+      <div class="sec-icon" style="background:var(--blue-50);">🛒</div>
+      <div><h2>Catálogo</h2><p>Armá tu pedido y enviáselo a tu vendedor</p></div>
+    </div>
+    <div id="cli-nuevos-section" style="display:none;margin-bottom:22px;">
+      <h3 style="font-size:14px;margin-bottom:8px;">🆕 Productos nuevos</h3>
+      <div class="cli-carousel" id="cli-nuevos-carousel"></div>
+    </div>
+    <div id="cli-reponer-section" style="display:none;margin-bottom:22px;">
+      <h3 style="font-size:14px;margin-bottom:8px;">⏰ Te toca reponer</h3>
+      <div class="cli-carousel" id="cli-reponer-carousel"></div>
+    </div>
+    <div id="cli-sugeridos-section" style="display:none;margin-bottom:22px;">
+      <h3 style="font-size:14px;margin-bottom:8px;">🔁 Sugerido para vos</h3>
+      <div class="cli-carousel" id="cli-sugeridos-carousel"></div>
+    </div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:10px;">Catálogo completo</div>
+    <div style="margin-bottom:14px;"><input type="text" id="cli-cat-search" placeholder="🔍 Buscar producto..." oninput="renderClienteCatalogo()" style="width:100%;"></div>
+    <div id="cli-catalogo-grid"></div>
+  </div>
+  <div id="cli-cart-fab" onclick="toggleClienteCart()" style="display:none;position:fixed;bottom:20px;right:20px;background:var(--blue-500);color:#fff;padding:14px 22px;border-radius:999px;box-shadow:0 4px 16px rgba(0,0,0,.25);cursor:pointer;font-weight:700;z-index:150;font-size:14px;">
+    🛒 <span id="cli-cart-count">0</span> ítems — Bs <span id="cli-cart-total">0.00</span>
+  </div>
+  <div id="cli-cart-panel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;">
+    <div style="position:absolute;right:0;top:0;bottom:0;width:min(420px,100%);background:var(--surface);padding:1.25rem;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h3 style="margin:0;">Mi pedido</h3>
+        <button class="btn btn-sm" onclick="toggleClienteCart()">✕</button>
+      </div>
+      <div id="cli-cart-items"></div>
+      <div style="margin-top:14px;font-size:16px;font-weight:700;display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:10px;">
+        <span>Total</span><span id="cli-cart-total-2">Bs 0.00</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;">
+        <button class="btn btn-success" onclick="clienteEnviarPedido()">📤 Enviar pedido a mi vendedor</button>
+        <button class="btn btn-primary" onclick="clienteDescargarPdf()">📄 Descargar PDF</button>
+        <button class="btn" onclick="clienteVaciarCarrito()">Vaciar pedido</button>
+      </div>
+      <div id="cli-cart-error" style="font-size:12px;color:var(--red-600);margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="ov-ok"><div class="modal"><span class="modal-ico">✅</span><h3>Cotización guardada</h3><p>La cotización quedó registrada correctamente.</p><div class="modal-actions"><button class="btn" onclick="closeOv('ov-ok');resetForm()">Nuevo registro</button><button class="btn btn-primary" onclick="closeOv('ov-ok');goBack()">Volver</button></div></div></div>
 <div class="overlay" id="ov-clear"><div class="modal"><span class="modal-ico">🗑️</span><h3>¿Limpiar formulario?</h3><p>Se borrarán todos los datos ingresados.</p><div class="modal-actions"><button class="btn" onclick="closeOv('ov-clear')">Cancelar</button><button class="btn btn-danger" onclick="closeOv('ov-clear');doClean()">Sí, limpiar</button></div></div></div>
 <div class="overlay" id="ov-act-ok"><div class="modal"><span class="modal-ico">✅</span><h3>Actividad guardada</h3><p>La actividad fue registrada y enviada al administrador.</p><div class="modal-actions"><button class="btn btn-primary" onclick="closeOv('ov-act-ok');goBack()">Volver</button></div></div></div>
@@ -951,9 +1012,19 @@ function doLogin(){
   console.log('Logging in user:', u);
   sbLogin(u,p).then(function(usr){
     console.log('Login success:', JSON.stringify(usr));
-    SESSION={user:usr.user_name,nombre:usr.nombre||usr.user_name,rol:usr.rol||'user',sucursal:usr.sucursal||'\u2014',licitaciones:!!usr.licitaciones,cotizaciones:usr.cotizaciones!==false,mercados:usr.mercados!==false,creditos:usr.creditos!==false};
     var lp=el('login-page');if(lp)lp.style.display='none';
     if(btn)btn.textContent='Ingresar';
+    if(usr.rol==='cliente'){
+      SESSION={user:usr.user_name,nombre:usr.nombre||usr.user_name,rol:'cliente',vendedor_asignado:usr.vendedor_asignado||'',tipo_precio:usr.tipo_precio||'local'};
+      Promise.all([
+        sbLoadOverrides().catch(function(e){console.warn('Override load failed:',e);}),
+        sbLoadProductosExtra().catch(function(e){console.warn('Productos extra load failed:',e);})
+      ]).then(function(){
+        showClientPortal();
+      });
+      return;
+    }
+    SESSION={user:usr.user_name,nombre:usr.nombre||usr.user_name,rol:usr.rol||'user',sucursal:usr.sucursal||'\u2014',licitaciones:!!usr.licitaciones,cotizaciones:usr.cotizaciones!==false,mercados:usr.mercados!==false,creditos:usr.creditos!==false};
     // Wait for overrides to load BEFORE showing home, so prices/fpct are correct
     Promise.all([
       sbLoadOverrides().catch(function(e){console.warn('Override load failed:',e);}),
@@ -976,7 +1047,7 @@ function doLogin(){
     if(err){err.textContent='Usuario o contrase\u00F1a incorrectos.';err.style.display='block';}
   });
 }
-function doLogout(){SESSION=null;el('app-page').classList.remove('visible');el('login-page').style.display='flex';el('lu').value='';el('lp').value='';}
+function doLogout(){SESSION=null;el('app-page').classList.remove('visible');var cp=el('client-page');if(cp)cp.classList.remove('visible');el('login-page').style.display='flex';el('lu').value='';el('lp').value='';}
 function initApp(){
   var isAdmin=SESSION.rol==='admin';
   el('tb-user').textContent=SESSION.nombre;
@@ -1400,7 +1471,7 @@ function renderCotizacionesList(){
         '<div class="cot-card" style="margin-bottom:8px;">'+
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">'+
             '<div>'+
-              '<div style="font-size:13.5px;font-weight:600;">'+c.cliente+'</div>'+
+              '<div style="font-size:13.5px;font-weight:600;">'+c.cliente+(c.origen==='cliente'?' <span class="tag tag-coral" style="font-size:10px;">🔔 Pedido de cliente</span>':'')+'</div>'+
               '<div style="font-size:11px;color:var(--text-3);margin-top:2px;">'+c.numeroCot+' &middot; '+c.fecha+'</div>'+
             '</div>'+
             '<div style="display:flex;gap:6px;flex-shrink:0;">'+
@@ -3128,6 +3199,8 @@ var HISTORIAL_ALIASES=[
   {match:'ELE-I53C18',target:'ELE-L53C18'},
   {match:'EXPOTGNP120RH GAMA ALTA',target:'120 litros gama alta'},
   {match:'PLOMO 120 LITROS EXPOP120GNEL',target:'120 LITROS GRIS'},
+  {match:'ELEQUI PLOMO 150 LITROS',target:'150 litros gris'},
+  {match:'EXPOTGNP120RH40 ALTURA',target:'120 litros gama alta'},
   {match:'AG1100GRRE MXP EM615',target:'TERMOTANQUE SKABE A GAS A6 AQUAPIU'}
 ];
 function extractCodeTokens(desc){
@@ -3208,6 +3281,7 @@ function parseHistorialExcel(input){
         if(/^total\s/i.test(c0))continue;
         if(/^total general/i.test(c0))continue;
         if(/sin datos disponibles/i.test(c0))continue;
+        if(/\(sin factura\)/i.test(c0))continue; // repuestos/accesorios: no se cargan al historial de productos
         if(!currentMes)continue;
         var cantContado=parseFloat(row[1])||0;
         var cantCredito=parseFloat(row[2])||0;
@@ -3337,6 +3411,274 @@ function deleteCliente(userName){
     .then(function(){return sbFetch('historial_compras?cliente_user=eq.'+encodeURIComponent(userName),'DELETE');})
     .then(function(){renderAdmClientes();})
     .catch(function(err){alert('Error: '+err.message);});
+}
+
+// ═══════════ PORTAL DE CLIENTE ═══════════
+var CLIENTE_CARRITO={};
+function showClientPortal(){
+  var ap=el('app-page');if(ap)ap.classList.remove('visible');
+  var cp=el('client-page');if(cp)cp.classList.add('visible');
+  var tbU=el('cli-tb-user');if(tbU)tbU.textContent=SESSION.nombre;
+  CLIENTE_CARRITO={};
+  renderClienteCatalogo();
+  actualizarCarritoFab();
+  cargarSugerenciasCliente().then(renderClienteSugerencias).catch(function(e){console.warn('Sugerencias no disponibles:',e);});
+}
+function esTermotanque(desc){
+  return /TERMOTANQUE/i.test(desc||'');
+}
+function precioParaCliente(p,ov){
+  ov=ov||{};
+  var p1=ov.precio1!==undefined?ov.precio1:p.precio1;
+  var p2=ov.precio2!==undefined?ov.precio2:p.precio2;
+  var desc=ov.descripcion||p.descripcion;
+  var tipo=SESSION.tipo_precio;
+  var base=(tipo==='nacional')?(p2!=null?p2:p1):p1;
+  if(tipo==='envios'&&esTermotanque(desc))base=base+15;
+  return base||0;
+}
+function renderClienteCatalogo(){
+  var q=((el('cli-cat-search')||{}).value||'').toLowerCase();
+  var grid=el('cli-catalogo-grid');if(!grid)return;
+  var list=PRODUCTOS_CATALOGO.filter(function(p){
+    var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id]||{};
+    if(ov.deleted||ov.sinStock)return false;
+    var desc=(ov.descripcion||p.descripcion).toLowerCase();
+    return !q||desc.indexOf(q)>-1;
+  });
+  if(!list.length){grid.innerHTML='<div class="empty-state"><p>Sin resultados.</p></div>';return;}
+  grid.innerHTML='<div class="cli-prod-grid">'+list.map(function(p){return clienteProdCardHtml(p.id,'cat');}).join('')+'</div>';
+}
+function clienteProdCardHtml(prodId,ctx,extraBadge){
+  var p=PRODUCTOS_CATALOGO.find(function(x){return x.id===prodId;});
+  if(!p)return '';
+  var ov=PROD_OVERRIDES[String(prodId)]||PROD_OVERRIDES[prodId]||{};
+  if(ov.deleted||ov.sinStock)return '';
+  var desc=ov.descripcion||p.descripcion;
+  var precio=precioParaCliente(p,ov);
+  var enCarrito=CLIENTE_CARRITO[prodId];
+  var qtyId='cli-qty-'+ctx+'-'+prodId;
+  return '<div class="cli-prod-card">'+
+    (extraBadge||'')+
+    (ov.nuevo?'<span class="tag" style="background:var(--teal-50);color:var(--teal-800);font-size:9px;align-self:flex-start;">🆕 Nuevo</span>':'')+
+    '<div class="cli-prod-name">'+desc+'</div>'+
+    '<div class="cli-prod-price">Bs '+precio.toFixed(2)+'</div>'+
+    '<div style="display:flex;gap:6px;align-items:center;">'+
+      '<input type="number" min="1" value="'+(enCarrito?enCarrito.cantidad:1)+'" id="'+qtyId+'" style="width:56px;margin-bottom:0;">'+
+      '<button class="btn btn-sm btn-primary" onclick="clienteAgregarAlCarrito('+prodId+',\''+ctx+'\')" style="flex:1;">'+(enCarrito?'✓ En el pedido':'➕ Agregar')+'</button>'+
+    '</div>'+
+  '</div>';
+}
+function clienteAgregarAlCarrito(prodId,ctx){
+  var qtyEl=el('cli-qty-'+(ctx||'cat')+'-'+prodId);
+  var qty=parseFloat(qtyEl?qtyEl.value:1)||1;
+  var p=PRODUCTOS_CATALOGO.find(function(x){return x.id===prodId;});
+  if(!p)return;
+  var ov=PROD_OVERRIDES[String(prodId)]||PROD_OVERRIDES[prodId]||{};
+  var desc=ov.descripcion||p.descripcion;
+  var precio=precioParaCliente(p,ov);
+  CLIENTE_CARRITO[prodId]={productId:prodId,desc:desc,precio:precio,cantidad:qty};
+  renderClienteCatalogo();
+  renderClienteSugerencias();
+  actualizarCarritoFab();
+}
+function clienteQuitarDelCarrito(prodId){
+  delete CLIENTE_CARRITO[prodId];
+  renderClienteCarrito();
+  renderClienteCatalogo();
+  renderClienteSugerencias();
+  actualizarCarritoFab();
+}
+// ── Motor de sugerencias (basado en historial_compras) ──
+var CLIENTE_HISTORIAL=[];
+var CLIENTE_SUGERIDOS=[];
+var CLIENTE_REPONER=[];
+function mesToNum(mes){
+  var parts=(mes||'').split('-');
+  return (parseInt(parts[0])||0)*12+(parseInt(parts[1])||0);
+}
+function currentMesStr(){
+  var d=new Date();var y=d.getFullYear();var mo=d.getMonth()+1;
+  return y+'-'+(mo<10?'0'+mo:mo);
+}
+function cargarSugerenciasCliente(){
+  return sbFetch('historial_compras?cliente_user=eq.'+encodeURIComponent(SESSION.user)+'&select=*')
+    .then(function(rows){
+      CLIENTE_HISTORIAL=rows||[];
+      var porProducto={};
+      CLIENTE_HISTORIAL.forEach(function(r){
+        if(!r.producto_id)return;
+        if(!porProducto[r.producto_id])porProducto[r.producto_id]={total:0,meses:[]};
+        porProducto[r.producto_id].total+=(r.cantidad_total||0);
+        porProducto[r.producto_id].meses.push(r.mes);
+      });
+      var nowNum=mesToNum(currentMesStr());
+      var entries=Object.keys(porProducto).map(function(pid){
+        var info=porProducto[pid];
+        var mesesUnicos=[];
+        info.meses.forEach(function(m){if(mesesUnicos.indexOf(m)===-1)mesesUnicos.push(m);});
+        mesesUnicos.sort();
+        var tocaReponer=false,mesesSinceLast=null,avgInterval=null;
+        if(mesesUnicos.length>=2){
+          var nums=mesesUnicos.map(mesToNum);
+          var intervals=[];
+          for(var i=1;i<nums.length;i++)intervals.push(nums[i]-nums[i-1]);
+          avgInterval=intervals.reduce(function(a,b){return a+b;},0)/intervals.length;
+          mesesSinceLast=nowNum-nums[nums.length-1];
+          tocaReponer=avgInterval>0&&mesesSinceLast>=avgInterval;
+        }
+        return {productoId:parseInt(pid),total:info.total,mesesUnicos:mesesUnicos,tocaReponer:tocaReponer,mesesSinceLast:mesesSinceLast,avgInterval:avgInterval};
+      });
+      entries.sort(function(a,b){return b.total-a.total;});
+      CLIENTE_SUGERIDOS=entries.slice(0,10);
+      CLIENTE_REPONER=entries.filter(function(e){return e.tocaReponer;}).sort(function(a,b){return (b.mesesSinceLast-b.avgInterval)-(a.mesesSinceLast-a.avgInterval);}).slice(0,10);
+    });
+}
+function renderClienteSugerencias(){
+  var nuevos=PRODUCTOS_CATALOGO.filter(function(p){
+    var ov=PROD_OVERRIDES[String(p.id)]||PROD_OVERRIDES[p.id]||{};
+    return ov.nuevo&&!ov.deleted&&!ov.sinStock;
+  });
+  var nuevosWrap=el('cli-nuevos-carousel');var nuevosSection=el('cli-nuevos-section');
+  if(nuevosWrap&&nuevosSection){
+    if(nuevos.length){nuevosWrap.innerHTML=nuevos.map(function(p){return clienteProdCardHtml(p.id,'nuevo');}).join('');nuevosSection.style.display='block';}
+    else{nuevosSection.style.display='none';}
+  }
+  var reponerWrap=el('cli-reponer-carousel');var reponerSection=el('cli-reponer-section');
+  if(reponerWrap&&reponerSection){
+    if(CLIENTE_REPONER.length){
+      reponerWrap.innerHTML=CLIENTE_REPONER.map(function(e){
+        return clienteProdCardHtml(e.productoId,'reponer','<span class="tag tag-coral" style="font-size:9px;align-self:flex-start;">⏰ Te toca reponer</span>');
+      }).join('');
+      reponerSection.style.display='block';
+    } else{reponerSection.style.display='none';}
+  }
+  var sugWrap=el('cli-sugeridos-carousel');var sugSection=el('cli-sugeridos-section');
+  if(sugWrap&&sugSection){
+    if(CLIENTE_SUGERIDOS.length){
+      sugWrap.innerHTML=CLIENTE_SUGERIDOS.map(function(e){
+        return clienteProdCardHtml(e.productoId,'sug','<span class="tag tag-blue" style="font-size:9px;align-self:flex-start;">🔁 Habitual</span>');
+      }).join('');
+      sugSection.style.display='block';
+    } else{sugSection.style.display='none';}
+  }
+}
+function clienteCambiarCantidad(prodId,val){
+  var q=parseFloat(val)||1;
+  if(CLIENTE_CARRITO[prodId])CLIENTE_CARRITO[prodId].cantidad=q;
+  actualizarCarritoFab();
+  renderClienteCarrito();
+}
+function clienteCarritoItems(){
+  return Object.keys(CLIENTE_CARRITO).map(function(k){return CLIENTE_CARRITO[k];});
+}
+function actualizarCarritoFab(){
+  var items=clienteCarritoItems();
+  var count=items.length;
+  var total=items.reduce(function(s,i){return s+i.precio*i.cantidad;},0);
+  var fab=el('cli-cart-fab');
+  if(fab)fab.style.display=count?'block':'none';
+  setTxt('cli-cart-count',count);
+  setTxt('cli-cart-total',total.toFixed(2));
+}
+function toggleClienteCart(){
+  var panel=el('cli-cart-panel');if(!panel)return;
+  var opening=panel.style.display==='none';
+  panel.style.display=opening?'block':'none';
+  if(opening)renderClienteCarrito();
+}
+function renderClienteCarrito(){
+  var wrap=el('cli-cart-items');if(!wrap)return;
+  var items=clienteCarritoItems();
+  if(!items.length){wrap.innerHTML='<div class="empty-state"><p>Tu pedido está vacío.</p></div>';setTxt('cli-cart-total-2','Bs 0.00');return;}
+  wrap.innerHTML=items.map(function(it){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:8px;">'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:12.5px;font-weight:500;">'+it.desc+'</div><div style="font-size:11px;color:var(--text-3);">Bs '+it.precio.toFixed(2)+' c/u</div></div>'+
+      '<input type="number" min="1" value="'+it.cantidad+'" style="width:52px;margin-bottom:0;" onchange="clienteCambiarCantidad('+it.productId+',this.value)">'+
+      '<button class="btn btn-sm" onclick="clienteQuitarDelCarrito('+it.productId+')" style="color:var(--red-600);border-color:var(--red-400);">✕</button>'+
+    '</div>';
+  }).join('');
+  var total=items.reduce(function(s,i){return s+i.precio*i.cantidad;},0);
+  setTxt('cli-cart-total-2','Bs '+total.toFixed(2));
+}
+function clienteVaciarCarrito(){
+  if(!confirm('¿Vaciar todo el pedido?'))return;
+  CLIENTE_CARRITO={};
+  renderClienteCarrito();renderClienteCatalogo();actualizarCarritoFab();
+}
+function clienteBuildPedidoPdfHtml(){
+  var items=clienteCarritoItems();
+  var total=items.reduce(function(s,i){return s+i.precio*i.cantidad;},0);
+  var fecha=new Date().toLocaleDateString('es-BO');
+  var rows=items.map(function(it){
+    return '<tr><td style="border:1px solid #ccc;padding:5px 7px;font-size:11px;">'+it.desc+'</td>'+
+      '<td style="border:1px solid #ccc;padding:5px 7px;font-size:11px;text-align:center;">'+it.cantidad+'</td>'+
+      '<td style="border:1px solid #ccc;padding:5px 7px;font-size:11px;text-align:right;">'+it.precio.toFixed(2)+'</td>'+
+      '<td style="border:1px solid #ccc;padding:5px 7px;font-size:11px;text-align:right;">'+(it.precio*it.cantidad).toFixed(2)+'</td></tr>';
+  }).join('');
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Pedido - '+SESSION.nombre+'</title>'+
+  '<style>body{font-family:Arial,Helvetica,sans-serif;padding:24px;color:#222;}h1{font-size:16px;margin:0 0 2px;}h2{font-size:13px;margin:0 0 14px;color:#666;font-weight:500;}'+
+  'table{border-collapse:collapse;width:100%;}th{background:#f2f2f2;border:1px solid #ccc;padding:5px 7px;font-size:10px;text-align:left;}'+
+  '@media print{body{padding:8px;}}</style></head><body>'+
+  '<h1>MARTIZENT S.R.L.</h1><h2>Pedido de '+SESSION.nombre+' &middot; '+fecha+'</h2>'+
+  '<table><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unit.</th><th>Subtotal</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+  '<div style="margin-top:14px;font-size:14px;font-weight:700;text-align:right;">TOTAL: Bs '+total.toFixed(2)+'</div>'+
+  '</body></html>';
+}
+function clienteDescargarPdf(){
+  if(!clienteCarritoItems().length){var e=el('cli-cart-error');if(e)e.textContent='Tu pedido está vacío.';return;}
+  var html=clienteBuildPedidoPdfHtml();
+  var win=window.open('','_blank');
+  if(!win){alert('Habilitá las ventanas emergentes.');return;}
+  win.document.write(html);win.document.close();win.focus();
+  setTimeout(function(){win.print();},600);
+}
+function clienteEnviarPedido(){
+  var items=clienteCarritoItems();
+  var errEl=el('cli-cart-error');
+  if(!items.length){if(errEl)errEl.textContent='Tu pedido está vacío.';return;}
+  if(!SESSION.vendedor_asignado){if(errEl)errEl.textContent='No tenés un vendedor asignado. Contactá al administrador.';return;}
+  if(!confirm('¿Enviar este pedido a tu vendedor? Ya no vas a poder editarlo después de enviarlo.'))return;
+  if(errEl)errEl.textContent='Enviando...';
+  var sub=items.reduce(function(s,it){return s+it.cantidad*it.precio;},0);
+  var mart=Math.round(sub);
+  var cot={
+    id:Date.now(),
+    cliente:SESSION.nombre,
+    tipoPrecio:SESSION.tipo_precio,
+    modalidad:'normal',
+    conFactura:false,hasProd:true,hasRep:false,
+    factNombre:'',factNit:'',
+    total:sub,subtotalNum:sub,gastoNum:0,
+    totalStr:'Bs '+Math.round(sub).toLocaleString('es-BO'),
+    martizent:'Bs '+mart.toLocaleString('es-BO'),martNum:mart,
+    multiempresas:'Bs 0',multiNum:0,
+    diego:'Bs 0',diegoNum:0,
+    utilidadTotalNum:0,
+    tipoPago:'contado',diasCredito:0,
+    items:items.map(function(it){return {prodId:it.productId,desc:it.desc,glosa:'',precio:it.precio,factura_pct:30,cant:it.cantidad,sinStock:false};}),
+    repItems:[],
+    fecha:new Date().toLocaleString('es-BO'),
+    usuario:SESSION.vendedor_asignado,
+    leido:false,
+    numeroCot:'PED-'+String(Date.now()).slice(-8),
+    origen:'cliente',
+    cliente_user:SESSION.user
+  };
+  sbFetch('cotizaciones','POST',{
+    id:cot.id,usuario:cot.usuario,cliente:cot.cliente,numero_cot:cot.numeroCot,
+    data:cot,enviado:false,fecha:new Date().toISOString(),
+    origen:'cliente',cliente_user:cot.cliente_user
+  }).then(function(){
+    alert('¡Pedido enviado! Tu vendedor lo va a revisar pronto.');
+    CLIENTE_CARRITO={};
+    toggleClienteCart();
+    renderClienteCatalogo();
+    actualizarCarritoFab();
+  }).catch(function(err){
+    console.error('Error al enviar pedido:',err);
+    if(errEl)errEl.textContent='Error: '+err.message;
+  });
 }
 
 // ═══════════ TABLES / PHOTOS ═══════════
