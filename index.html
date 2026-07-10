@@ -3113,6 +3113,23 @@ function parseMesHeader(s){
 function normalizeProdName(s){
   return (s||'').toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
 }
+// Casos confirmados a mano donde el nombre del Excel y el del catálogo son muy distintos
+// (sin código ni número en común) — se revisan primero, antes de cualquier heurística.
+var HISTORIAL_ALIASES=[
+  {match:'EXPOAP160GNRH',target:'160 LITROS NEGRO'},
+  {match:'ELE-M14',target:'14 LITROS (Llama modulante)'},
+  {match:'MODELO MARTINA',target:'80a1 martina'},
+  {match:'MODELO: STELLA DOBLE HORNO',target:'mc-h2 stella'},
+  {match:'ELECN-16L',target:'16 LITROS (serp. cobre, display temp.)'},
+  {match:'MODELO: CATERINA GARRAFA',target:'caterina mc-e4'},
+  {match:'EXPOTGNP150RH40 ALTURA',target:'150 litros gama alta'},
+  {match:'EXPOTGNP150RH GAMA ALTA',target:'150 litros gama alta'},
+  {match:'MODELO: FIORENZA BASE DE VIDRIO',target:'fiorenza mc-v5'},
+  {match:'ELE-I53C18',target:'ELE-L53C18'},
+  {match:'EXPOTGNP120RH GAMA ALTA',target:'120 litros gama alta'},
+  {match:'PLOMO 120 LITROS EXPOP120GNEL',target:'120 LITROS GRIS'},
+  {match:'AG1100GRRE MXP EM615',target:'TERMOTANQUE SKABE A GAS A6 AQUAPIU'}
+];
 function extractCodeTokens(desc){
   var norm=normalizeProdName(desc);
   return norm.split(/[\s,\/()]+/).filter(function(t){return t.length>=3&&/[0-9]/.test(t)&&/[A-Z]/.test(t);});
@@ -3127,6 +3144,12 @@ function matchHistorialProduct(desc){
   if(!norm)return null;
   var exact=PRODUCTOS_CATALOGO.find(function(p){return normalizeProdName(p.descripcion)===norm;});
   if(exact)return {product:exact,confidence:'exacta'};
+  var alias=HISTORIAL_ALIASES.find(function(a){return norm.indexOf(a.match)>-1;});
+  if(alias){
+    var targetNorm=normalizeProdName(alias.target);
+    var aliasProd=PRODUCTOS_CATALOGO.find(function(p){return normalizeProdName(p.descripcion)===targetNorm;});
+    if(aliasProd)return {product:aliasProd,confidence:'exacta'};
+  }
   var partial=PRODUCTOS_CATALOGO.find(function(p){
     var pn=normalizeProdName(p.descripcion);
     return pn.indexOf(norm)>-1||norm.indexOf(pn)>-1;
