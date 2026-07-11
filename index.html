@@ -1047,7 +1047,7 @@ function doLogin(){
     if(err){err.textContent='Usuario o contrase\u00F1a incorrectos.';err.style.display='block';}
   });
 }
-function doLogout(){SESSION=null;el('app-page').classList.remove('visible');var cp=el('client-page');if(cp)cp.classList.remove('visible');el('login-page').style.display='flex';el('lu').value='';el('lp').value='';}
+function doLogout(){SESSION=null;var ap=el('app-page');if(ap){ap.classList.remove('visible');ap.style.display='none';}var cp=el('client-page');if(cp)cp.style.display='none';el('login-page').style.display='flex';el('lu').value='';el('lp').value='';}
 function initApp(){
   var isAdmin=SESSION.rol==='admin';
   el('tb-user').textContent=SESSION.nombre;
@@ -3386,23 +3386,86 @@ function crearCliente(){
       if(errEl)errEl.textContent='Error: '+err.message;
     });
 }
+var ADM_CLIENTES=[];
 function renderAdmClientes(){
   var listEl=el('adm-clientes-list');if(!listEl)return;
   listEl.innerHTML='<div class="empty-state"><p>Cargando...</p></div>';
   sbFetch('usuarios?rol=eq.cliente&select=*&order=nombre.asc')
     .then(function(rows){
+      ADM_CLIENTES=rows||[];
       if(!rows||!rows.length){listEl.innerHTML='<div class="empty-state"><span class="empty-ico">🏬</span><h3>Sin clientes aún</h3><p>Agregá el primer cliente mayorista.</p></div>';return;}
-      listEl.innerHTML=rows.map(function(c){
+      listEl.innerHTML=rows.map(function(c,i){
         var vendedorUser=(USERS||[]).find(function(u){return u.user===c.vendedor_asignado;});
         var vendedorNombre=vendedorUser?vendedorUser.nombre:(c.vendedor_asignado||'—');
         var tipoLabel={local:'Cliente Local',nacional:'Cliente Nacional',envios:'Cliente Envíos'}[c.tipo_precio]||c.tipo_precio||'—';
-        return '<div class="cot-card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">'+
-          '<div><div style="font-size:13.5px;font-weight:600;">'+c.nombre+'</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">👤 '+c.user_name+' &middot; Vendedor: '+vendedorNombre+' &middot; '+tipoLabel+'</div></div>'+
-          '<button class="btn btn-sm" onclick="deleteCliente(\''+c.user_name+'\')" style="color:var(--red-600);border-color:var(--red-400);">&#128465;</button>'+
+        var nombreEsc=(c.nombre||'').replace(/"/g,'&quot;');
+        return '<div class="cot-card" style="margin-bottom:8px;">'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
+            '<div><div style="font-size:13.5px;font-weight:600;">'+c.nombre+'</div><div style="font-size:11px;color:var(--text-3);margin-top:2px;">👤 '+c.user_name+' &middot; Vendedor: '+vendedorNombre+' &middot; '+tipoLabel+'</div></div>'+
+            '<div style="display:flex;gap:6px;flex-shrink:0;">'+
+              '<button class="btn btn-sm" onclick="toggleEditCliente('+i+')">&#9998; Editar</button>'+
+              '<button class="btn btn-sm" onclick="deleteCliente(\''+c.user_name+'\')" style="color:var(--red-600);border-color:var(--red-400);">&#128465;</button>'+
+            '</div>'+
+          '</div>'+
+          '<div id="cliedit-'+i+'" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">'+
+            '<div class="frow">'+
+              '<div><label class="flabel">Nombre completo</label><input type="text" id="cliedit-nombre-'+i+'" value="'+nombreEsc+'"></div>'+
+              '<div><label class="flabel">Vendedor asignado</label><select id="cliedit-vendedor-'+i+'"></select></div>'+
+            '</div>'+
+            '<div class="frow" style="margin-top:8px;">'+
+              '<div><label class="flabel">Tipo de precio</label><select id="cliedit-tipoprecio-'+i+'">'+
+                '<option value="local"'+(c.tipo_precio==='local'?' selected':'')+'>Cliente Local</option>'+
+                '<option value="nacional"'+(c.tipo_precio==='nacional'?' selected':'')+'>Cliente Nacional</option>'+
+                '<option value="envios"'+(c.tipo_precio==='envios'?' selected':'')+'>Cliente Envíos</option>'+
+              '</select></div>'+
+              '<div><label class="flabel">Nueva contraseña (opcional)</label><input type="password" id="cliedit-pass-'+i+'" placeholder="Dejar vacío para no cambiar" autocomplete="new-password"></div>'+
+            '</div>'+
+            '<div style="display:flex;gap:8px;margin-top:10px;align-items:center;">'+
+              '<button class="btn btn-success btn-sm" onclick="guardarEditCliente('+i+')">Guardar</button>'+
+              '<button class="btn btn-sm" onclick="toggleEditCliente('+i+')">Cancelar</button>'+
+              '<span id="cliedit-error-'+i+'" style="font-size:12px;color:var(--red-600);"></span>'+
+            '</div>'+
+          '</div>'+
         '</div>';
       }).join('');
     }).catch(function(err){
       listEl.innerHTML='<div class="empty-state"><p style="color:var(--red-600);">Error: '+err.message+'</p></div>';
+    });
+}
+function toggleEditCliente(i){
+  var row=el('cliedit-'+i);if(!row)return;
+  var opening=row.style.display==='none';
+  row.style.display=opening?'block':'none';
+  if(opening){
+    var c=ADM_CLIENTES[i];
+    var sel=el('cliedit-vendedor-'+i);
+    if(sel&&c){
+      sel.innerHTML=(USERS||[]).filter(function(u){return u.rol!=='cliente';}).map(function(u){
+        return '<option value="'+u.user+'"'+(u.user===c.vendedor_asignado?' selected':'')+'>'+u.nombre+'</option>';
+      }).join('');
+    }
+    var errEl=el('cliedit-error-'+i);if(errEl)errEl.textContent='';
+  }
+}
+function guardarEditCliente(i){
+  var c=ADM_CLIENTES[i];if(!c)return;
+  var nombre=(el('cliedit-nombre-'+i)||{}).value.trim();
+  var vendedor=(el('cliedit-vendedor-'+i)||{}).value;
+  var tipoPrecio=(el('cliedit-tipoprecio-'+i)||{}).value;
+  var pass=(el('cliedit-pass-'+i)||{}).value;
+  var errEl=el('cliedit-error-'+i);
+  if(!nombre){if(errEl)errEl.textContent='El nombre no puede estar vacío.';return;}
+  if(pass&&pass.length<3){if(errEl)errEl.textContent='La nueva contraseña es muy corta.';return;}
+  if(errEl)errEl.textContent='Guardando...';
+  var patch={nombre:nombre,vendedor_asignado:vendedor,tipo_precio:tipoPrecio};
+  if(pass)patch.pass=pass;
+  sbFetch('usuarios?user_name=eq.'+encodeURIComponent(c.user_name),'PATCH',patch)
+    .then(function(){
+      if(errEl)errEl.textContent='';
+      renderAdmClientes();
+    }).catch(function(err){
+      console.error('Error al editar cliente:',err);
+      if(errEl)errEl.textContent='Error: '+err.message;
     });
 }
 function deleteCliente(userName){
@@ -3416,8 +3479,8 @@ function deleteCliente(userName){
 // ═══════════ PORTAL DE CLIENTE ═══════════
 var CLIENTE_CARRITO={};
 function showClientPortal(){
-  var ap=el('app-page');if(ap)ap.classList.remove('visible');
-  var cp=el('client-page');if(cp)cp.classList.add('visible');
+  var ap=el('app-page');if(ap)ap.style.display='none';
+  var cp=el('client-page');if(cp)cp.style.display='flex';
   var tbU=el('cli-tb-user');if(tbU)tbU.textContent=SESSION.nombre;
   CLIENTE_CARRITO={};
   renderClienteCatalogo();
